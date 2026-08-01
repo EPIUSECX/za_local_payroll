@@ -12,6 +12,8 @@ app_description = (
 app_email = "info@cohenix.com"
 app_license = "mit"
 
+za_local_practitioner_guide_provider = "za_local_payroll.practitioner_guide.provider.get_guide_sections"
+
 required_apps = ["frappe", "erpnext", "hrms", "za_local_core"]
 
 add_to_apps_screen = [
@@ -51,6 +53,9 @@ if dedicated_payroll_hooks_active():
 		),
 	}
 	doc_events = {
+		"Company": {
+			"after_insert": "za_local_payroll.setup.statutory.configure_new_south_african_company",
+		},
 		"Journal Entry": {
 			"on_trash": "za_local_payroll.overrides.journal_entry.on_trash",
 			"on_cancel": "za_local_payroll.overrides.journal_entry.on_cancel",

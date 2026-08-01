@@ -6,6 +6,11 @@ Runtime dependencies are Frappe/ERPNext/HRMS v16 and `za_local_core`. The app pr
 
 See the [detailed migration and compliance plan](MIGRATION_PLAN.md).
 
+Practitioner and end-user pages are contributed to the federated guide published
+by `za_local_core`. The current test record, release gates and cutover procedure
+are maintained in that repository's `VALIDATION_AND_SIGNOFF.md` and
+`CUTOVER_RUNBOOK.md`.
+
 ## Installation
 
 You can install this app using the [bench](https://github.com/frappe/bench) CLI:
@@ -31,6 +36,12 @@ uvx ruff check apps/za_local_payroll/za_local_payroll
 ```
 
 Site lifecycle and end-to-end payroll tests must run on a disposable test-site copy; do not run them against a production payroll site.
+
+## Support and releases
+
+See [SUPPORT.md](SUPPORT.md), [SECURITY.md](SECURITY.md), and
+[CHANGELOG.md](CHANGELOG.md). Payroll deployment requires the practitioner,
+bank-acceptance and parallel-run gates described above.
 
 ## Contributing
 

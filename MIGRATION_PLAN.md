@@ -1,6 +1,10 @@
 # SA Localisation Payroll Migration Plan
 
-Status: payroll code and metadata have been extracted; production site cutover and parallel-run sign-off remain pending.
+Status: extraction and isolated-site implementation complete. Payroll code,
+metadata, setup, documentation and tests are owned by this app and have passed
+legacy-compatible and legacy-free E2E runs. Production cutover remains gated by
+restore evidence, independent practitioner and bank acceptance, and parallel-run
+sign-off in `za_local_core/VALIDATION_AND_SIGNOFF.md`.
 
 ## Purpose and boundary
 

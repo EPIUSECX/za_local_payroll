@@ -2,11 +2,14 @@
 
 import ast
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import frappe
 from frappe.tests.classes import UnitTestCase
 
 from za_local_payroll.setup.custom_fields import get_payroll_custom_fields
+from za_local_payroll.setup.statutory import _ensure_company_record
 
 
 class TestPayrollExtractionBoundaries(UnitTestCase):
@@ -64,3 +67,25 @@ class TestPayrollExtractionBoundaries(UnitTestCase):
 			set(hooks.required_apps),
 			{"frappe", "erpnext", "hrms", "za_local_core"},
 		)
+
+	def test_statutory_records_are_company_scoped_and_submitted(self):
+		doc = SimpleNamespace(
+			name="2026-2027 - TEST",
+			meta=SimpleNamespace(is_submittable=True),
+			docstatus=0,
+			insert=Mock(),
+			submit=Mock(),
+		)
+		source = {"doctype": "Payroll Period", "name": "2026-2027"}
+		with (
+			patch("za_local_payroll.setup.statutory._get_company_scoped_name", return_value=doc.name),
+			patch("za_local_payroll.setup.statutory.frappe.db.exists", return_value=False),
+			patch("za_local_payroll.setup.statutory.frappe.get_doc", return_value=doc) as get_doc,
+		):
+			name, created = _ensure_company_record(source, "Test Company")
+
+		self.assertTrue(created)
+		self.assertEqual(name, doc.name)
+		self.assertEqual(get_doc.call_args.args[0]["company"], "Test Company")
+		doc.insert.assert_called_once_with(ignore_permissions=True)
+		doc.submit.assert_called_once_with()

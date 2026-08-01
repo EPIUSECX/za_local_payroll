@@ -8,6 +8,7 @@ from za_local_payroll.setup.custom_fields import apply_payroll_custom_fields
 from za_local_payroll.setup.masters import seed_payroll_masters
 from za_local_payroll.setup.property_setters import apply_payroll_property_setters
 from za_local_payroll.setup.records import install_payroll_doctype_links
+from za_local_payroll.setup.statutory import ensure_all_company_tax_configuration
 
 REQUIRED_APPS = {"erpnext", "hrms", "za_local_core"}
 
@@ -73,6 +74,7 @@ def after_install() -> None:
 	"""Install schema support and conservative initial payroll masters."""
 	_sync_schema_support()
 	seed_payroll_masters()
+	ensure_all_company_tax_configuration()
 	seed_payroll_readiness()
 	ensure_default_print_formats()
 
@@ -81,6 +83,7 @@ def after_migrate() -> None:
 	"""Keep schema ownership current without rewriting statutory master data."""
 	_sync_schema_support()
 	seed_payroll_masters()
+	ensure_all_company_tax_configuration()
 	seed_payroll_readiness()
 	ensure_default_print_formats()
 

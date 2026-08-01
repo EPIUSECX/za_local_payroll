@@ -11,6 +11,22 @@ from za_local_payroll.setup.default_data import (
 	DEFAULT_SARS_PAYROLL_CODES,
 )
 
+DEFAULT_SALARY_COMPONENT_ACCOUNT_NAMES = {
+	"Basic": "Salaries and Wages",
+	"Basic Salary": "Salaries and Wages",
+	"Arrear": "Salaries and Wages",
+	"Leave Encashment": "Salaries and Wages",
+	"PAYE": "PAYE Payable - SARS",
+	"Income Tax": "PAYE Payable - SARS",
+	"UIF": "UIF Employee Contribution",
+	"UIF Employee Contribution": "UIF Employee Contribution",
+	"UIF Employer Contribution": "UIF Employer Expense",
+	"SDL": "SDL Expense",
+	"SDL Contribution": "SDL Expense",
+	"COIDA": "COIDA Expense",
+	"COIDA Contribution": "COIDA Expense",
+}
+
 TERMINATION_COMPONENTS = (
 	{
 		"salary_component": "Severance Benefit",
@@ -52,6 +68,50 @@ def seed_payroll_masters() -> None:
 	_seed_component_links()
 	_seed_component_treatments()
 	_seed_single_defaults()
+	repair_salary_component_accounts()
+
+
+def repair_salary_component_accounts(company: str | None = None) -> int:
+	"""Map components to existing company accounts without creating a chart."""
+	if not frappe.db.table_exists("Salary Component Account"):
+		return 0
+	companies = [company] if company else frappe.get_all(
+		"Company", filters={"country": "South Africa"}, pluck="name"
+	)
+	repaired = 0
+	for company_name in companies:
+		if not company_name or not frappe.db.exists("Company", company_name):
+			continue
+		for component, account_name in DEFAULT_SALARY_COMPONENT_ACCOUNT_NAMES.items():
+			if not frappe.db.exists("Salary Component", component):
+				continue
+			account = frappe.db.get_value(
+				"Account",
+				{"company": company_name, "account_name": account_name, "is_group": 0},
+				"name",
+			)
+			if not account:
+				continue
+			row_name = frappe.db.get_value(
+				"Salary Component Account",
+				{"parent": component, "company": company_name},
+				"name",
+			)
+			if row_name:
+				if frappe.db.get_value("Salary Component Account", row_name, "account") != account:
+					frappe.db.set_value(
+						"Salary Component Account",
+						row_name,
+						"account",
+						update_modified=False,
+					)
+					repaired += 1
+				continue
+			doc = frappe.get_doc("Salary Component", component)
+			doc.append("accounts", {"company": company_name, "account": account})
+			doc.save(ignore_permissions=True)
+			repaired += 1
+	return repaired
 
 
 def _seed_salary_components() -> None:
