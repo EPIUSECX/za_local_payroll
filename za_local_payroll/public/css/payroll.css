@@ -1,0 +1,12 @@
+/*
+ * Flexible benefits are not part of the supported South African payroll model.
+ * Hide leaf fields only. In Salary Structure, max_benefits shares its section
+ * with timesheet frequency, Salary Component, and Hour Rate.
+ */
+.page-container[data-page-route="Salary Structure"] [data-fieldname="employee_benefits"],
+.page-container[data-page-route="Salary Structure"] [data-fieldname="max_benefits"],
+.page-container[data-page-route="Salary Structure Assignment"] [data-fieldname="employee_benefits"],
+.page-container[data-page-route="Salary Structure Assignment"] [data-fieldname="max_benefits"],
+.page-container[data-page-route="Salary Structure Assignment"] [data-fieldname="employee_benefits_section"] {
+	display: none !important;
+}

@@ -1,0 +1,290 @@
+{# South African IRP5 / IT3(a) certificate print format. #}
+<style>
+.za-irp5 {
+  color: #111827;
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+.za-irp5__header {
+  border-bottom: 2px solid #111827;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+.za-irp5__title {
+  font-size: 20px;
+  font-weight: 700;
+}
+.za-irp5__meta {
+  text-align: right;
+}
+.za-irp5__grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+.za-irp5__section {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  padding: 10px;
+}
+.za-irp5__section-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.za-irp5__row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  margin-bottom: 3px;
+}
+.za-irp5__label {
+  color: #4b5563;
+  font-weight: 600;
+}
+.za-irp5 table {
+  border-collapse: collapse;
+  margin-top: 4px;
+  width: 100%;
+}
+.za-irp5 th,
+.za-irp5 td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 4px 5px;
+  vertical-align: top;
+}
+.za-irp5 th {
+  background: #f9fafb;
+  color: #374151;
+  font-weight: 700;
+  text-align: left;
+}
+.za-irp5 .num {
+  text-align: right;
+  white-space: nowrap;
+}
+.za-irp5__note {
+  color: #6b7280;
+  font-size: 9.5px;
+  margin-top: 10px;
+}
+</style>
+
+{% macro money(value) -%}
+  {{ frappe.format(value or 0, {"fieldtype": "Currency", "options": doc.get("currency") or "ZAR"}) | e }}
+{%- endmacro %}
+
+{% macro date_value(value) -%}
+  {{ (frappe.format(value, {"fieldtype": "Date"}) if value else "") | e }}
+{%- endmacro %}
+
+{% macro field(label, value) -%}
+  <div class="za-irp5__row">
+    <div class="za-irp5__label">{{ label | e }}</div>
+    <div>{{ (value if value is not none else "") | e }}</div>
+  </div>
+{%- endmacro %}
+
+<div class="za-irp5">
+  <div class="za-irp5__header">
+    <div>
+      <div class="za-irp5__title">{{ (doc.certificate_type or "IRP5") | e }} Employee Tax Certificate</div>
+      <div>{{ (doc.employer_legal_name or doc.company or "") | e }}</div>
+    </div>
+    <div class="za-irp5__meta">
+      <div><strong>Certificate No.</strong> {{ (doc.certificate_number or doc.name or "") | e }}</div>
+      <div><strong>Tax Year</strong> {{ (doc.tax_year or "") | e }}</div>
+      <div><strong>Status</strong> {{ (doc.status or "") | e }}</div>
+    </div>
+  </div>
+
+  <div class="za-irp5__section">
+    <div class="za-irp5__section-title">Business Address</div>
+    {{ field("Line 1", doc.biz_address_line_1) }}
+    {{ field("Line 2", doc.biz_address_line_2) }}
+    {{ field("Line 3", doc.biz_address_line_3) }}
+    {{ field("Line 4", doc.biz_address_line_4) }}
+    {{ field("Postal Code", doc.biz_postal_code) }}
+  </div>
+
+  <div class="za-irp5__grid">
+    <div class="za-irp5__section">
+      <div class="za-irp5__section-title">Certificate Details</div>
+      {{ field("Assessment Year", doc.year_of_assessment) }}
+      {{ field("Transaction Year", doc.transaction_year) }}
+      {{ field("Reconciliation", (doc.reconciliation_period or "") ~ (" - " ~ doc.reconciliation_period_yyyymm if doc.reconciliation_period_yyyymm else "")) }}
+      {{ field("Period", date_value(doc.from_date) ~ " to " ~ date_value(doc.to_date)) }}
+      {{ field("Issue Date", date_value(doc.issue_date)) }}
+      {{ field("EMP501", doc.emp501_reconciliation) }}
+    </div>
+
+    <div class="za-irp5__section">
+      <div class="za-irp5__section-title">Employer Details</div>
+      {{ field("Legal Name", doc.employer_legal_name) }}
+      {{ field("Trading Name", doc.employer_trading_name) }}
+      {{ field("Tax ID", doc.employer_tax_id) }}
+      {{ field("PAYE Ref.", doc.employer_paye_reference_number) }}
+      {{ field("SDL Ref.", doc.employer_sdl_reference_number) }}
+      {{ field("UIF Ref.", doc.employer_uif_reference_number) }}
+    </div>
+  </div>
+
+  <div class="za-irp5__grid">
+    <div class="za-irp5__section">
+      <div class="za-irp5__section-title">Employee Details</div>
+      {{ field("Employee", doc.employee_name or doc.employee) }}
+      {{ field("Surname", doc.employee_surname) }}
+      {{ field("First Names", doc.employee_first_names) }}
+      {{ field("Initials", doc.employee_initials) }}
+      {{ field("Identity Type", doc.identity_type) }}
+      {{ field("Identity Number", doc.employee_id_number) }}
+      {{ field("Passport", doc.passport_number) }}
+      {{ field("Passport Country", doc.passport_country_of_issue) }}
+      {{ field("Income Tax Ref.", doc.income_tax_reference_number) }}
+      {{ field("Nature of Person", doc.nature_of_person) }}
+      {{ field("Date of Birth", date_value(doc.date_of_birth)) }}
+    </div>
+
+    <div class="za-irp5__section">
+      <div class="za-irp5__section-title">Employment & Bank</div>
+      {{ field("Employed From", date_value(doc.employed_from)) }}
+      {{ field("Employed To", date_value(doc.employed_to)) }}
+      {{ field("Periods in Year", doc.periods_in_year) }}
+      {{ field("Periods Worked", doc.periods_worked) }}
+      {{ field("Bank", doc.bank_name) }}
+      {{ field("Account Number", doc.bank_account_no) }}
+      {{ field("Account Type", doc.bank_account_type) }}
+      {{ field("Account Holder", doc.bank_account_holder_name) }}
+    </div>
+  </div>
+
+  <div class="za-irp5__grid">
+    <div class="za-irp5__section">
+      <div class="za-irp5__section-title">Residential Address</div>
+      {{ field("Line 1", doc.res_address_line_1) }}
+      {{ field("Line 2", doc.res_address_line_2) }}
+      {{ field("Line 3", doc.res_address_line_3) }}
+      {{ field("Line 4", doc.res_address_line_4) }}
+      {{ field("Postal Code", doc.res_postal_code) }}
+    </div>
+
+    <div class="za-irp5__section">
+      <div class="za-irp5__section-title">Postal Address</div>
+      {{ field("Line 1", doc.post_address_line_1) }}
+      {{ field("Line 2", doc.post_address_line_2) }}
+      {{ field("Line 3", doc.post_address_line_3) }}
+      {{ field("Line 4", doc.post_address_line_4) }}
+      {{ field("Postal Code", doc.post_postal_code) }}
+    </div>
+  </div>
+
+  <div class="za-irp5__section">
+    <div class="za-irp5__section-title">Income Lines</div>
+    <table>
+      <thead>
+        <tr>
+          <th>SARS Code</th>
+          <th>Description</th>
+          <th class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in doc.income_details %}
+        <tr>
+          <td>{{ (row.income_code or "") | e }}</td>
+          <td>{{ (row.description or "") | e }}</td>
+          <td class="num">{{ money(row.amount) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3">No income lines captured.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="za-irp5__grid">
+    <div class="za-irp5__section">
+      <div class="za-irp5__section-title">Deductions & Tax Credits</div>
+      <table>
+        <thead>
+          <tr>
+            <th>SARS Code</th>
+            <th>Description</th>
+            <th class="num">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in doc.deduction_details %}
+          <tr>
+            <td>{{ (row.deduction_code or "") | e }}</td>
+            <td>{{ (row.description or "") | e }}</td>
+            <td class="num">{{ money(row.amount) }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3">No deduction lines captured.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="za-irp5__section">
+      <div class="za-irp5__section-title">Employer Contributions</div>
+      <table>
+        <thead>
+          <tr>
+            <th>SARS Code</th>
+            <th>Description</th>
+            <th class="num">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in doc.company_contribution_details %}
+          <tr>
+            <td>{{ (row.contribution_code or "") | e }}</td>
+            <td>{{ (row.description or "") | e }}</td>
+            <td class="num">{{ money(row.amount) }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3">No employer contribution lines captured.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="za-irp5__section">
+    <div class="za-irp5__section-title">Certificate Totals</div>
+    <div class="za-irp5__grid">
+      <div>
+        {{ field("Gross Taxable Income", money(doc.gross_taxable_income)) }}
+        {{ field("Non-Taxable Income", money(doc.non_taxable_income)) }}
+        {{ field("Total Deductions & Contributions", money(doc.total_deductions_contributions)) }}
+        {{ field("Medical Scheme Fees Tax Credit", money(doc.medical_scheme_fees_tax_credit)) }}
+        {{ field("Additional Medical Expenses Tax Credit", money(doc.additional_medical_expenses_tax_credit)) }}
+      </div>
+      <div>
+        {{ field("PAYE", money(doc.paye)) }}
+        {{ field("UIF", money(doc.uif)) }}
+        {{ field("SDL", money(doc.sdl)) }}
+        {{ field("Total Tax, SDL & UIF (4149)", money(doc.total_tax_payable)) }}
+      </div>
+    </div>
+  </div>
+
+  {% if doc.directive_numbers or doc.reason_for_non_deduction %}
+  <div class="za-irp5__section">
+    <div class="za-irp5__section-title">Directive and Non-Deduction Details</div>
+    {{ field("Directive Number(s)", doc.directive_numbers) }}
+    {{ field("Reason Code for IT3(a) (4150)", doc.reason_for_non_deduction) }}
+  </div>
+  {% endif %}
+
+  <div class="za-irp5__note">
+    This print format is a practitioner review copy generated from the IRP5 Certificate record in ERPNext.
+    It does not constitute direct SARS submission and must be validated by the payroll practitioner before filing.
+  </div>
+</div>
