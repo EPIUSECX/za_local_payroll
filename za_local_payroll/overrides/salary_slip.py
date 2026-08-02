@@ -48,6 +48,8 @@ if get_period_factor is None:
 
 
 # Import ZA Local utilities
+from za_local_core.localisation import is_south_african_company
+
 from za_local_payroll.setup.statutory import validate_current_tax_configuration
 from za_local_payroll.utils.eti_utils import (
 	calculate_eti_amount,
@@ -99,11 +101,18 @@ class ZASalarySlip(SalarySlip):
 			require_hrms("Salary Slip")
 		super().__init__(*args, **kwargs)
 
+	@property
+	def za_localisation_applies(self) -> bool:
+		"""Whether South African statutory rules govern this slip's company."""
+		return is_south_african_company(self.get("company"))
+
 	def validate(self):
 		"""
 		Validate salary slip with SA-specific checks.
 		"""
 		require_hrms("Salary Slip")
+		if not self.za_localisation_applies:
+			return super().validate()
 		if self.company and self.end_date:
 			validate_current_tax_configuration(self.company, self.end_date)
 		if self.is_new() and not flt(self.get("za_eti_hours")) and self.employee:
@@ -121,6 +130,8 @@ class ZASalarySlip(SalarySlip):
 
 	def add_tax_components(self):
 		"""Classify populated deduction rows immediately before HRMS calculates PAYE."""
+		if not self.za_localisation_applies:
+			return super().add_tax_components()
 		self.apply_sa_component_classification_defaults()
 		return super().add_tax_components()
 
@@ -129,11 +140,15 @@ class ZASalarySlip(SalarySlip):
 		Validate before submitting salary slip.
 		"""
 		# Note: Parent class (SalarySlip) doesn't have before_submit, so we don't call super()
+		if not self.za_localisation_applies:
+			return
 		# Validate all components have accounts before allowing submission
 		self.validate_component_accounts()
 
 	def after_insert(self):
 		"""Persist ETI audit evidence only after the Salary Slip link exists."""
+		if not self.za_localisation_applies:
+			return
 		self._log_current_eti_calculation()
 
 	def validate_payroll_frequency(self):
@@ -204,6 +219,8 @@ class ZASalarySlip(SalarySlip):
 		"""
 		Calculate annual taxable earnings including annual bonus.
 		"""
+		if not self.za_localisation_applies:
+			return super().compute_taxable_earnings_for_year()
 		super().compute_taxable_earnings_for_year()
 
 		self.apply_sa_paye_inclusion_adjustments()
@@ -456,6 +473,8 @@ class ZASalarySlip(SalarySlip):
 
 		Follows standard HRMS pattern: validates payroll_period, then calls calculate_variable_tax.
 		"""
+		if not self.za_localisation_applies:
+			return super().calculate_variable_based_on_taxable_salary(tax_component)
 		# Validate required attributes (standard HRMS validation)
 		if not self.payroll_period:
 			frappe.throw(
@@ -516,6 +535,8 @@ class ZASalarySlip(SalarySlip):
 
 		This uses the same tax slab calculation as standard HRMS, just avoids NoneType errors.
 		"""
+		if not self.za_localisation_applies:
+			return super().calculate_variable_tax(tax_component, has_additional_salary_tax_component)
 		# Get previous tax paid in period (standard HRMS logic)
 		self.previous_total_paid_taxes = self.get_tax_paid_in_period(
 			self.payroll_period.start_date, self.start_date, tax_component
@@ -636,6 +657,8 @@ class ZASalarySlip(SalarySlip):
 		"""
 		Calculate net pay with ETI and company contributions.
 		"""
+		if not self.za_localisation_applies:
+			return super().calculate_net_pay(skip_tax_breakup_computation)
 		# Standard net pay calculation
 		super().calculate_net_pay(skip_tax_breakup_computation)
 
@@ -946,13 +969,15 @@ class ZASalarySlip(SalarySlip):
 		Post-submission tasks.
 		"""
 		super().on_submit()
-		submit_eti_log(self.employee, self)
+		if self.za_localisation_applies:
+			submit_eti_log(self.employee, self)
 
 	def on_cancel(self):
 		"""
 		Post-cancellation tasks.
 		"""
-		cancel_eti_log(self.employee, self)
+		if self.za_localisation_applies:
+			cancel_eti_log(self.employee, self)
 		super().on_cancel()
 
 

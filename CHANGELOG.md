@@ -2,6 +2,12 @@
 
 ## 1.0.0 - 2026-08-02
 
+- Gated every HRMS entry point on company country. Companies outside South
+  Africa keep stock HRMS payroll, including the standard bank entry, and are
+  no longer blocked by South African statutory setup they cannot complete.
+- Tagged the app's Property Setters with their owning module, with a backfill
+  patch, so uninstall no longer orphans them on core HRMS DocTypes.
+- Added country-gating and uninstall-hygiene regression tests.
 - Extracted PAYE, UIF, SDL, ETI, benefits, employer declarations,
   certificates and payroll-payment workflows from the legacy `za_local` app.
 - Corrected Salary Structure visibility so `max_benefits` is hidden without

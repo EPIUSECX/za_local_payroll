@@ -8,6 +8,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate
 from za_local_core.files import read_packaged_json
+from za_local_core.localisation import is_south_african_company
 
 from za_local_payroll.utils.statutory_rates import get_tax_year_for_date
 
@@ -135,7 +136,13 @@ def ensure_company_tax_configuration(company: str) -> dict:
 
 
 def get_missing_current_tax_configuration(company: str, date_value=None) -> list[str]:
-	"""Return actionable gaps for one company and payroll date."""
+	"""Return actionable gaps for one company and payroll date.
+
+	Companies outside South Africa have no South African statutory setup to
+	complete, so they report no gaps and are never blocked by this app.
+	"""
+	if not is_south_african_company(company):
+		return []
 	date_value = getdate(date_value or frappe.utils.today())
 	tax_year = get_tax_year_for_date(date_value)
 	missing = []

@@ -35,6 +35,8 @@ except ImportError:
 
 
 # Import ZA Local utilities
+from za_local_core.localisation import is_south_african_company
+
 from za_local_payroll.setup.statutory import validate_current_tax_configuration
 from za_local_payroll.utils.payroll_utils import (
 	get_current_block_period,
@@ -55,11 +57,17 @@ class ZAPayrollEntry(PayrollEntry):
 	- Employee type validation
 	"""
 
+	@property
+	def za_localisation_applies(self) -> bool:
+		"""Whether South African statutory rules govern this run's company."""
+		return is_south_african_company(self.get("company"))
+
 	def validate(self):
 		"""Run stock HRMS validation and mandatory SA employee checks on every save."""
 		require_hrms("Payroll Entry")
 		super().validate()
-		self.validate_employee_requirements()
+		if self.za_localisation_applies:
+			self.validate_employee_requirements()
 
 	def before_save(self):
 		self.ensure_consistent_status()
@@ -114,7 +122,8 @@ class ZAPayrollEntry(PayrollEntry):
 	def make_accrual_jv_entry(self, submitted_salary_slips):
 		"""Post stock payroll accruals and the employer statutory contribution accrual."""
 		super().make_accrual_jv_entry(submitted_salary_slips)
-		self._ensure_company_contribution_entry()
+		if self.za_localisation_applies:
+			self._ensure_company_contribution_entry()
 
 	def ensure_consistent_status(self):
 		if self.docstatus == 0 and self.get("status") == "Submitted":
@@ -216,6 +225,8 @@ class ZAPayrollEntry(PayrollEntry):
 		"""
 		Fill employee details with frequency-based filtering.
 		"""
+		if not self.za_localisation_applies:
+			return super().fill_employee_details()
 		self.check_permission("write")
 		filters = self.make_filters()
 		employees = get_employee_list(filters=filters, as_dict=True, ignore_match_conditions=True)
@@ -444,6 +455,8 @@ class ZAPayrollEntry(PayrollEntry):
 		"""
 		Create salary slips with frequency-based filtering.
 		"""
+		if not self.za_localisation_applies:
+			return super().create_salary_slips()
 		self.check_permission("write")
 		validate_current_tax_configuration(self.company, self.end_date)
 
@@ -568,7 +581,13 @@ class ZAPayrollEntry(PayrollEntry):
 
 	@frappe.whitelist(methods=["POST"])
 	def make_payment_entry(self, selected_payment_account=None):
-		"""Reject the retired direct-Journal-Entry payment path."""
+		"""Reject the retired direct-Journal-Entry payment path for South Africa.
+
+		Companies outside South Africa keep the stock HRMS bank entry; the
+		Payroll Payment Batch control exists for South African banking only.
+		"""
+		if not self.za_localisation_applies:
+			return super().make_payment_entry(selected_payment_account)
 		self.check_permission("write")
 		frappe.throw(
 			_(

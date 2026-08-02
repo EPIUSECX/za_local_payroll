@@ -7,6 +7,8 @@ from frappe.custom.doctype.customize_form.customize_form import (
 )
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 
+OWNING_MODULE = "SA Payroll"
+
 PROTECTED_PAYROLL_DOCTYPES = (
 	"Salary Slip",
 	"Payroll Entry",
@@ -32,7 +34,7 @@ def apply_payroll_property_setters() -> None:
 		property_type = (
 			doctype_properties[property_name] if for_doctype else docfield_properties[property_name]
 		)
-		make_property_setter(
+		property_setter = make_property_setter(
 			doctype=doctype,
 			fieldname=fieldname,
 			property=property_name,
@@ -41,6 +43,19 @@ def apply_payroll_property_setters() -> None:
 			for_doctype=for_doctype,
 			validate_fields_for_doctype=False,
 		)
+		_claim_ownership(property_setter.name)
+
+
+def _claim_ownership(property_setter_name: str) -> None:
+	"""Tag the Property Setter with this app's module.
+
+	``make_property_setter`` leaves ``module`` empty. Frappe removes records by
+	module during uninstall, so an untagged Property Setter would survive on a
+	core HRMS DocType after the app is gone.
+	"""
+	frappe.db.set_value(
+		"Property Setter", property_setter_name, "module", OWNING_MODULE, update_modified=False
+	)
 
 
 def _property_setters() -> list[tuple[str, str | None, str, object]]:

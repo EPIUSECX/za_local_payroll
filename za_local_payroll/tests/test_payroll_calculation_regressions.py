@@ -88,6 +88,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 			[("UIF Employer Contribution", 100), ("SDL Contribution", 100)],
 		)
 
+	@patch.object(ZASalarySlip, "za_localisation_applies", True)
 	@patch("za_local_payroll.overrides.salary_slip.submit_eti_log")
 	@patch.object(SalarySlip, "on_submit")
 	def test_submit_delegates_loan_lifecycle_only_to_hrms(self, parent_submit, submit_eti):
@@ -97,6 +98,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		parent_submit.assert_called_once_with()
 		submit_eti.assert_called_once_with("EMP-0001", slip)
 
+	@patch.object(ZASalarySlip, "za_localisation_applies", True)
 	@patch("za_local_payroll.overrides.salary_slip.cancel_eti_log")
 	@patch.object(SalarySlip, "on_cancel")
 	def test_cancel_delegates_loan_lifecycle_only_to_hrms(self, parent_cancel, cancel_eti):
@@ -141,6 +143,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 
 	def test_full_tax_additional_earning_survives_rebate_adjustment(self):
 		slip = SimpleNamespace(
+			za_localisation_applies=True,
 			payroll_period=frappe._dict(name="2026-2027"),
 			remaining_sub_periods=9,
 			_component_based_variable_tax={
@@ -166,6 +169,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 
 	def test_rebate_adjustment_handles_zero_remaining_periods(self):
 		slip = SimpleNamespace(
+			za_localisation_applies=True,
 			payroll_period=frappe._dict(name="2026-2027"),
 			remaining_sub_periods=0,
 			_component_based_variable_tax={
@@ -191,6 +195,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 	)
 	def test_variable_tax_handles_zero_remaining_periods(self, _calculate_tax):
 		slip = SimpleNamespace(
+			za_localisation_applies=True,
 			payroll_period=frappe._dict(start_date="2026-03-01"),
 			start_date="2027-02-01",
 			remaining_sub_periods=0,
@@ -261,6 +266,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 
 		self.assertEqual(basis, 2_000)
 
+	@patch.object(ZASalarySlip, "za_localisation_applies", True)
 	@patch.object(SalarySlip, "add_tax_components")
 	def test_classification_runs_after_deductions_exist_and_before_tax(self, parent_add_tax):
 		events = []

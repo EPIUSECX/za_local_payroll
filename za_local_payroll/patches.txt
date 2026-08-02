@@ -4,3 +4,4 @@
 za_local_payroll.patches.v1_0.transfer_payroll_ownership
 za_local_payroll.patches.v1_0.seed_payroll_masters
 za_local_payroll.patches.v1_0.backfill_payment_batch_keys
+za_local_payroll.patches.v1_0.tag_property_setter_ownership

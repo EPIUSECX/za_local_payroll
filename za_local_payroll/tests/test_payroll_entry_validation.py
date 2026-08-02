@@ -3,11 +3,16 @@ from unittest.mock import Mock, patch
 import frappe
 from frappe.tests.classes import UnitTestCase
 
+from za_local_payroll.overrides.payroll_entry import PayrollEntry, ZAPayrollEntry
+
+# These are synthetic documents with no company, so the country gate is stated
+# explicitly: every test below covers the South African path.
+south_african_company = patch.object(ZAPayrollEntry, "za_localisation_applies", True)
+
 
 class TestPayrollEntryValidation(UnitTestCase):
+	@south_african_company
 	def test_accrual_posts_stock_and_company_contributions_once(self):
-		from za_local_payroll.overrides.payroll_entry import PayrollEntry, ZAPayrollEntry
-
 		doc = object.__new__(ZAPayrollEntry)
 		doc._ensure_company_contribution_entry = Mock()
 		slips = [frappe._dict(name="SAL-0001")]
@@ -17,19 +22,17 @@ class TestPayrollEntryValidation(UnitTestCase):
 		parent.assert_called_once_with(slips)
 		doc._ensure_company_contribution_entry.assert_called_once_with()
 
+	@south_african_company
 	def test_legacy_direct_bank_journal_entry_is_retired(self):
-		from za_local_payroll.overrides.payroll_entry import ZAPayrollEntry
-
 		doc = object.__new__(ZAPayrollEntry)
 		doc.check_permission = Mock()
 		with self.assertRaises(frappe.ValidationError):
 			ZAPayrollEntry.make_payment_entry(doc, {})
 		doc.check_permission.assert_called_once_with("write")
 
+	@south_african_company
 	@patch("za_local_payroll.overrides.payroll_entry.validate_current_tax_configuration")
 	def test_salary_slip_creation_validates_statutory_setup_first(self, validate_setup):
-		from za_local_payroll.overrides.payroll_entry import ZAPayrollEntry
-
 		doc = object.__new__(ZAPayrollEntry)
 		doc.company = "_Test Company"
 		doc.end_date = "2026-08-31"
@@ -39,9 +42,8 @@ class TestPayrollEntryValidation(UnitTestCase):
 			ZAPayrollEntry.create_salary_slips(doc)
 		validate_setup.assert_called_once_with("_Test Company", "2026-08-31")
 
+	@south_african_company
 	def test_existing_payroll_entry_still_runs_parent_and_sa_validation(self):
-		from za_local_payroll.overrides.payroll_entry import PayrollEntry, ZAPayrollEntry
-
 		doc = ZAPayrollEntry({"doctype": "Payroll Entry"})
 		doc.name = "PAY-TEST"
 		doc.flags.ignore_validate = False
