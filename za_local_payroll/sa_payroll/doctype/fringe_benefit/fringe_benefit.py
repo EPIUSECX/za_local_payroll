@@ -80,7 +80,7 @@ class FringeBenefit(Document):
 			return "Expired"
 		return "Active" if self.docstatus == 1 else "Inactive"
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def calculate_taxable_value(self, date_value=None):
 		"""Set the full monthly cash equivalent used for IRP5 reporting."""
 		date_value = getdate(date_value or max(getdate(self.from_date), getdate(today())))
@@ -108,7 +108,7 @@ class FringeBenefit(Document):
 			self.taxable_value = flt(self.benefit_value)
 		return self.taxable_value
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def generate_monthly_breakdown(self):
 		"""Regenerate monthly values, extending open benefits to tax-year end."""
 		self.set("monthly_breakdown", [])
@@ -181,7 +181,7 @@ def _is_leap_year(year):
 	return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_active_fringe_benefits(employee, date=None):
 	"""Return submitted benefits active on a date, subject to read permission."""
 	if not frappe.has_permission("Fringe Benefit", "read"):

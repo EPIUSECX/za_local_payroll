@@ -374,12 +374,7 @@ def validate_south_african_id_number(id_number):
 	gender = "Female" if gender_code < 5000 else "Male"
 	citizenship = "SA Citizen" if citizenship_code == 0 else "Permanent Resident"
 
-	return {
-		"valid": True,
-		"gender": gender,
-		"date_of_birth": dob,
-		"citizenship": citizenship
-	}
+	return {"valid": True, "gender": gender, "date_of_birth": dob, "citizenship": citizenship}
 
 
 def validate_south_african_id(id_number):
@@ -420,7 +415,7 @@ def validate_south_african_id(id_number):
 		if i % 2 == 0:
 			checksum += num
 		else:
-			checksum += (num * 2 if num * 2 <= 9 else num * 2 - 9)
+			checksum += num * 2 if num * 2 <= 9 else num * 2 - 9
 
 	check_digit = (10 - (checksum % 10)) % 10
 	return check_digit == int(id_number[-1])

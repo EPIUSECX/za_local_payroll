@@ -1,12 +1,17 @@
 # SA Payroll Configuration and Testing Practitioner Guide
 
-This guide explains how to configure, test, and validate South African payroll functionality in ZA Local.
+This guide explains how to configure, test and validate South African payroll
+functionality in `za_local_payroll`.
 
 ## Purpose And Scope
 
-SA Payroll extends HRMS payroll for South African statutory payroll processing. It supports PAYE, UIF, SDL, ETI, retirement fund treatment, medical tax credits, employer contributions, payroll reports, EMP201, EMP501, and IRP5 / IT3(a) certificate working papers.
+SA Payroll extends HRMS for PAYE, UIF, SDL, ETI, retirement treatment, medical
+tax credits, supported fringe benefits, employer contributions, payroll reports,
+EMP201, EMP501 and IRP5/IT3(a) internal working papers.
 
-HRMS is required for payroll execution. ZA Local does not replace HRMS payroll; it extends HRMS Salary Slip, Salary Structure, Payroll Entry, and related payroll workflows where HRMS is installed.
+HRMS is required. `za_local_payroll` does not replace HRMS payroll: HRMS remains
+authoritative for Salary Structure, recurring/overwrite Additional Salary,
+Salary Slip, benefit-ledger, loan, exchange-rate and rounding behaviour.
 
 Direct SARS electronic submission is not supported. The app does not generate the SARS BRS payroll-import CSV or encrypted reconciliation file. Generic exports and PDFs are review aids only; capture approved figures through eFiling/e@syFile or use a separately validated BRS-compatible integration.
 
@@ -14,18 +19,28 @@ Use the current [SARS Guide for Employers](https://www.sars.gov.za/guide-for-emp
 
 ## Annual Statutory Update Checklist
 
-ZA Local is designed so a new South African payroll year is primarily a statutory data update, not a rewrite of payroll logic.
+An annual update is a governed source-and-data release, not a normal Desk edit.
 
 Each year, before the first March payroll:
 
-1. Add a new `statutory_rates_YYYY.json` rate pack under `za_local_payroll/setup/data`.
-2. Capture PAYE brackets, rebates, tax thresholds, medical tax credits, UIF cap and rates, ETI brackets, reimbursive travel rate, subsistence rates, retirement cap, COIDA earnings cap, source reference, and effective dates.
-3. Add or update Payroll Period, Income Tax Slab, and Tax Rebates fixtures for the new year.
-4. Commit the versioned pack and fixtures, back up, migrate a restored staging site, and verify the Desk-reviewable records. `refresh_sa_tax_tables` is a System Manager maintenance action, not a normal payroll-user step.
-5. Run the payroll compliance tests and compare golden fictional payroll cases for the new year.
-6. Practitioner signs off the new pack before processing March payroll.
+1. Archive the exact official publication as a restricted source record in
+   `za_local_core`, including its checksum, effective dates and reviewer.
+2. Create, review and submit one non-overlapping core **Payroll** rate pack for
+   shared scalar values that changed during the period.
+3. Update the payroll-owned structured annual pack for ETI, lump-sum and
+   fringe-benefit rule tables through a reviewed code release.
+4. Add or update Payroll Period, HRMS Income Tax Slab, rebate/medical-credit and
+   other annual fixtures through that release.
+5. Back up and migrate a restored staging site. Verify the submitted core pack,
+   packaged structured pack and Desk masters separately. A packaged scalar
+   fallback is not proof of source approval.
+6. Run golden fictional cases on both sides of every effective-date change and
+   compare them independently with the official publication.
+7. Obtain written practitioner approval before the first affected payroll.
 
-Do not edit old statutory packs after payroll has been processed for that year. If SARS republishes a correction, add a new dated correction pack or document the adjustment in the source reference and rerun the affected regression tests.
+Do not mutate a historical submitted source/rate record or packaged pack after
+payroll has used it. Add a dated correction with its own source evidence and
+rerun every affected regression and parallel calculation.
 
 ## Prerequisites
 
@@ -58,6 +73,8 @@ Review or create:
 - Submitted Fringe Benefit records and linked Company Car, Housing or Low Interest Loan detail records where non-cash benefits apply.
 - Salary Structure and Salary Structure Assignment.
 - Payroll Entry.
+- Approved `ZA Statutory Source` evidence and an applicable submitted core
+  Payroll rate pack, where shared scalar rates are governed in core.
 
 ## Configuration Tutorial
 
@@ -116,6 +133,11 @@ For each component, confirm:
 - SA Payroll Treatment, PAYE Inclusion %, UIF Applicable, SDL Applicable, COIDA Applicable, Reimbursement, and Variable Pay Treatment are configured.
 - Fixed travel allowances use 80% PAYE inclusion by default unless the 20% statutory rule is explicitly supportable and documented.
 - Reimbursive travel components are separated from fixed travel allowances and reviewed against the prescribed rate for the tax year.
+- Retirement deductions use the fund-specific current BRS code: 4001 pension,
+  4003 provident and 4006 retirement annuity. Do not use a generic retirement
+  label or a seeded default without reviewing the actual fund.
+- The ETI wage component flag is set only on remuneration used for the
+  applicable minimum-wage comparison.
 
 ### 4. Review Tax Tables And Credits
 
@@ -141,7 +163,9 @@ For each employee:
 4. Capture South African identity or passport details.
 5. Capture income tax reference where available.
 6. Capture bank details where salary payment and IRP5 output require them.
-7. Capture ETI-related fields where ETI is applicable.
+7. For a potentially eligible ETI employee, review the exclusion/eligibility
+   facts, minimum-wage basis/rate and standard monthly hours. Capture actual
+   period hours on the Salary Slip where they differ from the Employee fallback.
 8. Capture Employment Equity fields if Labour reports are also used.
 9. Save.
 
@@ -155,6 +179,10 @@ Validation:
 Use `Employee Private Benefit` only for date-effective private medical scheme/medical-credit and retirement-annuity data. A medical credit requires an active record with a positive private-medical-aid contribution; capture the dependant count on that record and prevent overlapping active periods.
 
 Use the separate submittable `Fringe Benefit` workflow for non-cash benefits. Link and submit the applicable Company Car, Housing or Low Interest Loan detail record, then submit the Fringe Benefit. Active submitted benefits are added to Salary Slips as taxable non-cash earnings: they affect PAYE and certificate reporting but do not increase cash gross/net pay or accounting earnings.
+
+The generic `Other` benefit route does not determine a legally correct valuation
+or SARS classification for the practitioner. Keep it in Preview unless the
+value, code, inclusion and supporting evidence have been independently approved.
 
 Validation:
 
@@ -171,6 +199,23 @@ Validation:
 4. Add company contributions.
 5. Ensure all components have account rows for the company.
 6. Save and submit if required by HRMS.
+
+For a timesheet/hourly structure, tick **Salary Slip Based on Timesheet** and
+verify `Payroll Frequency`, `Salary Component` and `Hour Rate` remain visible.
+The app hides only the unused `max_benefits` field. If the whole section is
+hidden, stop and clear/rebuild assets or investigate a stale legacy `za_local`
+CSS/client script before processing payroll.
+
+### 7A. Configure Additional Salary
+
+- A non-recurring row uses its Payroll Date.
+- A recurring row uses `From Date`/`To Date`; HRMS clears Payroll Date and selects
+  the record when its effective period includes the Salary Slip.
+- Disabled rows are excluded.
+- **Overwrite Salary Structure Amount** replaces the matching structure
+  component. It must not create a second Basic/allowance row.
+- **Deduct Full Tax on Selected Payroll Date** is a separate instruction for the
+  selected additional earning. Test it with a bonus and reconcile the added tax.
 
 Recommended test structures:
 
@@ -266,9 +311,12 @@ Steps:
 
 Expected result:
 
-- Monthly ETI is calculated where eligible.
-- ETI is stored on the Salary Slip.
-- EMP201 can utilise ETI against PAYE.
+- ETI is generated only when all eligibility, exclusion, minimum-wage, hours and
+  qualifying-month tests pass.
+- Generated ETI is stored on the Salary Slip.
+- EMP201 separately shows generated, brought-forward/available, utilised and
+  carried-forward ETI. Only utilised ETI, capped by gross PAYE, reduces PAYE
+  payable.
 
 ### Test 5: Medical Aid Main Member
 
@@ -298,8 +346,8 @@ Expected result:
 
 Steps:
 
-1. Add a retirement fund deduction component.
-2. Map the SARS payroll code.
+1. Add a pension, provident or retirement-annuity deduction component.
+2. Map code 4001, 4003 or 4006 respectively and verify the actual fund facts.
 3. Submit Salary Slip.
 
 Expected result:
@@ -324,7 +372,7 @@ Expected result:
 
 Steps:
 
-1. Add UIF employer and SDL as company contribution rows.
+1. Confirm Payroll Settings identifies the UIF employer and SDL components. The engine must materialise both rows when their bases are positive, even if a zero structure row was removed.
 2. Submit Salary Slip.
 3. Post Payroll Entry accounting.
 
@@ -379,6 +427,8 @@ Expected result:
 - Missing months are reported (six for an interim reconciliation, twelve for the annual reconciliation).
 - EMP501 cannot proceed without required monthly declarations.
 - EMP201 totals reconcile to submitted certificate totals before the internal working paper is submitted.
+- Actual PAYE/SDL/UIF payments are not stored as the third reconciliation leg;
+  tie them manually to SARS receipts/statements before external submission.
 
 ### Test 13: IRP5 / IT3(a) Certificate
 
@@ -396,6 +446,26 @@ Expected result:
 - Submitted certificates render to PDF.
 - Long certificate numbers do not overlap critical text.
 - Missing statutory data is visible for practitioner review.
+- IRP5 versus IT3(a), the IT3(a) reason code and directive numbers are correct.
+- The PDF is a review/certificate output, not a PAYE BRS import file.
+
+### Test 16: FNB Payroll Payment Batch
+
+Steps:
+
+1. Create and submit one Payroll Payment Batch for the Payroll Entry.
+2. Generate the supported FNB Online Banking Enterprise CSV.
+3. Compare the private file to the batch source hash, employee amounts and
+   control total.
+4. Upload it to the bank test facility and have a second authorised user approve
+   it in the bank portal.
+
+Expected result:
+
+- A duplicate active batch is rejected.
+- The FNB adapter version and control total are explicit.
+- Bank acceptance/rejection and the bank-statement result are retained outside
+  the app's generated-file status. The app does not enforce maker/checker.
 
 ### Test 14: SA Salary Slip Print Format
 
@@ -452,10 +522,25 @@ Print formats:
 - If SDL is missing, check company contribution rows.
 - If EMP201 is incomplete, check submitted Salary Slips and SARS payroll code mappings.
 - If EMP501 blocks submission, complete missing EMP201 months or IRP5 certificate references.
+- If a timesheet field is missing, confirm only `max_benefits` is hidden and that
+  no legacy CSS/JS or stale assets hide the containing section.
+- If recurring Additional Salary is absent, check `is_recurring`, effective
+  dates, disabled status and the Salary Slip period. Do not add a Payroll Date to
+  a recurring record.
+- If overwrite creates two rows, stop the run: the selected HRMS overwrite alias
+  is not being preserved.
+- If ETI does not reduce EMP201 PAYE by the generated amount, first compare
+  generated with **utilised** ETI and the gross-PAYE cap; they need not be equal.
 - Do not upload a generic EMP501/IRP5 CSV exported from the app to SARS; it is not a BRS payroll-import file.
 - If IRP5 PDF is incomplete, review Company, Employee, Address, Salary Component, and certificate line data.
 - If GL does not post correctly, review salary component account rows for the company.
 
 ## Practitioner Responsibility
 
-Payroll practitioners must validate every statutory rate, employee classification, benefit valuation, PAYE/UIF/SDL/ETI value, EMP201/EMP501 working paper, certificate, bank control total and GL posting before filing or payment. Only FNB Online Banking Enterprise CSV is currently enabled, through a submitted Payroll Payment Batch, and it requires bank acceptance testing. ZA Local supports calculation and review; it does not remove practitioner responsibility.
+Payroll practitioners must validate every official source, rate, employee
+classification, fund mapping, medical membership, benefit valuation,
+PAYE/UIF/SDL/ETI value, directive, working paper, certificate, bank control total
+and GL posting. Only the identified FNB Online Banking Enterprise CSV is enabled,
+and it requires formal bank acceptance and independent bank-portal approval.
+`za_local_payroll` supports calculation and review; the employer remains
+responsible for external filing, payment and legal compliance.

@@ -64,9 +64,7 @@ class EmployeeFinalSettlement(Document):
 
 		# UIF applies to normal termination remuneration, not severance benefits.
 		self.uif = (
-			calculate_uif_contribution(normal_taxable, self.separation_date)[0]
-			if normal_taxable > 0
-			else 0
+			calculate_uif_contribution(normal_taxable, self.separation_date)[0] if normal_taxable > 0 else 0
 		)
 
 		# Net settlement
@@ -77,14 +75,18 @@ class EmployeeFinalSettlement(Document):
 			return
 		if not self.tax_directive:
 			frappe.throw(
-				_("A SARS tax directive is required before submitting a settlement with a severance benefit."),
+				_(
+					"A SARS tax directive is required before submitting a settlement with a severance benefit."
+				),
 				title=_("Tax Directive Required"),
 			)
 		directive = frappe.get_doc("Tax Directive", self.tax_directive)
 		if directive.employee != self.employee:
 			frappe.throw(_("Tax Directive must belong to employee {0}.").format(self.employee))
 		if directive.docstatus != 1 or directive.status != "Active":
-			frappe.throw(_("Tax Directive {0} must be submitted and Active.").format(directive.directive_number))
+			frappe.throw(
+				_("Tax Directive {0} must be submitted and Active.").format(directive.directive_number)
+			)
 
 	def get_directive_tax_amount(self):
 		if not self.tax_directive:

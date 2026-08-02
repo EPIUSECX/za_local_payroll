@@ -8,6 +8,104 @@ from za_local_payroll.overrides.salary_slip import SalarySlip, ZASalarySlip
 
 
 class TestSalarySlipTaxRegressions(UnitTestCase):
+	@patch("za_local_payroll.overrides.salary_slip.calculate_uif_contribution", return_value=(100, 100))
+	@patch("za_local_payroll.overrides.salary_slip.get_salary_component_data")
+	def test_employee_uif_row_is_materialized_when_hrms_removed_it(self, get_component_data, _calculate_uif):
+		get_component_data.return_value = frappe._dict(
+			salary_component="UIF Employee Contribution",
+			abbr="UIF_EE",
+		)
+		deductions = []
+
+		class Slip:
+			end_date = "2026-08-31"
+
+			def get(self, fieldname, default=None):
+				return deductions if fieldname == "deductions" else default
+
+			def get_statutory_earning_basis(self, _fieldname):
+				return 10_000
+
+			def get_configured_statutory_component(self, *_args):
+				return "UIF Employee Contribution"
+
+			def is_component_in_codes(self, component, _codes):
+				return component == "UIF Employee Contribution"
+
+			def update_component_row(self, component_data, amount, _component_type, **_kwargs):
+				deductions.append(
+					frappe._dict(
+						salary_component=component_data.salary_component,
+						amount=amount,
+					)
+				)
+
+			recalculate_totals_after_statutory_adjustment = Mock()
+
+		slip = Slip()
+		ZASalarySlip.apply_statutory_deduction_amounts(slip)
+
+		self.assertEqual(len(deductions), 1)
+		self.assertEqual(deductions[0].amount, 100)
+		self.assertEqual(deductions[0].default_amount, 100)
+		slip.recalculate_totals_after_statutory_adjustment.assert_called_once_with()
+
+	@patch("za_local_payroll.overrides.salary_slip.get_sdl_rate", return_value=0.01)
+	@patch("za_local_payroll.overrides.salary_slip.calculate_uif_contribution", return_value=(100, 100))
+	def test_employer_uif_and_sdl_rows_are_materialized(self, _calculate_uif, _get_sdl_rate):
+		contributions = []
+
+		class Slip:
+			end_date = "2026-08-31"
+
+			def get(self, fieldname, default=None):
+				return contributions if fieldname == "company_contribution" else default
+
+			def get_statutory_earning_basis(self, _fieldname):
+				return 10_000
+
+			def get_configured_statutory_component(self, settings_field, *_args):
+				return {
+					"za_uif_employer_salary_component": "UIF Employer Contribution",
+					"za_sdl_salary_component": "SDL Contribution",
+				}[settings_field]
+
+			def is_component_in_codes(self, component, codes):
+				return (component == "UIF Employer Contribution" and "4141" in codes) or (
+					component == "SDL Contribution" and "4142" in codes
+				)
+
+			def append(self, _fieldname, values):
+				row = frappe._dict(values)
+				contributions.append(row)
+				return row
+
+		slip = Slip()
+		ZASalarySlip.apply_statutory_company_contribution_amounts(slip)
+
+		self.assertEqual(
+			[(row.salary_component, row.amount) for row in contributions],
+			[("UIF Employer Contribution", 100), ("SDL Contribution", 100)],
+		)
+
+	@patch("za_local_payroll.overrides.salary_slip.submit_eti_log")
+	@patch.object(SalarySlip, "on_submit")
+	def test_submit_delegates_loan_lifecycle_only_to_hrms(self, parent_submit, submit_eti):
+		slip = object.__new__(ZASalarySlip)
+		slip.employee = "EMP-0001"
+		ZASalarySlip.on_submit(slip)
+		parent_submit.assert_called_once_with()
+		submit_eti.assert_called_once_with("EMP-0001", slip)
+
+	@patch("za_local_payroll.overrides.salary_slip.cancel_eti_log")
+	@patch.object(SalarySlip, "on_cancel")
+	def test_cancel_delegates_loan_lifecycle_only_to_hrms(self, parent_cancel, cancel_eti):
+		slip = object.__new__(ZASalarySlip)
+		slip.employee = "EMP-0001"
+		ZASalarySlip.on_cancel(slip)
+		parent_cancel.assert_called_once_with()
+		cancel_eti.assert_called_once_with("EMP-0001", slip)
+
 	@patch("za_local_payroll.overrides.salary_slip.is_payroll_processed", return_value=True)
 	@patch("za_local_payroll.overrides.salary_slip.get_current_block_period")
 	@patch("za_local_payroll.overrides.salary_slip.get_employee_frequency_map")
@@ -20,7 +118,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		period = frappe._dict(start_date="2026-08-01", end_date="2026-08-31")
 		get_frequency_map.return_value = {"EMP-0001": "Monthly"}
 		get_block_period.return_value = {"Monthly": period}
-		slip = SimpleNamespace(employee="EMP-0001")
+		slip = SimpleNamespace(employee="EMP-0001", company="Test Company")
 
 		with self.assertRaises(frappe.ValidationError):
 			ZASalarySlip.validate_payroll_frequency(slip)
@@ -31,13 +129,14 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		"za_local_payroll.overrides.salary_slip.get_employee_frequency_map",
 		return_value={"EMP-0001": "Monthly"},
 	)
-	def test_missing_frequency_period_does_not_raise(
+	def test_missing_frequency_period_fails_closed(
 		self,
 		_get_frequency_map,
 		_get_block_period,
 		is_processed,
 	):
-		ZASalarySlip.validate_payroll_frequency(SimpleNamespace(employee="EMP-0001"))
+		with self.assertRaises(frappe.ValidationError):
+			ZASalarySlip.validate_payroll_frequency(SimpleNamespace(employee="EMP-0001"))
 		is_processed.assert_not_called()
 
 	def test_full_tax_additional_earning_survives_rebate_adjustment(self):

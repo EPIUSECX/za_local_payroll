@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import frappe
 from frappe.tests.classes import UnitTestCase
@@ -32,6 +32,49 @@ from za_local_payroll.utils.emp501_utils import generate_emp501_csv
 
 
 class TestSARSReportingRegressions(UnitTestCase):
+	def test_emp201_recomputes_authoritative_values_before_submit(self):
+		doc = frappe.new_doc("EMP201 Submission")
+		doc._calculate_emp201_data = Mock(
+			return_value={
+				"gross_paye_before_eti": 1_000,
+				"net_paye_payable": 800,
+				"uif_payable": 200,
+				"sdl_payable": 100,
+			}
+		)
+
+		EMP201Submission.before_submit(doc)
+
+		doc._calculate_emp201_data.assert_called_once_with(require_salary_slips=True)
+		self.assertEqual(doc.net_paye_payable, 800)
+		self.assertEqual(doc.status, "Prepared Working Paper")
+
+	@patch("frappe.db.exists", return_value=False)
+	@patch("frappe.db.get_value")
+	def test_irp5_rejects_employee_company_mismatch_without_historical_payroll(self, get_value, _exists):
+		get_value.return_value = frappe._dict(employee_name="Test Employee", company="Current Company")
+		doc = frappe.new_doc("IRP5 Certificate")
+		doc.update(
+			{
+				"employee": "EMP-0001",
+				"company": "Wrong Company",
+				"from_date": "2026-03-01",
+				"to_date": "2027-02-28",
+			}
+		)
+
+		with self.assertRaises(frappe.ValidationError):
+			IRP5Certificate.validate_employee(doc)
+
+	@patch("frappe.get_all", return_value=[])
+	def test_irp5_salary_slips_are_always_company_scoped(self, get_all):
+		doc = frappe.new_doc("IRP5 Certificate")
+		doc.company = "Certificate Company"
+
+		IRP5Certificate._get_salary_slips(doc, "EMP-0001", "2026-03-01", "2027-02-28")
+
+		self.assertEqual(get_all.call_args.kwargs["filters"]["company"], "Certificate Company")
+
 	def test_emp201_submission_key_is_deterministic_for_company_period(self):
 		first = frappe.new_doc("EMP201 Submission")
 		first.update({"company": "Test Company", "fiscal_year": "2026-2027", "month": "March"})

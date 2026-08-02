@@ -56,7 +56,7 @@ class TestSAPayrollCompliancePriorYears(UnitTestCase):
 		self.assertEqual(1125, calculate_eti_from_pack(1500, 1, d))
 		self.assertEqual(1500, calculate_eti_from_pack(3000, 1, d))
 		self.assertEqual(750, calculate_eti_from_pack(5500, 1, d))
-		self.assertEqual(0, calculate_eti_from_pack(6500, 1, d))     # above ceiling
+		self.assertEqual(0, calculate_eti_from_pack(6500, 1, d))  # above ceiling
 		self.assertEqual(750, calculate_eti_from_pack(3000, 13, d))
 
 	def test_2025_2026_eti_switches_on_1_april_2025(self):

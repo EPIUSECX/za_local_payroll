@@ -10,6 +10,7 @@ from functools import lru_cache
 
 import frappe
 from frappe.utils import flt, getdate
+from frappe.utils.caching import request_cache
 from za_local_core.files import resolve_packaged_path
 
 
@@ -27,6 +28,50 @@ def _load_rate_packs():
 
 def clear_rate_pack_cache():
 	_load_rate_packs.cache_clear()
+
+
+@request_cache
+def _get_applicable_core_rate_packs(date_value: str) -> tuple[str, ...]:
+	"""Return submitted Core payroll packs that cover one transaction date."""
+	if not frappe.db.exists("DocType", "ZA Statutory Rate Pack"):
+		return ()
+
+	return tuple(
+		frappe.get_all(
+			"ZA Statutory Rate Pack",
+			filters={
+				"domain": "Payroll",
+				"docstatus": 1,
+				"effective_from": ["<=", date_value],
+				"effective_to": [">=", date_value],
+			},
+			pluck="name",
+			order_by="name",
+			limit=2,
+		)
+	)
+
+
+def _get_core_rate(path: str, date_value):
+	"""Resolve a scalar from an approved Core pack, or signal package fallback."""
+	date_value = getdate(date_value or frappe.utils.today())
+	pack_names = _get_applicable_core_rate_packs(str(date_value))
+	if not pack_names:
+		return None
+	if len(pack_names) > 1:
+		frappe.throw(
+			frappe._("Multiple approved Payroll statutory rate packs apply on {0}: {1}.").format(
+				date_value,
+				", ".join(pack_names),
+			),
+			title=frappe._("Overlapping Statutory Rates"),
+		)
+
+	# Once an approved Core pack applies, a missing rule is a configuration error.
+	# get_rate deliberately throws rather than falling back to another source.
+	from za_local_core.services.rates import get_rate
+
+	return get_rate("Payroll", path, str(date_value))
 
 
 def get_tax_year_for_date(date_value) -> str:
@@ -65,6 +110,10 @@ def find_rate_pack(date_value=None, tax_year: str | None = None) -> dict | None:
 
 
 def get_nested_rate(path: str, date_value=None, default=None):
+	core_value = _get_core_rate(path, date_value)
+	if core_value is not None:
+		return core_value
+
 	value = get_rate_pack(date_value)
 	for part in path.split("."):
 		if not isinstance(value, dict) or part not in value:
@@ -86,9 +135,10 @@ def calculate_tax_from_brackets(annual_taxable_income, brackets):
 	for bracket in brackets:
 		to_amount = bracket.get("to_amount")
 		if to_amount is None or annual_taxable_income <= flt(to_amount):
-			return flt(bracket.get("base_tax")) + (
-				annual_taxable_income - flt(bracket.get("amount_over"))
-			) * flt(bracket.get("rate")) / 100
+			return (
+				flt(bracket.get("base_tax"))
+				+ (annual_taxable_income - flt(bracket.get("amount_over"))) * flt(bracket.get("rate")) / 100
+			)
 	return 0
 
 

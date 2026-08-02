@@ -38,9 +38,7 @@ class TestEmployeePrivateBenefit(UnitTestCase):
 		"za_local_payroll.sa_payroll.doctype.employee_private_benefit.employee_private_benefit.frappe.get_all"
 	)
 	def test_overlapping_active_benefit_period_is_rejected(self, get_all):
-		get_all.return_value = [
-			frappe._dict(name="RA-2026-0001", effective_from="2026-01-01", to=None)
-		]
+		get_all.return_value = [frappe._dict(name="RA-2026-0001", effective_from="2026-01-01", to=None)]
 		doc = frappe.new_doc("Employee Private Benefit")
 		doc.employee = "EMP-1"
 		doc.effective_from = "2026-06-01"

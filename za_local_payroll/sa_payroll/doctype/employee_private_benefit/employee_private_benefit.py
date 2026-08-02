@@ -41,7 +41,9 @@ class EmployeePrivateBenefit(Document):
 		if overlaps:
 			overlap = overlaps[0]
 			frappe.throw(
-				_("Employee {0} already has an active private benefit period that overlaps this record: {1}.").format(
+				_(
+					"Employee {0} already has an active private benefit period that overlaps this record: {1}."
+				).format(
 					frappe.bold(self.employee),
 					frappe.utils.get_link_to_form("Employee Private Benefit", overlap.name),
 				),

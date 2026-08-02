@@ -49,7 +49,8 @@ class TaxDirective(Document):
 
 	def check_for_overlapping_directives(self):
 		"""Check for overlapping active directives for the same employee"""
-		overlapping = frappe.db.sql("""
+		overlapping = frappe.db.sql(
+			"""
 			SELECT name, directive_number
 			FROM `tabTax Directive`
 			WHERE employee = %(employee)s
@@ -58,18 +59,21 @@ class TaxDirective(Document):
 				AND status = 'Active'
 				AND effective_from <= COALESCE(%(effective_to)s, '2099-12-31')
 				AND COALESCE(effective_to, '2099-12-31') >= %(effective_from)s
-		""", {
-			"employee": self.employee,
-			"name": self.name or "New",
-			"effective_from": self.effective_from,
-			"effective_to": self.effective_to or "2099-12-31"
-		}, as_dict=True)
+		""",
+			{
+				"employee": self.employee,
+				"name": self.name or "New",
+				"effective_from": self.effective_from,
+				"effective_to": self.effective_to or "2099-12-31",
+			},
+			as_dict=True,
+		)
 
 		if overlapping:
 			frappe.throw(
-				_("There is already an active Tax Directive ({0}) for employee {1} with overlapping dates").format(
-					overlapping[0].directive_number, self.employee
-				)
+				_(
+					"There is already an active Tax Directive ({0}) for employee {1} with overlapping dates"
+				).format(overlapping[0].directive_number, self.employee)
 			)
 
 	def update_status(self):
@@ -110,7 +114,7 @@ class TaxDirective(Document):
 		result = {
 			"directive_applied": True,
 			"directive_number": self.directive_number,
-			"directive_type": self.directive_type
+			"directive_type": self.directive_type,
 		}
 
 		if self.directive_type == "Reduced Tax Rate":
@@ -127,7 +131,7 @@ class TaxDirective(Document):
 		return result
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_active_directive(employee, date=None):
 	"""
 	Get active tax directive for an employee on a specific date
@@ -159,12 +163,9 @@ def get_active_directive(employee, date=None):
 			"status": "Active",
 			"effective_from": ["<=", date],
 		},
-		or_filters=[
-			["effective_to", ">=", date],
-			["effective_to", "is", "not set"]
-		],
+		or_filters=[["effective_to", ">=", date], ["effective_to", "is", "not set"]],
 		order_by="effective_from desc",
-		limit=1
+		limit=1,
 	)
 
 	if directives:

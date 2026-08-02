@@ -9,7 +9,11 @@ def get_guide_sections() -> dict:
 				"title": "Payroll Foundations",
 				"order": 30,
 				"pages": _pages(
-					("payroll-prerequisites-settings", "Payroll Prerequisites and Settings", "30_payroll_prerequisites_settings.md"),
+					(
+						"payroll-prerequisites-settings",
+						"Payroll Prerequisites and Settings",
+						"30_payroll_prerequisites_settings.md",
+					),
 					("statutory-rate-data", "Statutory Rate Data", "31_statutory_rate_data.md"),
 					("sars-payroll-codes", "SARS Payroll Codes", "32_sars_payroll_codes.md"),
 					("salary-components", "Salary Components", "33_salary_components.md"),
@@ -29,7 +33,11 @@ def get_guide_sections() -> dict:
 				"order": 40,
 				"pages": _pages(
 					("payroll-entry-salary-slips", "Payroll Entry and Salary Slips", "50_payroll_entry.md"),
-					("understanding-the-salary-slip", "Understanding the Salary Slip", "51_understanding_salary_slip.md"),
+					(
+						"understanding-the-salary-slip",
+						"Understanding the Salary Slip",
+						"51_understanding_salary_slip.md",
+					),
 					("review-submit-post", "Review, Submit and Post", "52_review_submit_post.md"),
 					("payments-and-reports", "Payments and Reports", "53_payments_and_reports.md"),
 				),
@@ -42,14 +50,20 @@ def get_guide_sections() -> dict:
 					("emp201", "EMP201", "60_emp201.md"),
 					("irp5-it3", "IRP5 and IT3(a)", "61_irp5_it3.md"),
 					("emp501", "EMP501", "62_emp501.md"),
-					("directives-and-final-settlements", "Directives and Final Settlements", "63_directives_final_settlements.md"),
+					(
+						"directives-and-final-settlements",
+						"Directives and Final Settlements",
+						"63_directives_final_settlements.md",
+					),
 				),
 			},
 			{
 				"key": "reference-operations",
 				"title": "Reference and Operations",
 				"order": 80,
-				"pages": _pages(("annual-statutory-update", "Annual Statutory Update", "81_annual_statutory_update.md")),
+				"pages": _pages(
+					("annual-statutory-update", "Annual Statutory Update", "81_annual_statutory_update.md")
+				),
 			},
 		],
 		"user": [

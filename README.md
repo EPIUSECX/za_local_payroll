@@ -1,63 +1,79 @@
 # SA Localisation Payroll
 
-South African payroll localisation for PAYE, UIF, SDL, ETI, benefits, employer declarations, and payment controls on Frappe HRMS.
+South African payroll localisation for Frappe HRMS v16. The app extends the
+upstream Salary Structure, Additional Salary, Salary Slip and Payroll Entry
+workflows; it does not replace HRMS payroll.
 
-Runtime dependencies are Frappe/ERPNext/HRMS v16 and `za_local_core`. The app preserves existing SA Payroll DocType names and database tables so the monolithic `za_local` data can be transferred in place.
+Runtime dependencies are Frappe, ERPNext, HRMS and `za_local_core`. Existing
+SA Payroll DocType names and database tables are retained so that data from the
+legacy `za_local` app can be transferred in place under the controlled process
+in [MIGRATION_PLAN.md](MIGRATION_PLAN.md).
 
-See the [detailed migration and compliance plan](MIGRATION_PLAN.md).
+## Supported application scope
 
-Practitioner and end-user pages are contributed to the federated guide published
-by `za_local_core`. The current test record, release gates and cutover procedure
-are maintained in that repository's `VALIDATION_AND_SIGNOFF.md` and
-`CUTOVER_RUNBOOK.md`.
+| Area | Current application behaviour | Release boundary |
+|---|---|---|
+| Salary Structure | Hides only the unused `max_benefits` leaf field. Timesheet frequency, Salary Component and hourly-rate fields remain visible and editable. | Verify the form after every HRMS upgrade. |
+| Additional Salary | Reuses HRMS recurring, disabled-record and overwrite semantics. SA code only partitions company contributions and preserves benefit-ledger bookkeeping. | Test recurring dates and overwrite replacement in every release. |
+| PAYE, UIF and SDL | Uses dated payroll inputs, explicit component metadata and mandatory configuration. Full-tax additional earnings, loan repayments, exchange rates and HRMS rounding remain in the calculation path. | Annual rate and mapping approval is mandatory. |
+| ETI | Calculates eligibility, minimum-wage tests, 160-hour gross-up/down, qualifying months, generated ETI, utilised ETI and carry-forward. | Employee facts and eligibility require employer/practitioner review. |
+| Retirement and medical credits | Applies the configured retirement limit and date-effective medical membership/dependant data. | Fund classification and membership evidence require review. |
+| Fringe benefits | Supports submitted company-car, housing and low-interest-loan detail records as non-cash taxable rows. | Other benefit types and all underlying valuations require practitioner sign-off. |
+| EMP201, IRP5/IT3(a), EMP501 | Produces controlled internal working papers and reconciliation records from submitted payroll documents. | No SARS BRS file or direct electronic filing is produced. External filing and payment evidence remain controlled manual steps. |
+| Payroll payment file | Supports the identified FNB Online Banking Enterprise CSV adapter through a submitted Payroll Payment Batch with a source hash and control total. | The app does not enforce independent maker/checker approval. Bank-portal dual authorisation and bank acceptance are mandatory. |
+
+The statutory engine uses three governed data layers:
+
+1. submitted `za_local_core` Payroll rate packs for shared scalar rates;
+2. payroll-owned structured annual packs for ETI, lump-sum and fringe-benefit
+   rule tables; and
+3. HRMS Income Tax Slabs plus the payroll rebate/medical-credit master for PAYE.
+
+If no submitted core pack applies, compatible packaged scalar values may be used
+as a technical fallback. That fallback is not practitioner approval. Feature
+readiness remains **Preview** until the official source, dated configuration and
+parallel calculations have been signed off.
 
 ## Installation
-
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
 
 ```bash
 bench get-app $ZA_LOCAL_CORE_REPO --branch main
 bench --site $SITE_NAME install-app za_local_core
 bench get-app $URL_OF_THIS_REPO --branch main
 bench --site $SITE_NAME install-app za_local_payroll
+bench --site $SITE_NAME migrate
 ```
 
-Do not enable both payroll engines. While `za_local` remains installed, this app deliberately suppresses its duplicate controller, client-script, and scheduler hooks. Follow [MIGRATION_PLAN.md](MIGRATION_PLAN.md) for inventory, shadow calculation, cutover, rollback, and practitioner sign-off requirements.
+Do not activate the legacy and extracted payroll engines together. While
+`za_local` remains installed, duplicate payroll hooks are deliberately
+suppressed; this coexistence is a migration aid, not a supported steady state.
+Do not archive or remove the legacy repository until the inventory, restored
+backup, rollback and parallel-run evidence in [MIGRATION_PLAN.md](MIGRATION_PLAN.md)
+has been approved.
 
-The packaged statutory rates and filing mappings require annual source verification and payroll-practitioner approval before a production tax year is opened. Unsupported SARS BRS exports and unsupported bank formats fail explicitly instead of presenting a generic file as an accepted filing/payment format.
+## Verification and operating documentation
 
-## Safe validation
+- [Configuration and practitioner test guide](docs/sa_payroll_configuration_and_testing.md)
+- [2026/27 remediation verification note](docs/sa_payroll_compliance_remediation_2026_27.md)
+- [Test evidence and release gates](TESTING.md)
+- [Security policy](SECURITY.md)
+- [Support boundary](SUPPORT.md)
 
-The repository supports non-mutating checks from the bench container:
+Practitioner and end-user Markdown pages are contributed to the federated guide
+published by `za_local_core`. The cross-app release record, validation checklist
+and cutover runbook in the core repository remain authoritative for a deployment.
+
+## Safe local checks
 
 ```bash
 python -m compileall -q apps/za_local_payroll/za_local_payroll
 uvx ruff check apps/za_local_payroll/za_local_payroll
+git diff --check
 ```
 
-Site lifecycle and end-to-end payroll tests must run on a disposable test-site copy; do not run them against a production payroll site.
-
-## Support and releases
-
-See [SUPPORT.md](SUPPORT.md), [SECURITY.md](SECURITY.md), and
-[CHANGELOG.md](CHANGELOG.md). Payroll deployment requires the practitioner,
-bank-acceptance and parallel-run gates described above.
-
-## Contributing
-
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
-
-```bash
-cd apps/za_local_payroll
-pre-commit install
-```
-
-Pre-commit is configured to use the following tools for checking and formatting your code:
-
-- ruff
-- eslint
-- prettier
-- pyupgrade
+Lifecycle and end-to-end tests create and submit payroll documents. Run them only
+on a disposable site or an approved restored copy, never on a production payroll
+site.
 
 ## License
 

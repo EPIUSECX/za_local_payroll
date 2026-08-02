@@ -189,9 +189,7 @@ class TestEtiCalculationQueries(UnitTestCase):
 	def test_unregulated_minimum_wage_is_prorated_to_ordinary_hours(self, _get_component_flag):
 		employee = frappe._dict(za_eti_minimum_wage_basis=eti_utils.WAGE_BASIS_UNREGULATED)
 		settings = frappe._dict(za_eti_unregulated_minimum_monthly_wage=2_500)
-		slip = frappe._dict(
-			earnings=[frappe._dict(salary_component="Basic Salary", amount=1_250)]
-		)
+		slip = frappe._dict(earnings=[frappe._dict(salary_component="Basic Salary", amount=1_250)])
 
 		result = eti_utils.check_eti_minimum_wage(employee, slip, settings, 2_000, 80)
 
@@ -204,9 +202,7 @@ class TestEtiCalculationQueries(UnitTestCase):
 			za_eti_minimum_wage_basis=eti_utils.WAGE_BASIS_REGULATED,
 			za_eti_minimum_wage_rate=30,
 		)
-		slip = frappe._dict(
-			earnings=[frappe._dict(salary_component="Basic Salary", amount=4_700)]
-		)
+		slip = frappe._dict(earnings=[frappe._dict(salary_component="Basic Salary", amount=4_700)])
 
 		result = eti_utils.check_eti_minimum_wage(employee, slip, frappe._dict(), 5_000, 160)
 
@@ -220,9 +216,7 @@ class TestEtiCalculationQueries(UnitTestCase):
 			frappe._dict(za_disable_eti_calculation=0),
 		]
 
-		result = eti_utils.check_eti_eligibility(
-			"EMP-1", frappe._dict(end_date="2026-06-30"), 5_000
-		)
+		result = eti_utils.check_eti_eligibility("EMP-1", frappe._dict(end_date="2026-06-30"), 5_000)
 
 		self.assertFalse(result.eligible)
 		self.assertIn("Domestic", result.reason)
@@ -234,9 +228,7 @@ class TestEtiCalculationQueries(UnitTestCase):
 			frappe._dict(za_disable_eti_calculation=0),
 		]
 
-		result = eti_utils.check_eti_eligibility(
-			"EMP-1", frappe._dict(end_date="2026-06-30"), 5_000
-		)
+		result = eti_utils.check_eti_eligibility("EMP-1", frappe._dict(end_date="2026-06-30"), 5_000)
 
 		self.assertFalse(result.eligible)
 		self.assertIn("Connected", result.reason)

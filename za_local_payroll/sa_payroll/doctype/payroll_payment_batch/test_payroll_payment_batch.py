@@ -7,6 +7,9 @@ from unittest.mock import Mock, patch
 import frappe
 from frappe.tests.classes import UnitTestCase
 
+from za_local_payroll.sa_payroll.doctype.payroll_payment_batch.payroll_payment_batch import (
+	PayrollPaymentBatch,
+)
 from za_local_payroll.utils.integrations.eft_file_generator import (
 	FNB_COLUMNS,
 	FNB_VERSION,
@@ -69,7 +72,15 @@ class TestFNBPaymentCSV(UnitTestCase):
 		self.assertEqual(rows[3], list(FNB_COLUMNS))
 		self.assertEqual(
 			rows[4][:7],
-			["Test Employee", "12345678901", "1", "250655", "12345.67", "PAY-BATCH-2026-00001", "Salary 202608 EMP-00"],
+			[
+				"Test Employee",
+				"12345678901",
+				"1",
+				"250655",
+				"12345.67",
+				"PAY-BATCH-2026-00001",
+				"Salary 202608 EMP-00",
+			],
 		)
 		self.assertEqual(rows[4][7:], [""] * 29)
 
@@ -96,6 +107,32 @@ class TestFNBPaymentCSV(UnitTestCase):
 
 
 class TestPaymentBatchSnapshot(UnitTestCase):
+	def test_active_batch_key_is_deterministic_per_payroll_entry(self):
+		first = frappe.new_doc("Payroll Payment Batch")
+		first.payroll_entry = "PAY-ENTRY-0001"
+		second = frappe.new_doc("Payroll Payment Batch")
+		second.payroll_entry = "PAY-ENTRY-0001"
+
+		PayrollPaymentBatch._set_batch_key(first)
+		PayrollPaymentBatch._set_batch_key(second)
+
+		self.assertEqual(first.batch_key, second.batch_key)
+		self.assertEqual(len(first.batch_key), 64)
+
+	def test_cancel_releases_active_batch_key(self):
+		batch = frappe._dict(
+			name="PAY-BATCH-0001",
+			batch_key="active-key",
+			db_set=Mock(),
+		)
+
+		PayrollPaymentBatch.on_cancel(batch)
+
+		fieldname, released_key = batch.db_set.call_args.args
+		self.assertEqual(fieldname, "batch_key")
+		self.assertNotEqual(released_key, "active-key")
+		self.assertEqual(len(released_key), 64)
+
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.validate_payment_batch_header")
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.frappe.get_all")
 	def test_uses_submitted_slips_and_linked_employee_bank_accounts(self, get_all, validate_header):
@@ -105,22 +142,44 @@ class TestPaymentBatchSnapshot(UnitTestCase):
 			company_account,
 		)
 		slip = frappe._dict(
-			name="SAL-00001", employee="EMP-00001", employee_name="Test Employee",
-			net_pay=1000, currency="ZAR", company="_Test Company", docstatus=1,
+			name="SAL-00001",
+			employee="EMP-00001",
+			employee_name="Test Employee",
+			net_pay=1000,
+			currency="ZAR",
+			company="_Test Company",
+			docstatus=1,
 		)
 		employee = frappe._dict(
-			name="EMP-00001", employee_name="Test Employee",
+			name="EMP-00001",
+			employee_name="Test Employee",
 			za_payroll_payable_bank_account="EMPLOYEE-BANK",
 		)
 		company_bank = frappe._dict(
-			name="COMPANY-BANK", account_name="Company", bank="FNB", account_type="Current",
-			bank_account_no="62000031451", branch_code="250655", disabled=0,
-			is_company_account=1, company="_Test Company", party_type=None, party=None,
+			name="COMPANY-BANK",
+			account_name="Company",
+			bank="FNB",
+			account_type="Current",
+			bank_account_no="62000031451",
+			branch_code="250655",
+			disabled=0,
+			is_company_account=1,
+			company="_Test Company",
+			party_type=None,
+			party=None,
 		)
 		employee_bank = frappe._dict(
-			name="EMPLOYEE-BANK", account_name="Employee", bank="FNB", account_type="Savings",
-			bank_account_no="12345678901", branch_code="250655", disabled=0,
-			is_company_account=0, company=None, party_type="Employee", party="EMP-00001",
+			name="EMPLOYEE-BANK",
+			account_name="Employee",
+			bank="FNB",
+			account_type="Savings",
+			bank_account_no="12345678901",
+			branch_code="250655",
+			disabled=0,
+			is_company_account=0,
+			company=None,
+			party_type="Employee",
+			party="EMP-00001",
 		)
 
 		def get_rows(doctype, **kwargs):
@@ -132,8 +191,11 @@ class TestPaymentBatchSnapshot(UnitTestCase):
 
 		get_all.side_effect = get_rows
 		batch = SimpleNamespace(
-			name="PAY-BATCH-2026-00001", payroll_entry="PAY-ENTRY", company="_Test Company",
-			payment_date="2026-08-07", bank_account="COMPANY-BANK",
+			name="PAY-BATCH-2026-00001",
+			payroll_entry="PAY-ENTRY",
+			company="_Test Company",
+			payment_date="2026-08-07",
+			bank_account="COMPANY-BANK",
 		)
 		snapshot = build_payment_batch_snapshot(batch)
 
@@ -159,7 +221,10 @@ class TestPaymentBatchExportEndpoint(UnitTestCase):
 		)
 		get_doc.assert_not_called()
 
-	@patch("za_local_payroll.utils.integrations.eft_file_generator.now_datetime", return_value="2026-08-01 10:00:00")
+	@patch(
+		"za_local_payroll.utils.integrations.eft_file_generator.now_datetime",
+		return_value="2026-08-01 10:00:00",
+	)
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.save_file")
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.render_fnb_obe_csv")
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.build_payment_batch_snapshot")
@@ -168,20 +233,34 @@ class TestPaymentBatchExportEndpoint(UnitTestCase):
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.frappe.has_permission")
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.frappe.only_for")
 	def test_generates_and_attaches_privately_without_returning_content(
-		self, only_for, has_permission, get_value, get_doc, build_snapshot,
-		render_csv, save_file_mock, now_datetime,
+		self,
+		only_for,
+		has_permission,
+		get_value,
+		get_doc,
+		build_snapshot,
+		render_csv,
+		save_file_mock,
+		now_datetime,
 	):
 		batch = frappe._dict(
-			name="PAY-BATCH-2026-00001", doctype="Payroll Payment Batch", docstatus=1,
-			eft_source_hash="", eft_file_generated=0, eft_file_path=None,
+			name="PAY-BATCH-2026-00001",
+			doctype="Payroll Payment Batch",
+			docstatus=1,
+			eft_source_hash="",
+			eft_file_generated=0,
+			eft_file_path=None,
 		)
 		batch.db_set = Mock()
 		get_doc.return_value = batch
 		build_snapshot.return_value = make_snapshot()
 		render_csv.return_value = ("sensitive,csv\r\n", "173111142461")
 		file_doc = frappe._dict(
-			file_name="FNB_OBE.csv", file_url="/private/files/FNB_OBE.csv", is_private=1,
-			attached_to_doctype="Payroll Payment Batch", attached_to_name=batch.name,
+			file_name="FNB_OBE.csv",
+			file_url="/private/files/FNB_OBE.csv",
+			is_private=1,
+			attached_to_doctype="Payroll Payment Batch",
+			attached_to_name=batch.name,
 		)
 		save_file_mock.return_value = file_doc
 
@@ -202,11 +281,20 @@ class TestPaymentBatchExportEndpoint(UnitTestCase):
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.frappe.has_permission")
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.frappe.only_for")
 	def test_reuses_existing_private_attachment_idempotently(
-		self, only_for, has_permission, get_value, get_doc, build_snapshot, get_existing,
+		self,
+		only_for,
+		has_permission,
+		get_value,
+		get_doc,
+		build_snapshot,
+		get_existing,
 	):
 		batch = frappe._dict(
-			name="PAY-BATCH-2026-00001", doctype="Payroll Payment Batch", docstatus=1,
-			eft_source_hash="source-hash", eft_file_generated=1,
+			name="PAY-BATCH-2026-00001",
+			doctype="Payroll Payment Batch",
+			docstatus=1,
+			eft_source_hash="source-hash",
+			eft_file_generated=1,
 			eft_file_path="/private/files/FNB_OBE.csv",
 		)
 		get_doc.return_value = batch
@@ -227,11 +315,20 @@ class TestPaymentBatchExportEndpoint(UnitTestCase):
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.frappe.has_permission")
 	@patch("za_local_payroll.utils.integrations.eft_file_generator.frappe.only_for")
 	def test_rejects_changed_source_after_submission(
-		self, only_for, has_permission, get_value, get_doc, build_snapshot,
+		self,
+		only_for,
+		has_permission,
+		get_value,
+		get_doc,
+		build_snapshot,
 	):
 		get_doc.return_value = frappe._dict(
-			name="PAY-BATCH-2026-00001", doctype="Payroll Payment Batch", docstatus=1,
-			eft_source_hash="original-hash", eft_file_generated=0, eft_file_path=None,
+			name="PAY-BATCH-2026-00001",
+			doctype="Payroll Payment Batch",
+			docstatus=1,
+			eft_source_hash="original-hash",
+			eft_file_generated=0,
+			eft_file_path=None,
 		)
 		build_snapshot.return_value = make_snapshot(source_hash="changed-hash")
 

@@ -182,6 +182,31 @@ class IRP5Certificate(Document):
 			self.employee_name = employee_data.employee_name
 			if not self.company:
 				self.company = employee_data.company
+			elif (
+				self.company != employee_data.company
+				and not IRP5Certificate._has_historical_company_payroll(self)
+			):
+				frappe.throw(
+					_("Employee {0} does not belong to Company {1} for this certificate period.").format(
+						frappe.bold(self.employee), frappe.bold(self.company)
+					),
+					title=_("IRP5 Company Mismatch"),
+				)
+
+	def _has_historical_company_payroll(self):
+		if not (self.company and self.employee and self.from_date and self.to_date):
+			return False
+		return bool(
+			frappe.db.exists(
+				"Salary Slip",
+				{
+					"employee": self.employee,
+					"company": self.company,
+					"end_date": ["between", [self.from_date, self.to_date]],
+					"docstatus": 1,
+				},
+			)
+		)
 
 	def before_submit(self):
 		self.calculate_totals()
@@ -296,8 +321,10 @@ class IRP5Certificate(Document):
 		pack = get_rate_pack(tax_year=self.tax_year)
 		tax_year_end = getdate(pack["effective_to"])
 		date_of_birth = getdate(self.date_of_birth)
-		age = tax_year_end.year - date_of_birth.year - (
-			(tax_year_end.month, tax_year_end.day) < (date_of_birth.month, date_of_birth.day)
+		age = (
+			tax_year_end.year
+			- date_of_birth.year
+			- ((tax_year_end.month, tax_year_end.day) < (date_of_birth.month, date_of_birth.day))
 		)
 		if age >= 75:
 			threshold_key = "age_75_plus"
@@ -309,7 +336,7 @@ class IRP5Certificate(Document):
 		annualized_taxable_income = flt(self.gross_taxable_income) * periods_in_year / periods_worked
 		return annualized_taxable_income <= flt(pack["paye"]["thresholds"][threshold_key])
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["GET"])
 	def validate_statutory_readiness(self, throw=False):
 		missing = []
 
@@ -397,7 +424,7 @@ class IRP5Certificate(Document):
 		elif reason_code == "10" and not (income_codes == {"4588"} or "4042" in deduction_codes):
 			missing.append("Reason code 10 requires only code 4588 or deduction code 4042")
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def generate_certificate_data(self):
 		require_certificate_generation_permissions()
 		if not self.employee:
@@ -699,6 +726,7 @@ class IRP5Certificate(Document):
 			"Salary Slip",
 			filters={
 				"employee": employee,
+				"company": self.company,
 				"end_date": ["between", [getdate(from_date), getdate(to_date)]],
 				"docstatus": 1,
 			},
@@ -915,7 +943,7 @@ class IRP5Certificate(Document):
 		slips = self._get_salary_slips(self.employee, self.from_date, self.to_date)
 		self.eti = sum(flt(frappe.db.get_value("Salary Slip", slip.name, "za_monthly_eti")) for slip in slips)
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def export_pdf(self):
 		if self.status == "Draft":
 			frappe.throw(_("Cannot export a draft certificate. Generate certificate data first."))
@@ -1269,12 +1297,12 @@ class IRP5Certificate(Document):
 		"""Compatibility wrapper: the official SARS PDF path is now authoritative."""
 		return self.generate_official_pdf()
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["GET"])
 	def get_it3_pdf(self):
 		"""Compatibility wrapper retained for callers still expecting IT3 naming."""
 		return self.get_official_pdf()
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["GET"])
 	def get_official_pdf(self):
 		if self.status == "Draft":
 			frappe.throw(_("Cannot export a draft certificate. Generate certificate data first."))
@@ -1396,13 +1424,13 @@ def _wrap_pdf_text(value, max_width, font_name="Helvetica", font_size=8.5):
 	return lines or [""]
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_it3_pdf(docname):
 	"""Backward-compatible endpoint retained for existing buttons and integrations."""
 	return get_official_pdf(docname)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_official_pdf(docname):
 	# check_permission=True is required: frappe.get_doc does NOT check permissions on
 	# its own, and an IRP5 certificate carries the employee's ID number, tax number
@@ -1411,7 +1439,7 @@ def get_official_pdf(docname):
 	return doc.get_official_pdf()
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def bulk_generate_certificates(filters_json=None):
 	# This creates/overwrites certificates for every employee matching the filters,
 	# and saves with ignore_permissions below, so gate the whole endpoint first.

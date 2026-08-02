@@ -16,9 +16,7 @@ def refresh_fringe_benefit_statuses():
 		fields=["name", "from_date", "to_date", "status"],
 		order_by="name",
 	)
-	latest_breakdown_months = _get_latest_breakdown_months(
-		[row.name for row in benefits if not row.to_date]
-	)
+	latest_breakdown_months = _get_latest_breakdown_months([row.name for row in benefits if not row.to_date])
 	for row in benefits:
 		try:
 			status = _status_for_dates(row.from_date, row.to_date, current_date)

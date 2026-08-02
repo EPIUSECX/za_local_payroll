@@ -22,7 +22,7 @@ Submit each Salary Slip (or use the Payroll Entry's submit action to submit the 
 
 ## 3. Submit the Payroll Entry and post accounting
 
-Submit the **Payroll Entry**. `za_local_payroll`'s Payroll Entry override creates the accounting entries, posting employer contributions (UIF employer, SDL) correctly alongside earnings, employee deductions and net pay.
+Use the submitted Payroll Entry's **Submit Salary Slips** action. HRMS creates the ordinary payroll accrual and `za_local_payroll` atomically creates one additional submitted accrual for employer contributions (UIF employer and SDL). Repeating the action reuses the existing employer-contribution entry; it does not double-post. Cancelling the Payroll Entry cancels both linked accruals.
 
 A typical posting per period aggregates to:
 

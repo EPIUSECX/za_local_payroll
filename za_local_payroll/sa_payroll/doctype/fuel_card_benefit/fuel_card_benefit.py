@@ -20,5 +20,7 @@ class FuelCardBenefit(Document):
 		private_fuel_cost = (private_km / 100) * consumption * rate
 
 		monthly_limit = flt(self.monthly_limit)
-		self.monthly_taxable_value = min(private_fuel_cost, monthly_limit) if monthly_limit else private_fuel_cost
+		self.monthly_taxable_value = (
+			min(private_fuel_cost, monthly_limit) if monthly_limit else private_fuel_cost
+		)
 		return self.monthly_taxable_value

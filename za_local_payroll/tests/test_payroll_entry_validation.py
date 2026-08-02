@@ -1,10 +1,44 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import frappe
 from frappe.tests.classes import UnitTestCase
 
 
 class TestPayrollEntryValidation(UnitTestCase):
+	def test_accrual_posts_stock_and_company_contributions_once(self):
+		from za_local_payroll.overrides.payroll_entry import PayrollEntry, ZAPayrollEntry
+
+		doc = object.__new__(ZAPayrollEntry)
+		doc._ensure_company_contribution_entry = Mock()
+		slips = [frappe._dict(name="SAL-0001")]
+		with patch.object(PayrollEntry, "make_accrual_jv_entry") as parent:
+			ZAPayrollEntry.make_accrual_jv_entry(doc, slips)
+
+		parent.assert_called_once_with(slips)
+		doc._ensure_company_contribution_entry.assert_called_once_with()
+
+	def test_legacy_direct_bank_journal_entry_is_retired(self):
+		from za_local_payroll.overrides.payroll_entry import ZAPayrollEntry
+
+		doc = object.__new__(ZAPayrollEntry)
+		doc.check_permission = Mock()
+		with self.assertRaises(frappe.ValidationError):
+			ZAPayrollEntry.make_payment_entry(doc, {})
+		doc.check_permission.assert_called_once_with("write")
+
+	@patch("za_local_payroll.overrides.payroll_entry.validate_current_tax_configuration")
+	def test_salary_slip_creation_validates_statutory_setup_first(self, validate_setup):
+		from za_local_payroll.overrides.payroll_entry import ZAPayrollEntry
+
+		doc = object.__new__(ZAPayrollEntry)
+		doc.company = "_Test Company"
+		doc.end_date = "2026-08-31"
+		doc.check_permission = Mock()
+		doc.validate_mandatory_fields = Mock(side_effect=frappe.MandatoryError("stop"))
+		with self.assertRaises(frappe.MandatoryError):
+			ZAPayrollEntry.create_salary_slips(doc)
+		validate_setup.assert_called_once_with("_Test Company", "2026-08-31")
+
 	def test_existing_payroll_entry_still_runs_parent_and_sa_validation(self):
 		from za_local_payroll.overrides.payroll_entry import PayrollEntry, ZAPayrollEntry
 
@@ -46,7 +80,9 @@ class TestPayrollEntryValidation(UnitTestCase):
 			),
 		]
 		with (
-			patch("za_local_payroll.overrides.payroll_entry.frappe.get_all", return_value=metadata) as get_all,
+			patch(
+				"za_local_payroll.overrides.payroll_entry.frappe.get_all", return_value=metadata
+			) as get_all,
 			patch("za_local_payroll.overrides.payroll_entry.frappe.db.get_value") as get_value,
 		):
 			ZAPayrollEntry.validate_employee_requirements(doc)

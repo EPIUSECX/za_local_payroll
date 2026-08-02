@@ -8,7 +8,7 @@ Used during hook discovery and controller imports to verify the site dependency.
 import frappe
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def is_hrms_installed():
 	"""
 	Check if HRMS app is installed on the current site.
@@ -56,7 +56,7 @@ def require_hrms(feature_name="This feature"):
 		frappe.throw(
 			f"{feature_name} requires HRMS app to be installed. "
 			"Please install HRMS to use payroll and HR features.",
-			title="HRMS Required"
+			title="HRMS Required",
 		)
 
 

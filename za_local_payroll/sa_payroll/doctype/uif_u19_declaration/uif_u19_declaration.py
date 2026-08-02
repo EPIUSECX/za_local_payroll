@@ -29,7 +29,8 @@ class UifU19Declaration(Document):
 
 		# U19 contribution evidence is employee-side UIF, bounded to this Employee
 		# record's employment term and Company. Employer UIF is not added here.
-		uif_total = frappe.db.sql("""
+		uif_total = frappe.db.sql(
+			"""
 			SELECT SUM(sd.amount)
 			FROM `tabSalary Detail` sd
 			INNER JOIN `tabSalary Slip` ss ON ss.name = sd.parent
@@ -40,19 +41,21 @@ class UifU19Declaration(Document):
 				AND ss.docstatus = 1
 				AND sc.za_sars_payroll_code = '4141'
 				AND sd.parentfield = 'deductions'
-		""", {
-			"employee": self.employee,
-			"company": employment.company,
-			"from_date": getdate(employment.date_of_joining),
-			"to_date": getdate(self.last_day_worked),
-		})
+		""",
+			{
+				"employee": self.employee,
+				"company": employment.company,
+				"from_date": getdate(employment.date_of_joining),
+				"to_date": getdate(self.last_day_worked),
+			},
+		)
 
 		if uif_total and uif_total[0][0]:
 			self.total_uif_contributions = flt(uif_total[0][0])
 		else:
 			self.total_uif_contributions = 0
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def generate_u19_form(self):
 		"""
 		Generate UIF U19 form data.
@@ -72,18 +75,20 @@ class UifU19Declaration(Document):
 			"last_day_worked": self.last_day_worked,
 			"reason_for_leaving": self.reason_for_leaving,
 			"total_uif_contributions": self.total_uif_contributions,
-			"declaration_date": self.declaration_date or today()
+			"declaration_date": self.declaration_date or today(),
 		}
 
 		return form_data
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def export_pdf(self):
 		"""
 		Export U19 declaration as PDF.
 		"""
 		self.check_permission("read")
 		frappe.throw(
-			_("UIF U19 PDF export is not available yet. Use the generated form data for manual UIF preparation."),
+			_(
+				"UIF U19 PDF export is not available yet. Use the generated form data for manual UIF preparation."
+			),
 			title=_("Manual Preparation Required"),
 		)

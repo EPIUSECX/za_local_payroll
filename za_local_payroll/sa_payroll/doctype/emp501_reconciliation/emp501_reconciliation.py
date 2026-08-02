@@ -55,7 +55,7 @@ def _get_reconciliation_period_dates(tax_year, reconciliation_period):
 	return from_date, to_date
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_company_tax_details(company):
 	# frappe.db.get_value does no permission check; these are the company's SARS
 	# PAYE/SDL/UIF registration numbers.
@@ -75,7 +75,7 @@ def get_company_tax_details(company):
 	return details
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_period_dates(tax_year, reconciliation_period):
 	from_date, to_date = _get_reconciliation_period_dates(tax_year, reconciliation_period)
 	return {"from_date": from_date, "to_date": to_date}
@@ -587,7 +587,7 @@ class EMP501Reconciliation(Document):
 		self.db_set("status", "Cancelled", update_modified=False)
 		frappe.msgprint(_("EMP501 Reconciliation {0} has been cancelled.").format(self.name))
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def fetch_emp201_submissions(self):
 		self.check_permission("write")
 		if not self.from_date or not self.to_date:
@@ -697,7 +697,7 @@ class EMP501Reconciliation(Document):
 			else _("No EMP201 submissions found."),
 		}
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def generate_irp5_certificates(self):
 		"""
 		Generate IRP5 Certificates in bulk for all employees with salary slips in the period.
@@ -889,7 +889,7 @@ class EMP501Reconciliation(Document):
 			"message": message,
 		}
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def submit_to_sars(self):
 		frappe.throw(
 			_(

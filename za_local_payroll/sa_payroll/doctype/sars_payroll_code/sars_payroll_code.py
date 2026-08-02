@@ -14,4 +14,3 @@ class SARSPayrollCode(Document):
 
 		if self.code and not self.name:
 			self.name = self.code
-

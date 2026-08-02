@@ -7,10 +7,44 @@ from za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconcilia
 	EMP501Reconciliation,
 )
 from za_local_payroll.sa_payroll.doctype.irp5_certificate.irp5_certificate import IRP5Certificate
-from za_local_payroll.setup.masters import _seed_single_defaults
+from za_local_payroll.setup.masters import _seed_component_treatments, _seed_single_defaults
 
 
 class TestIRP5CertificateSetup(UnitTestCase):
+	def test_governed_statutory_component_zeroes_override_field_defaults(self):
+		fields = {
+			"za_payroll_treatment",
+			"za_paye_inclusion_percentage",
+			"za_uif_applicable",
+			"za_sdl_applicable",
+			"za_coida_applicable",
+		}
+		current = frappe._dict(
+			za_payroll_treatment="UIF",
+			za_paye_inclusion_percentage=100,
+			za_uif_applicable=1,
+			za_sdl_applicable=1,
+			za_coida_applicable=1,
+		)
+		with (
+			patch("frappe.db.get_table_columns", return_value=list(fields)),
+			patch("frappe.db.exists", return_value=True),
+			patch("frappe.db.get_value", return_value=current),
+			patch("frappe.db.set_value") as set_value,
+		):
+			_seed_component_treatments()
+
+		payroll_updates = [
+			call_args.args[2]
+			for call_args in set_value.call_args_list
+			if call_args.args[1] == "UIF Employee Contribution"
+		]
+		self.assertEqual(len(payroll_updates), 1)
+		self.assertEqual(payroll_updates[0]["za_paye_inclusion_percentage"], 0)
+		self.assertEqual(payroll_updates[0]["za_uif_applicable"], 0)
+		self.assertEqual(payroll_updates[0]["za_sdl_applicable"], 0)
+		self.assertEqual(payroll_updates[0]["za_coida_applicable"], 0)
+
 	def test_statutory_component_settings_are_seeded_when_blank(self):
 		meta = MagicMock()
 		meta.has_field.return_value = True

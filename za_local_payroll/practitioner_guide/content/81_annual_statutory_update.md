@@ -35,6 +35,7 @@ Then in the console confirm the new year resolves:
 
 ```python
 from za_local_payroll.utils.statutory_rates import get_rate_pack
+
 get_rate_pack("<a date in the new tax year>")["tax_year"]
 ```
 

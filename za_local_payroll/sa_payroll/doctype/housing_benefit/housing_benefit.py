@@ -21,7 +21,7 @@ class HousingBenefit(Document):
 			frappe.throw(_("Remuneration Proxy must be greater than zero."))
 		self.calculate_monthly_benefit()
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def calculate_monthly_benefit(self):
 		"""Calculate residential accommodation under paragraph 9."""
 		values = calculate_housing_values(

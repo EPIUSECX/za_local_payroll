@@ -8,7 +8,7 @@ submissions to SARS.
 import frappe
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def generate_emp501_csv(emp501_name):
 	"""Reject the removed mixed-record export while preserving access control."""
 	# check_permission=True is required: frappe.get_doc does NOT check permissions.

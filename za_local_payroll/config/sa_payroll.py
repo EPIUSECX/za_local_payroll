@@ -24,12 +24,13 @@ def get_data():
 					"name": "Employee Private Benefit",
 					"description": _("Track employee private benefits for tax purposes"),
 				},
-
 				# Master Data Section
 				{
 					"type": "doctype",
 					"name": "Retirement Fund",
-					"description": _("Configure retirement funds (Pension, Provident, Retirement Annuity, Preservation)"),
+					"description": _(
+						"Configure retirement funds (Pension, Provident, Retirement Annuity, Preservation)"
+					),
 				},
 				{
 					"type": "doctype",
@@ -61,7 +62,6 @@ def get_data():
 					"name": "Holiday List",
 					"description": _("South African public holidays for payroll periods"),
 				},
-
 				# Benefits Section
 				{
 					"type": "doctype",
@@ -98,7 +98,6 @@ def get_data():
 					"name": "Fringe Benefit",
 					"description": _("Comprehensive fringe benefit management"),
 				},
-
 				# Payments & Settlement Section
 				{
 					"type": "doctype",
@@ -115,7 +114,6 @@ def get_data():
 					"name": "Leave Encashment SA",
 					"description": _("Leave encashment calculations for SA compliance"),
 				},
-
 				# SARS Submissions (Employer Tax)
 				{
 					"type": "doctype",
@@ -161,6 +159,6 @@ def get_data():
 					"is_query_report": True,
 					"description": _("Analysis report for EMP201 submissions"),
 				},
-			]
+			],
 		}
 	]

@@ -6,4 +6,3 @@ from frappe.model.document import Document
 
 class FringeBenefitDetail(Document):
 	pass
-

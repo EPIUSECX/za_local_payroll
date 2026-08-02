@@ -33,7 +33,7 @@ class LowInterestLoanBenefit(Document):
 			frappe.throw(_("Actual Interest Rate cannot be negative."))
 		self.calculate_interest_benefit()
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def calculate_interest_benefit(self):
 		"""Calculate the benefit for the calendar month of Calculation Date."""
 		calculation_date = getdate(self.calculation_date or today())
@@ -51,7 +51,7 @@ class LowInterestLoanBenefit(Document):
 		self.monthly_interest_benefit = result["taxable_value"]
 		return result
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def get_official_rate(self):
 		rate = get_official_interest_rate(self.calculation_date or today())
 		self.official_interest_rate = rate["rate"]
@@ -59,6 +59,6 @@ class LowInterestLoanBenefit(Document):
 		return rate
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_current_official_rate(date_value=None):
 	return get_official_interest_rate(date_value or today())

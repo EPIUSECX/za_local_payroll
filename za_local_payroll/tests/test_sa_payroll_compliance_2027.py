@@ -31,6 +31,10 @@ class TestSAPayrollCompliance2027(UnitTestCase):
 		self.assertEqual(4.95, get_reimbursive_travel_rate("2026-03-31"))
 		self.assertEqual(668000, get_coida_annual_earnings_cap("2027-02-28"))
 		self.assertEqual(430000, get_retirement_annual_cap("2027-02-28"))
+		self.assertEqual(
+			99000,
+			pack["fringe_benefits"]["residential_accommodation_abatement"],
+		)
 
 	def test_uif_and_sdl_use_statutory_pack_rates(self):
 		self.assertEqual(
@@ -70,10 +74,7 @@ class TestSAPayrollCompliance2027(UnitTestCase):
 		self.assertEqual(39600, calculate_severance_tax(770000, "2026-03-31"))
 
 	def test_salary_component_classification_fields_are_defined(self):
-		fieldnames = {
-			field["fieldname"]
-			for field in get_payroll_custom_fields()["Salary Component"]
-		}
+		fieldnames = {field["fieldname"] for field in get_payroll_custom_fields()["Salary Component"]}
 		for fieldname in (
 			"za_payroll_treatment",
 			"za_paye_inclusion_percentage",

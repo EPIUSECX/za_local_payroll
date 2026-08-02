@@ -116,7 +116,7 @@
             "fieldname": "status",
             "label": "Status",
             "fieldtype": "Select",
-            "options": "Draft\nSubmitted to SARS\nCancelled",
+            "options": "Draft\nPrepared Working Paper\nCancelled",
             "default": "Draft",
             "print_hide": 1,
             "in_list_view": 1

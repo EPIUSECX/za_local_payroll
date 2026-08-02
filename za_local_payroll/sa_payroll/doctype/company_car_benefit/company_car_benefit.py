@@ -31,7 +31,7 @@ class CompanyCarBenefit(Document):
 			private_km / self.total_km_per_month * 100 if self.total_km_per_month else 0
 		)
 
-	@frappe.whitelist()
+	@frappe.whitelist(methods=["POST"])
 	def calculate_monthly_benefit(self):
 		"""Calculate the SARS Seventh Schedule monthly cash equivalent."""
 		values = calculate_company_car_values(

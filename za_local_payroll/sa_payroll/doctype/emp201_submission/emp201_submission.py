@@ -125,6 +125,8 @@ class EMP201Submission(Document):
 				)
 
 		self.set_submission_period_dates()
+		if self.docstatus == 1:
+			self._set_authoritative_snapshot()
 
 	def set_submission_key(self):
 		"""Persist a database-enforced identity for one active company period."""
@@ -184,6 +186,9 @@ class EMP201Submission(Document):
 	@frappe.whitelist(methods=["POST"])
 	def fetch_emp201_data(self):
 		self.check_permission("write")
+		return self._calculate_emp201_data()
+
+	def _calculate_emp201_data(self, *, require_salary_slips=False):
 		from frappe.utils import flt
 
 		if not self.company or not self.submission_period_start_date or not self.submission_period_end_date:
@@ -210,6 +215,11 @@ class EMP201Submission(Document):
 		)
 
 		if not salary_slips:
+			if require_salary_slips:
+				frappe.throw(
+					_("No submitted Salary Slips exist for this EMP201 period."),
+					title=_("EMP201 Has No Payroll Source"),
+				)
 			frappe.msgprint(_("No submitted salary slips found for the selected period."))
 			return {}
 
@@ -286,8 +296,19 @@ class EMP201Submission(Document):
 			"sdl_payable": sdl,
 		}
 
+	def before_submit(self):
+		"""Freeze an authoritative working-paper snapshot at submission."""
+		self._set_authoritative_snapshot()
+
+	def _set_authoritative_snapshot(self):
+		"""Replace user-visible totals with values recalculated from submitted payroll."""
+		values = self._calculate_emp201_data(require_salary_slips=True)
+		for fieldname, value in values.items():
+			self.set(fieldname, flt(value, 2))
+		self.status = "Prepared Working Paper"
+
 	def on_submit(self):
-		self.db_set("status", "Submitted", update_modified=False)
+		self.db_set("status", "Prepared Working Paper", update_modified=False)
 
 	def on_cancel(self):
 		cancelled_key = hashlib.sha256(f"{self.submission_key}|cancelled|{self.name}".encode()).hexdigest()

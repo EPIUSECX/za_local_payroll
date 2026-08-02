@@ -52,7 +52,5 @@ def _property_setters() -> list[tuple[str, str | None, str, object]]:
 		("Salary Structure Assignment", "max_benefits", "hidden", 1),
 		("Salary Component", "type", "options", "Earning\nDeduction\nCompany Contribution"),
 	]
-	rows.extend(
-		(doctype, None, "protect_attached_files", 1) for doctype in PROTECTED_PAYROLL_DOCTYPES
-	)
+	rows.extend((doctype, None, "protect_attached_files", 1) for doctype in PROTECTED_PAYROLL_DOCTYPES)
 	return rows

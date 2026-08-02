@@ -13,7 +13,7 @@ Go to **Salary Structure → New**:
 5. **Company Contribution** — `za_local_payroll` adds a *Company Contribution* table to the Salary Structure. Add **UIF Employer Contribution** and **SDL Contribution** here (and employer retirement/medical if applicable). These are employer costs, not employee deductions.
 6. **Save and Submit.**
 
-> The Company Contribution table is what feeds employer UIF/SDL and other employer costs onto the salary slip and into the payroll posting. If it is empty, employer contributions will not post.
+> The Company Contribution table feeds employer costs onto the slip and payroll posting. The engine materialises the configured employer UIF and SDL rows when their statutory bases are positive, even if HRMS removed a zero structure row. Add any other employer retirement, medical or benefit contributions explicitly.
 
 ## 2. Create a Salary Structure Assignment per employee
 

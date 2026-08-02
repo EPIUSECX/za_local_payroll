@@ -26,6 +26,31 @@ DEFAULT_SALARY_COMPONENT_ACCOUNT_NAMES = {
 	"COIDA": "COIDA Expense",
 	"COIDA Contribution": "COIDA Expense",
 }
+GOVERNED_COMPONENT_CLASSIFICATIONS = {
+	"PAYE",
+	"UIF Employee Contribution",
+	"UIF Employer Contribution",
+	"SDL Contribution",
+	"Company Car Benefit",
+	"Company Car PAYE Adjustment",
+	"Housing Fringe Benefit",
+	"Low Interest Loan Fringe Benefit",
+	"Other Fringe Benefit",
+}
+GOVERNED_COMPONENT_FIELDS = {
+	"salary_component_abbr",
+	"type",
+	"is_tax_applicable",
+	"is_income_tax_component",
+	"variable_based_on_taxable_salary",
+	"is_flexible_benefit",
+	"depends_on_payment_days",
+	"do_not_include_in_total",
+	"do_not_include_in_accounts",
+	"remove_if_zero_valued",
+	"formula",
+	"amount_based_on_formula",
+}
 
 TERMINATION_COMPONENTS = (
 	{
@@ -75,8 +100,8 @@ def repair_salary_component_accounts(company: str | None = None) -> int:
 	"""Map components to existing company accounts without creating a chart."""
 	if not frappe.db.table_exists("Salary Component Account"):
 		return 0
-	companies = [company] if company else frappe.get_all(
-		"Company", filters={"country": "South Africa"}, pluck="name"
+	companies = (
+		[company] if company else frappe.get_all("Company", filters={"country": "South Africa"}, pluck="name")
 	)
 	repaired = 0
 	for company_name in companies:
@@ -126,6 +151,18 @@ def _seed_salary_components() -> None:
 		if not name:
 			frappe.throw(_("A packaged Salary Component is missing salary_component."))
 		if frappe.db.exists("Salary Component", name):
+			if name in GOVERNED_COMPONENT_CLASSIFICATIONS:
+				governed_fields = [
+					fieldname for fieldname in component if fieldname in GOVERNED_COMPONENT_FIELDS
+				]
+				current = frappe.db.get_value("Salary Component", name, governed_fields, as_dict=True) or {}
+				updates = {
+					fieldname: value
+					for fieldname, value in component.items()
+					if fieldname in GOVERNED_COMPONENT_FIELDS and current.get(fieldname) != value
+				}
+				if updates:
+					frappe.db.set_value("Salary Component", name, updates, update_modified=False)
 			continue
 		frappe.get_doc(doctype="Salary Component", **component).insert(ignore_permissions=True)
 
@@ -176,7 +213,9 @@ def _seed_component_treatments() -> None:
 			continue
 		current = frappe.db.get_value("Salary Component", component, available, as_dict=True) or {}
 		missing = {
-			field: desired[field] for field in available if current.get(field) in (None, "")
+			field: desired[field]
+			for field in available
+			if component in GOVERNED_COMPONENT_CLASSIFICATIONS or current.get(field) in (None, "")
 		}
 		if missing:
 			frappe.db.set_value(

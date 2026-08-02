@@ -170,9 +170,7 @@ class TestFringeBenefitPayrollIntegration(UnitTestCase):
 		self.assertEqual(["<=", "2026-08-31"], filters["from_date"])
 
 	def test_salary_component_fixtures_are_non_cash_taxable_and_correctly_mapped(self):
-		path = Path(
-			frappe.get_app_path("za_local_payroll", "setup", "data", "salary_components.json")
-		)
+		path = Path(frappe.get_app_path("za_local_payroll", "setup", "data", "salary_components.json"))
 		components = {row["salary_component"]: row for row in json.loads(path.read_text())}
 		for name in (
 			"Company Car Benefit",
@@ -185,9 +183,7 @@ class TestFringeBenefitPayrollIntegration(UnitTestCase):
 			self.assertEqual(1, components[name]["do_not_include_in_total"])
 			self.assertEqual(1, components[name]["do_not_include_in_accounts"])
 
-		defaults_path = Path(
-			frappe.get_app_path("za_local_payroll", "setup", "default_data.py")
-		)
+		defaults_path = Path(frappe.get_app_path("za_local_payroll", "setup", "default_data.py"))
 		mappings = _literal_assignment(defaults_path, "DEFAULT_SALARY_COMPONENT_SARS_CODES")
 		excluded = _literal_assignment(defaults_path, "DEFAULT_IRP5_EXCLUDED_SALARY_COMPONENTS")
 		self.assertEqual("3802", mappings["Company Car Benefit"])

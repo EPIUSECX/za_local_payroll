@@ -40,6 +40,7 @@ def monthly():
 
 # ==================== Tax Directive Monitoring ====================
 
+
 def check_tax_directive_expiry():
 	"""
 	Check for tax directives expiring within 30 days.
@@ -103,6 +104,7 @@ def check_tax_directive_expiry():
 
 # ==================== ETI Eligibility Monitoring ====================
 
+
 def check_eti_eligibility_changes():
 	"""
 	Check for ETI eligibility changes:
@@ -128,8 +130,10 @@ def check_eti_eligibility_changes():
 	employees_turning_30 = []
 	for emp in employees_with_birthdays:
 		birth_date = getdate(emp.date_of_birth)
-		age = today_date.year - birth_date.year - (
-			(today_date.month, today_date.day) < (birth_date.month, birth_date.day)
+		age = (
+			today_date.year
+			- birth_date.year
+			- ((today_date.month, today_date.day) < (birth_date.month, birth_date.day))
 		)
 		if age == 30 and birth_date.month == today_date.month and birth_date.day == today_date.day:
 			employees_turning_30.append(emp)
@@ -140,7 +144,7 @@ def check_eti_eligibility_changes():
 			subject=f"ETI Eligibility Lost: {emp.employee_name}",
 			message=f"Employee {emp.employee_name} ({emp.name}) turned 30 today and is no longer eligible for Employment Tax Incentive (ETI).",
 			doctype="Employee",
-			docname=emp.name
+			docname=emp.name,
 		)
 
 	# Check employees reaching 24-month mark
@@ -148,11 +152,8 @@ def check_eti_eligibility_changes():
 
 	employees_at_24_months = frappe.get_all(
 		"Employee",
-		filters={
-			"status": "Active",
-			"date_of_joining": twenty_four_months_ago
-		},
-		fields=["name", "employee_name", "date_of_joining"]
+		filters={"status": "Active", "date_of_joining": twenty_four_months_ago},
+		fields=["name", "employee_name", "date_of_joining"],
 	)
 
 	for emp in employees_at_24_months:
@@ -160,7 +161,7 @@ def check_eti_eligibility_changes():
 			subject=f"ETI Period Ending: {emp.employee_name}",
 			message=f"Employee {emp.employee_name} ({emp.name}) has reached 24 months of employment. ETI eligibility will end after this month. Second 12-month rates apply for the final month.",
 			doctype="Employee",
-			docname=emp.name
+			docname=emp.name,
 		)
 
 	if employees_turning_30 or employees_at_24_months:
@@ -172,6 +173,7 @@ def check_eti_eligibility_changes():
 
 
 # ==================== ID Number Validation ====================
+
 
 def validate_employee_id_numbers():
 	"""
@@ -192,7 +194,7 @@ def validate_employee_id_numbers():
 	employees = frappe.get_all(
 		"Employee",
 		filters={"status": "Active", "za_id_number": ["is", "set"]},
-		fields=["name", "employee_name", "za_id_number"]
+		fields=["name", "employee_name", "za_id_number"],
 	)
 
 	invalid_ids = []
@@ -222,10 +224,7 @@ def validate_employee_id_numbers():
 			message += f"- {emp.employee_name} ({emp.name}): {emp.za_id_number}\n"
 
 		notify_hr_admin(
-			subject="Invalid SA ID Numbers Detected",
-			message=message,
-			doctype="Employee",
-			docname=None
+			subject="Invalid SA ID Numbers Detected", message=message, doctype="Employee", docname=None
 		)
 
 	# Report duplicates
@@ -239,10 +238,7 @@ def validate_employee_id_numbers():
 				message += f"  - {emp.employee_name} ({emp.name})\n"
 
 		notify_hr_admin(
-			subject="Duplicate SA ID Numbers Detected",
-			message=message,
-			doctype="Employee",
-			docname=None
+			subject="Duplicate SA ID Numbers Detected", message=message, doctype="Employee", docname=None
 		)
 
 	if invalid_ids or actual_duplicates:
@@ -254,6 +250,7 @@ def validate_employee_id_numbers():
 
 
 # ==================== SARS Rate Updates ====================
+
 
 def check_sars_rate_updates():
 	"""
@@ -286,6 +283,7 @@ def check_sars_rate_updates():
 
 
 # ==================== Helper Functions ====================
+
 
 def _skip_scheduler_check(check_name, reason):
 	LOGGER.warning("%s skipped: %s", check_name, reason)

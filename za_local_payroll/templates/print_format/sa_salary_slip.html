@@ -88,17 +88,17 @@
 </style>
 
 {% macro money(value) -%}
-  {{ frappe.format(value or 0, {"fieldtype": "Currency", "options": doc.get("currency") or "ZAR"}) }}
+  {{ frappe.format(value or 0, {"fieldtype": "Currency", "options": doc.get("currency") or "ZAR"}) | e }}
 {%- endmacro %}
 
 {% macro date_value(value) -%}
-  {{ frappe.format(value, {"fieldtype": "Date"}) if value else "" }}
+  {{ (frappe.format(value, {"fieldtype": "Date"}) if value else "") | e }}
 {%- endmacro %}
 
 {% macro field(label, value) -%}
   <div class="za-slip__row">
-    <div class="za-slip__label">{{ label }}</div>
-    <div>{{ value if value is not none else "" }}</div>
+    <div class="za-slip__label">{{ label | e }}</div>
+    <div>{{ (value if value is not none else "") | e }}</div>
   </div>
 {%- endmacro %}
 
@@ -106,12 +106,12 @@
   <div class="za-slip__header">
     <div>
       <div class="za-slip__title">South African Salary Slip</div>
-      <div>{{ doc.company }}</div>
+      <div>{{ (doc.company or "") | e }}</div>
     </div>
     <div class="za-slip__meta">
-      <div><strong>Salary Slip</strong> {{ doc.name }}</div>
-      <div><strong>Status</strong> {{ "Submitted" if doc.docstatus == 1 else "Draft" }}</div>
-      <div><strong>Currency</strong> {{ doc.currency or "ZAR" }}</div>
+      <div><strong>Salary Slip</strong> {{ (doc.name or "") | e }}</div>
+      <div><strong>Status</strong> {{ ("Submitted" if doc.docstatus == 1 else "Draft") | e }}</div>
+      <div><strong>Currency</strong> {{ (doc.currency or "ZAR") | e }}</div>
     </div>
   </div>
 
@@ -140,7 +140,7 @@
       <div class="za-slip__section-title">Attendance Basis</div>
       {{ field("Total Working Days", doc.total_working_days) }}
       {{ field("Payment Days", doc.payment_days) }}
-      {{ field("Leave Without Pay", doc.leave_without_pay or doc.lop_days) }}
+      {{ field("Leave Without Pay", doc.get("leave_without_pay") or doc.get("lop_days") or 0) }}
       {{ field("Absent Days", doc.absent_days) }}
     </div>
 
@@ -167,7 +167,7 @@
         <tbody>
           {% for row in doc.earnings %}
           <tr>
-            <td>{{ row.salary_component }}</td>
+            <td>{{ (row.salary_component or "") | e }}</td>
             <td class="num">{{ money(row.amount) }}</td>
             <td class="num">{{ money(row.year_to_date) }}</td>
           </tr>
@@ -196,7 +196,7 @@
         <tbody>
           {% for row in doc.deductions %}
           <tr>
-            <td>{{ row.salary_component }}</td>
+            <td>{{ (row.salary_component or "") | e }}</td>
             <td class="num">{{ money(row.amount) }}</td>
             <td class="num">{{ money(row.year_to_date) }}</td>
           </tr>
@@ -226,7 +226,7 @@
       <tbody>
         {% for row in doc.company_contribution %}
         <tr>
-          <td>{{ row.salary_component }}</td>
+          <td>{{ (row.salary_component or "") | e }}</td>
           <td class="num">{{ money(row.amount) }}</td>
         </tr>
         {% endfor %}

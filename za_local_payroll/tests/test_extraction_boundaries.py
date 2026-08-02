@@ -23,8 +23,10 @@ class TestPayrollExtractionBoundaries(UnitTestCase):
 				continue
 			tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
 			for node in ast.walk(tree):
-				if isinstance(node, ast.ImportFrom) and node.module and (
-					node.module == "za_local" or node.module.startswith("za_local.")
+				if (
+					isinstance(node, ast.ImportFrom)
+					and node.module
+					and (node.module == "za_local" or node.module.startswith("za_local."))
 				):
 					legacy_imports.append(str(path.relative_to(self.app_path)))
 				if isinstance(node, ast.Import):
@@ -39,6 +41,27 @@ class TestPayrollExtractionBoundaries(UnitTestCase):
 		css = (self.app_path / "public" / "css" / "payroll.css").read_text(encoding="utf-8")
 		self.assertNotIn(".form-section", css)
 		self.assertIn('[data-fieldname="max_benefits"]', css)
+
+	def test_payroll_ui_uses_governed_payment_batch(self):
+		javascript = (self.app_path / "public" / "js" / "payroll_entry.js").read_text(encoding="utf-8")
+		self.assertIn('frappe.new_doc("Payroll Payment Batch"', javascript)
+		self.assertNotIn("make_payment_entry_for_payroll", javascript)
+
+	def test_bulk_statutory_mutations_are_post_only(self):
+		irp5 = (
+			self.app_path / "sa_payroll" / "doctype" / "irp5_certificate" / "irp5_certificate.py"
+		).read_text(encoding="utf-8")
+		emp501 = (
+			self.app_path / "sa_payroll" / "doctype" / "emp501_reconciliation" / "emp501_reconciliation.py"
+		).read_text(encoding="utf-8")
+		self.assertIn(
+			'@frappe.whitelist(methods=["POST"])\ndef bulk_generate_certificates',
+			irp5,
+		)
+		self.assertIn(
+			'\t@frappe.whitelist(methods=["POST"])\n\tdef generate_irp5_certificates',
+			emp501,
+		)
 
 	def test_custom_field_ownership_excludes_other_localisation_domains(self):
 		fields = {

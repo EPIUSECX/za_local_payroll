@@ -1,0 +1,65 @@
+<style>
+.za-doc { color:#111827; font-size:11px; line-height:1.35; }
+.za-doc__header { border-bottom:2px solid #111827; display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:8px; }
+.za-doc__title { font-size:20px; font-weight:700; }
+.za-doc__meta { text-align:right; }
+.za-doc__grid { display:grid; gap:12px; grid-template-columns:1fr 1fr; }
+.za-doc__section { border:1px solid #d1d5db; border-radius:6px; margin-bottom:10px; padding:10px; }
+.za-doc__section-title { font-size:12px; font-weight:700; letter-spacing:.02em; margin-bottom:6px; text-transform:uppercase; }
+.za-doc__row { display:grid; grid-template-columns:170px 1fr; margin-bottom:3px; }
+.za-doc__label { color:#4b5563; font-weight:600; }
+.za-doc table { border-collapse:collapse; margin-top:4px; width:100%; }
+.za-doc th, .za-doc td { border-bottom:1px solid #e5e7eb; padding:4px 5px; vertical-align:top; }
+.za-doc th { background:#f9fafb; color:#374151; font-weight:700; text-align:left; }
+.za-doc .num { text-align:right; white-space:nowrap; }
+.za-doc__total { background:#f9fafb; font-weight:700; }
+.za-doc__net { border:2px solid #111827; border-radius:6px; font-size:14px; font-weight:700; margin-top:8px; padding:8px 10px; text-align:right; }
+.za-doc__note { color:#6b7280; font-size:9.5px; margin-top:10px; }
+</style>
+
+{% macro money(value) -%}
+  {{ frappe.format(value or 0, {"fieldtype": "Currency", "options": "ZAR"}) | e }}
+{%- endmacro %}
+{% macro date_value(value) -%}
+  {{ (frappe.format(value, {"fieldtype": "Date"}) if value else "") | e }}
+{%- endmacro %}
+{% macro field(label, value) -%}
+  <div class="za-doc__row"><div class="za-doc__label">{{ label | e }}</div><div>{{ (value if value is not none else "") | e }}</div></div>
+{%- endmacro %}
+
+<div class="za-doc">
+  <div class="za-doc__header">
+    <div>
+      <div class="za-doc__title">EMP201 Monthly Declaration</div>
+      <div>{{ (doc.get("company_name") or doc.company or "") | e }}</div>
+    </div>
+    <div class="za-doc__meta">
+      <div><strong>Document</strong> {{ (doc.name or "") | e }}</div>
+      <div><strong>Status</strong> {{ (doc.get("status") or ("Submitted" if doc.docstatus == 1 else "Draft")) | e }}</div>
+      <div><strong>Currency</strong> ZAR</div>
+    </div>
+  </div>
+
+  <div class="za-doc__grid">
+    <div class="za-doc__section">
+      <div class="za-doc__section-title">Employer & Period</div>
+      {{ field("Company", doc.company) }}
+      {{ field("Fiscal Year", doc.fiscal_year) }}
+      {{ field("Month", doc.month) }}
+      {{ field("Period Start", date_value(doc.submission_period_start_date)) }}
+      {{ field("Period End", date_value(doc.submission_period_end_date)) }}
+    </div>
+    <div class="za-doc__section">
+      <div class="za-doc__section-title">Declaration</div>
+      {{ field("Gross PAYE (before ETI)", money(doc.gross_paye_before_eti)) }}
+      {{ field("ETI Generated", money(doc.eti_generated_current_month)) }}
+      {{ field("ETI Utilised", money(doc.eti_utilized_current_month)) }}
+      {{ field("Net PAYE Payable", money(doc.net_paye_payable)) }}
+      {{ field("UIF Payable", money(doc.uif_payable)) }}
+      {{ field("SDL Payable", money(doc.sdl_payable)) }}
+    </div>
+  </div>
+  <div class="za-doc__net">Total Payable to SARS: {{ money((doc.net_paye_payable or 0) + (doc.uif_payable or 0) + (doc.sdl_payable or 0)) }}</div>
+
+  <div class="za-doc__note">This document is a working paper produced by the South African localisation. Electronic submission to SARS / the Compensation Fund is not performed here; export or print this document and complete the submission through the relevant authority's channel. Practitioners remain responsible for validating statutory figures before filing.</div>
+</div>
