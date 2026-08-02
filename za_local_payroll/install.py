@@ -2,6 +2,7 @@
 
 import frappe
 from frappe import _
+from za_local_core.navigation import sync_shared_navigation
 
 from za_local_payroll.patches.v1_0.transfer_payroll_ownership import execute as transfer_ownership
 from za_local_payroll.setup.custom_fields import apply_payroll_custom_fields
@@ -63,9 +64,7 @@ def before_install() -> None:
 	missing = sorted(REQUIRED_APPS.difference(frappe.get_installed_apps() or ()))
 	if missing:
 		frappe.throw(
-			_("Install the following apps before SA Localisation Payroll: {0}").format(
-				", ".join(missing)
-			),
+			_("Install the following apps before SA Localisation Payroll: {0}").format(", ".join(missing)),
 			title=_("Payroll Dependencies Missing"),
 		)
 
@@ -77,6 +76,7 @@ def after_install() -> None:
 	ensure_all_company_tax_configuration()
 	seed_payroll_readiness()
 	ensure_default_print_formats()
+	sync_shared_navigation()
 
 
 def after_migrate() -> None:
@@ -86,6 +86,7 @@ def after_migrate() -> None:
 	ensure_all_company_tax_configuration()
 	seed_payroll_readiness()
 	ensure_default_print_formats()
+	sync_shared_navigation()
 
 
 def _sync_schema_support() -> None:

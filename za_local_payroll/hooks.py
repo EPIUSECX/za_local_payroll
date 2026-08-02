@@ -16,19 +16,10 @@ za_local_practitioner_guide_provider = "za_local_payroll.practitioner_guide.prov
 
 required_apps = ["frappe", "erpnext", "hrms", "za_local_core"]
 
-add_to_apps_screen = [
-	{
-		"name": "za_local_payroll",
-		"title": "SA Payroll",
-		"logo": "/assets/za_local_core/images/sa_map_icon.png",
-		"route": "/desk/sa-payroll",
-		"has_permission": "za_local_payroll.api.has_app_permission",
-	}
-]
-
 before_install = "za_local_payroll.install.before_install"
 after_install = "za_local_payroll.install.after_install"
 after_migrate = "za_local_payroll.install.after_migrate"
+after_uninstall = "za_local_core.navigation.sync_shared_navigation"
 
 if dedicated_payroll_hooks_active():
 	app_include_css = "/assets/za_local_payroll/css/payroll.css"
