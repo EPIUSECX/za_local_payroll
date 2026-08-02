@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, call, patch
 
 import frappe
 from frappe.tests.classes import UnitTestCase
@@ -7,9 +7,33 @@ from za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconcilia
 	EMP501Reconciliation,
 )
 from za_local_payroll.sa_payroll.doctype.irp5_certificate.irp5_certificate import IRP5Certificate
+from za_local_payroll.setup.masters import _seed_single_defaults
 
 
 class TestIRP5CertificateSetup(UnitTestCase):
+	def test_statutory_component_settings_are_seeded_when_blank(self):
+		meta = MagicMock()
+		meta.has_field.return_value = True
+		settings = MagicMock()
+		settings.get.return_value = None
+
+		with (
+			patch("frappe.db.exists", return_value=True),
+			patch("frappe.get_meta", return_value=meta),
+			patch("frappe.get_single", return_value=settings),
+		):
+			_seed_single_defaults()
+
+		for expected in (
+			call("za_paye_salary_component", "PAYE"),
+			call("za_uif_employee_salary_component", "UIF Employee Contribution"),
+			call("za_uif_employer_salary_component", "UIF Employer Contribution"),
+			call("za_sdl_salary_component", "SDL Contribution"),
+			call("za_coida_salary_component", "COIDA Contribution"),
+		):
+			self.assertIn(expected, settings.set.call_args_list)
+		settings.save.assert_called_once_with(ignore_permissions=True)
+
 	def test_irp5_source_custom_fields_exist(self):
 		checks = {
 			"Employee": {

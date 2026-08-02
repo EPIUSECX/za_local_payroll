@@ -193,10 +193,21 @@ def _seed_single_defaults() -> None:
 	meta = frappe.get_meta("Payroll Settings")
 	settings = frappe.get_single("Payroll Settings")
 	changed = False
-	for fieldname, value in (
+	defaults = [
 		("za_calculate_annual_taxable_amount_based_on", "Payroll Period"),
 		("za_eti_unregulated_minimum_monthly_wage", 2500),
+	]
+	for fieldname, component in (
+		("za_paye_salary_component", "PAYE"),
+		("za_uif_employee_salary_component", "UIF Employee Contribution"),
+		("za_uif_employer_salary_component", "UIF Employer Contribution"),
+		("za_sdl_salary_component", "SDL Contribution"),
+		("za_coida_salary_component", "COIDA Contribution"),
 	):
+		if frappe.db.exists("Salary Component", component):
+			defaults.append((fieldname, component))
+
+	for fieldname, value in defaults:
 		if meta.has_field(fieldname) and settings.get(fieldname) in (None, ""):
 			settings.set(fieldname, value)
 			changed = True
