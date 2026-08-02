@@ -8,6 +8,7 @@ must never block it on South African statutory setup it can never complete.
 import frappe
 from frappe.tests.classes import IntegrationTestCase, UnitTestCase
 from za_local_core.localisation import is_south_african_company
+from za_local_core.tests.utils import ensure_company
 
 from za_local_payroll.overrides.payroll_entry import ZAPayrollEntry
 from za_local_payroll.overrides.salary_slip import ZASalarySlip
@@ -33,23 +34,8 @@ class TestPayrollCountryGating(IntegrationTestCase):
 		cls.suffix = frappe.generate_hash(length=5).upper()
 		cls.foreign_company = f"_ZA Gating Foreign {cls.suffix}"
 		cls.sa_company = f"_ZA Gating Local {cls.suffix}"
-		cls._make_company(cls.foreign_company, f"F{cls.suffix[:4]}", "Namibia", "NAD")
-		cls._make_company(cls.sa_company, f"L{cls.suffix[:4]}", "South Africa", "ZAR")
-
-	@classmethod
-	def _make_company(cls, company_name, abbr, country, currency):
-		if frappe.db.exists("Company", company_name):
-			return
-		template_company = frappe.db.get_value("Company", {}, "name", order_by="creation asc")
-		company = frappe.new_doc("Company")
-		company.company_name = company_name
-		company.abbr = abbr
-		company.country = country
-		company.default_currency = currency
-		if template_company:
-			company.create_chart_of_accounts_based_on = "Existing Company"
-			company.existing_company = template_company
-		company.insert(ignore_permissions=True)
+		ensure_company(cls.foreign_company, f"F{cls.suffix[:4]}", "Namibia", "NAD")
+		ensure_company(cls.sa_company, f"L{cls.suffix[:4]}", "South Africa", "ZAR")
 
 	def test_helper_distinguishes_the_two_companies(self):
 		self.assertFalse(is_south_african_company(self.foreign_company))

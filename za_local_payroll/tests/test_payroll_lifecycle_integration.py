@@ -55,12 +55,15 @@ class TestSouthAfricanPayrollLifecycle(IntegrationTestCase):
 		company.insert(ignore_permissions=True)
 
 		if not frappe.db.exists("Fiscal Year", "2026-2027"):
+			# Scope to this company: a CI site bootstrapped by HRMS already holds a
+			# generic January-December fiscal year that overlaps the South African one.
 			frappe.get_doc(
 				{
 					"doctype": "Fiscal Year",
 					"year": "2026-2027",
 					"year_start_date": "2026-03-01",
 					"year_end_date": "2027-02-28",
+					"companies": [{"company": cls.company}],
 				}
 			).insert(ignore_permissions=True)
 
@@ -104,6 +107,10 @@ class TestSouthAfricanPayrollLifecycle(IntegrationTestCase):
 			"name",
 		)
 		if existing:
+			# ERPNext's standard chart already ships names such as "Payroll Payable"
+			# without an account type; HRMS rejects those for payroll.
+			if account_type and frappe.db.get_value("Account", existing, "account_type") != account_type:
+				frappe.db.set_value("Account", existing, "account_type", account_type)
 			return existing
 		parent = frappe.db.get_value(
 			"Account",
