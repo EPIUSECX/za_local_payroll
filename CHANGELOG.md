@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0 - 2026-08-03
+
+- Added workspace metrics: eight statutory number cards and four charts covering
+  PAYE, UIF, SDL, ETI, net pay and certificate status.
+- Surfaced the app's own features in the workspace. Nineteen DocTypes were
+  previously unreachable, including the fringe-benefit set, Payroll Payment
+  Batch, Tax Directive, UIF U19 Declaration and Employee Final Settlement.
+- Removed a broken link to the legacy ZA Local Setup DocType and the
+  India-specific Salary Payments via ECS report.
+
 ## 1.0.0 - 2026-08-02
 
 - Gated every HRMS entry point on company country. Companies outside South

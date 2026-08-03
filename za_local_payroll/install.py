@@ -2,6 +2,7 @@
 
 import frappe
 from frappe import _
+from za_local_core.dashboards import seed_dashboards
 from za_local_core.navigation import sync_shared_navigation
 
 from za_local_payroll.patches.v1_0.transfer_payroll_ownership import execute as transfer_ownership
@@ -76,6 +77,7 @@ def after_install() -> None:
 	ensure_all_company_tax_configuration()
 	seed_payroll_readiness()
 	ensure_default_print_formats()
+	seed_payroll_dashboards()
 	sync_shared_navigation()
 
 
@@ -86,6 +88,7 @@ def after_migrate() -> None:
 	ensure_all_company_tax_configuration()
 	seed_payroll_readiness()
 	ensure_default_print_formats()
+	seed_payroll_dashboards()
 	sync_shared_navigation()
 
 
@@ -129,3 +132,113 @@ def ensure_default_print_formats() -> None:
 			continue
 		if not frappe.db.get_value("DocType", doctype_name, "default_print_format"):
 			frappe.db.set_value("DocType", doctype_name, "default_print_format", print_format_name)
+
+
+PAYROLL_MODULE = "SA Payroll"
+
+PAYROLL_NUMBER_CARDS = (
+	{
+		"label": "PAYE Payable (EMP201)",
+		"document_type": "EMP201 Submission",
+		"function": "Sum",
+		"aggregate_function_based_on": "net_paye_payable",
+		"filters": [["docstatus", "=", 1]],
+	},
+	{
+		"label": "UIF Payable (EMP201)",
+		"document_type": "EMP201 Submission",
+		"function": "Sum",
+		"aggregate_function_based_on": "uif_payable",
+		"filters": [["docstatus", "=", 1]],
+	},
+	{
+		"label": "SDL Payable (EMP201)",
+		"document_type": "EMP201 Submission",
+		"function": "Sum",
+		"aggregate_function_based_on": "sdl_payable",
+		"filters": [["docstatus", "=", 1]],
+	},
+	{
+		"label": "ETI Utilised (EMP201)",
+		"document_type": "EMP201 Submission",
+		"function": "Sum",
+		"aggregate_function_based_on": "eti_utilized_current_month",
+		"filters": [["docstatus", "=", 1]],
+	},
+	{
+		"label": "ETI Carried Forward (EMP201)",
+		"document_type": "EMP201 Submission",
+		"function": "Sum",
+		"aggregate_function_based_on": "eti_to_be_carried_forward",
+		"filters": [["docstatus", "=", 1]],
+	},
+	{
+		"label": "Salary Slips in Draft",
+		"document_type": "Salary Slip",
+		"function": "Count",
+		"filters": [["docstatus", "=", 0]],
+	},
+	{
+		"label": "IRP5 Certificates Not Submitted",
+		"document_type": "IRP5 Certificate",
+		"function": "Count",
+		"filters": [["docstatus", "=", 0]],
+	},
+	{
+		"label": "Payroll Payment Batches Awaiting Release",
+		"document_type": "Payroll Payment Batch",
+		"function": "Count",
+		"filters": [["docstatus", "=", 0]],
+	},
+)
+
+PAYROLL_CHARTS = (
+	{
+		"chart_name": "SA PAYE Payable by Month",
+		"chart_type": "Sum",
+		"document_type": "EMP201 Submission",
+		"based_on": "submission_period_end_date",
+		"aggregate_function_based_on": "net_paye_payable",
+		"time_interval": "Monthly",
+		"timespan": "Last Year",
+		"type": "Bar",
+		"filters": [["docstatus", "=", 1]],
+	},
+	{
+		"chart_name": "SA ETI Utilised by Month",
+		"chart_type": "Sum",
+		"document_type": "EMP201 Submission",
+		"based_on": "submission_period_end_date",
+		"aggregate_function_based_on": "eti_utilized_current_month",
+		"time_interval": "Monthly",
+		"timespan": "Last Year",
+		"type": "Line",
+		"filters": [["docstatus", "=", 1]],
+	},
+	{
+		"chart_name": "SA Net Pay by Month",
+		"chart_type": "Sum",
+		"document_type": "Salary Slip",
+		"based_on": "end_date",
+		"aggregate_function_based_on": "net_pay",
+		"time_interval": "Monthly",
+		"timespan": "Last Year",
+		"type": "Bar",
+		"filters": [["docstatus", "=", 1]],
+	},
+	{
+		"chart_name": "SA IRP5 Certificates by Status",
+		"chart_type": "Group By",
+		"document_type": "IRP5 Certificate",
+		"group_by_type": "Count",
+		"group_by_based_on": "status",
+		"type": "Donut",
+	},
+)
+
+
+def seed_payroll_dashboards() -> dict:
+	"""Create the SA Payroll number cards and charts when missing."""
+	return seed_dashboards(
+		PAYROLL_MODULE, cards=PAYROLL_NUMBER_CARDS, charts=PAYROLL_CHARTS, workspace="SA Payroll"
+	)

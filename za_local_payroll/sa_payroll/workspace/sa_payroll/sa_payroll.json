@@ -4,9 +4,25 @@
   {
    "chart_name": "Outgoing Salary",
    "label": "Outgoing Salary"
+  },
+  {
+   "chart_name": "SA PAYE Payable by Month",
+   "label": "SA PAYE Payable by Month"
+  },
+  {
+   "chart_name": "SA ETI Utilised by Month",
+   "label": "SA ETI Utilised by Month"
+  },
+  {
+   "chart_name": "SA Net Pay by Month",
+   "label": "SA Net Pay by Month"
+  },
+  {
+   "chart_name": "SA IRP5 Certificates by Status",
+   "label": "SA IRP5 Certificates by Status"
   }
  ],
- "content": "[{\"id\": \"sa-pay-ch\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Outgoing Salary\", \"col\": 12}}, {\"id\": \"sa-pay-sp\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"sa-pay-h\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Transactions &amp; Reports</b></span>\", \"col\": 12}}, {\"id\": \"sa-pay-p\", \"type\": \"paragraph\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">South Africa: EMP201/501, rebates, and statutory reports together with standard payroll operations.</span>\", \"col\": 12}}, {\"id\": \"sa-pay-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Statutory\", \"col\": 4}}, {\"id\": \"sa-pay-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"sa-pay-c3\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll\", \"col\": 4}}, {\"id\": \"sa-pay-c4\", \"type\": \"card\", \"data\": {\"card_name\": \"Incentives\", \"col\": 4}}, {\"id\": \"sa-pay-c5\", \"type\": \"card\", \"data\": {\"card_name\": \"Accounting\", \"col\": 4}}, {\"id\": \"sa-pay-c6\", \"type\": \"card\", \"data\": {\"card_name\": \"Accounting Reports\", \"col\": 4}}, {\"id\": \"sa-pay-c7\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll Reports\", \"col\": 4}}, {\"id\": \"sa-pay-c8\", \"type\": \"card\", \"data\": {\"card_name\": \"Deduction Reports\", \"col\": 4}}, {\"id\": \"sa-payroll-card-8\", \"type\": \"card\", \"data\": {\"card_name\": \"Benefits\", \"col\": 4}}, {\"id\": \"sa-payroll-card-9\", \"type\": \"card\", \"data\": {\"card_name\": \"Payments\", \"col\": 4}}]",
+ "content": "[{\"id\": \"sa-payroll-nc-0\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"PAYE Payable (EMP201)\", \"col\": 4}}, {\"id\": \"sa-payroll-nc-1\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"UIF Payable (EMP201)\", \"col\": 4}}, {\"id\": \"sa-payroll-nc-2\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"SDL Payable (EMP201)\", \"col\": 4}}, {\"id\": \"sa-payroll-nc-3\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"ETI Utilised (EMP201)\", \"col\": 4}}, {\"id\": \"sa-payroll-nc-4\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"ETI Carried Forward (EMP201)\", \"col\": 4}}, {\"id\": \"sa-payroll-nc-5\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Salary Slips in Draft\", \"col\": 4}}, {\"id\": \"sa-payroll-nc-6\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"IRP5 Certificates Not Submitted\", \"col\": 4}}, {\"id\": \"sa-payroll-nc-7\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Payroll Payment Batches Awaiting Release\", \"col\": 4}}, {\"id\": \"sa-payroll-ch-0\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Outgoing Salary\", \"col\": 6}}, {\"id\": \"sa-payroll-ch-1\", \"type\": \"chart\", \"data\": {\"chart_name\": \"SA PAYE Payable by Month\", \"col\": 6}}, {\"id\": \"sa-payroll-ch-2\", \"type\": \"chart\", \"data\": {\"chart_name\": \"SA ETI Utilised by Month\", \"col\": 6}}, {\"id\": \"sa-payroll-ch-3\", \"type\": \"chart\", \"data\": {\"chart_name\": \"SA Net Pay by Month\", \"col\": 6}}, {\"id\": \"sa-payroll-ch-4\", \"type\": \"chart\", \"data\": {\"chart_name\": \"SA IRP5 Certificates by Status\", \"col\": 6}}, {\"id\": \"sa-pay-sp\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"sa-pay-h\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Transactions &amp; Reports</b></span>\", \"col\": 12}}, {\"id\": \"sa-pay-p\", \"type\": \"paragraph\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">South Africa: EMP201/501, rebates, and statutory reports together with standard payroll operations.</span>\", \"col\": 12}}, {\"id\": \"sa-pay-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Statutory\", \"col\": 4}}, {\"id\": \"sa-pay-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"sa-pay-c3\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll\", \"col\": 4}}, {\"id\": \"sa-pay-c4\", \"type\": \"card\", \"data\": {\"card_name\": \"Incentives\", \"col\": 4}}, {\"id\": \"sa-pay-c5\", \"type\": \"card\", \"data\": {\"card_name\": \"Accounting\", \"col\": 4}}, {\"id\": \"sa-pay-c6\", \"type\": \"card\", \"data\": {\"card_name\": \"Accounting Reports\", \"col\": 4}}, {\"id\": \"sa-pay-c7\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll Reports\", \"col\": 4}}, {\"id\": \"sa-pay-c8\", \"type\": \"card\", \"data\": {\"card_name\": \"Deduction Reports\", \"col\": 4}}, {\"id\": \"sa-payroll-card-8\", \"type\": \"card\", \"data\": {\"card_name\": \"Benefits\", \"col\": 4}}, {\"id\": \"sa-payroll-card-9\", \"type\": \"card\", \"data\": {\"card_name\": \"Payments\", \"col\": 4}}]",
  "creation": "2026-03-12 12:47:22.452546",
  "custom_blocks": [],
  "docstatus": 0,
@@ -711,11 +727,44 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-03 06:35:31.219446",
+ "modified": "2026-08-03 07:36:13.134938",
  "modified_by": "Administrator",
  "module": "SA Payroll",
  "name": "SA Payroll",
- "number_cards": [],
+ "number_cards": [
+  {
+   "label": "PAYE Payable (EMP201)",
+   "number_card_name": "PAYE Payable (EMP201)"
+  },
+  {
+   "label": "UIF Payable (EMP201)",
+   "number_card_name": "UIF Payable (EMP201)"
+  },
+  {
+   "label": "SDL Payable (EMP201)",
+   "number_card_name": "SDL Payable (EMP201)"
+  },
+  {
+   "label": "ETI Utilised (EMP201)",
+   "number_card_name": "ETI Utilised (EMP201)"
+  },
+  {
+   "label": "ETI Carried Forward (EMP201)",
+   "number_card_name": "ETI Carried Forward (EMP201)"
+  },
+  {
+   "label": "Salary Slips in Draft",
+   "number_card_name": "Salary Slips in Draft"
+  },
+  {
+   "label": "IRP5 Certificates Not Submitted",
+   "number_card_name": "IRP5 Certificates Not Submitted"
+  },
+  {
+   "label": "Payroll Payment Batches Awaiting Release",
+   "number_card_name": "Payroll Payment Batches Awaiting Release"
+  }
+ ],
  "owner": "Administrator",
  "parent_page": "SA Overview",
  "public": 1,
