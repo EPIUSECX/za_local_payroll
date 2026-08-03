@@ -6,7 +6,7 @@
    "label": "Outgoing Salary"
   }
  ],
- "content": "[{\"id\":\"sa-pay-ch\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Outgoing Salary\",\"col\":12}},{\"id\":\"sa-pay-sp\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sa-pay-h\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Transactions &amp; Reports</b></span>\",\"col\":12}},{\"id\":\"sa-pay-p\",\"type\":\"paragraph\",\"data\":{\"text\":\"<span class=\\\"text-muted\\\">South Africa: EMP201/501, rebates, and statutory reports together with standard payroll operations.</span>\",\"col\":12}},{\"id\":\"sa-pay-c1\",\"type\":\"card\",\"data\":{\"card_name\":\"Statutory\",\"col\":4}},{\"id\":\"sa-pay-c2\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"sa-pay-c3\",\"type\":\"card\",\"data\":{\"card_name\":\"Payroll\",\"col\":4}},{\"id\":\"sa-pay-c4\",\"type\":\"card\",\"data\":{\"card_name\":\"Incentives\",\"col\":4}},{\"id\":\"sa-pay-c5\",\"type\":\"card\",\"data\":{\"card_name\":\"Accounting\",\"col\":4}},{\"id\":\"sa-pay-c6\",\"type\":\"card\",\"data\":{\"card_name\":\"Accounting Reports\",\"col\":4}},{\"id\":\"sa-pay-c7\",\"type\":\"card\",\"data\":{\"card_name\":\"Payroll Reports\",\"col\":4}},{\"id\":\"sa-pay-c8\",\"type\":\"card\",\"data\":{\"card_name\":\"Deduction Reports\",\"col\":4}}]",
+ "content": "[{\"id\": \"sa-pay-ch\", \"type\": \"chart\", \"data\": {\"chart_name\": \"Outgoing Salary\", \"col\": 12}}, {\"id\": \"sa-pay-sp\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"sa-pay-h\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Transactions &amp; Reports</b></span>\", \"col\": 12}}, {\"id\": \"sa-pay-p\", \"type\": \"paragraph\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">South Africa: EMP201/501, rebates, and statutory reports together with standard payroll operations.</span>\", \"col\": 12}}, {\"id\": \"sa-pay-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Statutory\", \"col\": 4}}, {\"id\": \"sa-pay-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"sa-pay-c3\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll\", \"col\": 4}}, {\"id\": \"sa-pay-c4\", \"type\": \"card\", \"data\": {\"card_name\": \"Incentives\", \"col\": 4}}, {\"id\": \"sa-pay-c5\", \"type\": \"card\", \"data\": {\"card_name\": \"Accounting\", \"col\": 4}}, {\"id\": \"sa-pay-c6\", \"type\": \"card\", \"data\": {\"card_name\": \"Accounting Reports\", \"col\": 4}}, {\"id\": \"sa-pay-c7\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll Reports\", \"col\": 4}}, {\"id\": \"sa-pay-c8\", \"type\": \"card\", \"data\": {\"card_name\": \"Deduction Reports\", \"col\": 4}}, {\"id\": \"sa-payroll-card-8\", \"type\": \"card\", \"data\": {\"card_name\": \"Benefits\", \"col\": 4}}, {\"id\": \"sa-payroll-card-9\", \"type\": \"card\", \"data\": {\"card_name\": \"Payments\", \"col\": 4}}]",
  "creation": "2026-03-12 12:47:22.452546",
  "custom_blocks": [],
  "docstatus": 0,
@@ -22,9 +22,10 @@
  "links": [
   {
    "hidden": 0,
+   "icon": "list-alt",
    "is_query_report": 0,
    "label": "Masters",
-   "link_count": 5,
+   "link_count": 10,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -82,8 +83,59 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Employee Type",
+   "link_count": 0,
+   "link_to": "Employee Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Payroll Frequency",
+   "link_count": 0,
+   "link_to": "Employee Payroll Frequency",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "ETI Slab",
+   "link_count": 0,
+   "link_to": "ETI Slab",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Travel Allowance Rate",
+   "link_count": 0,
+   "link_to": "Travel Allowance Rate",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sars Vehicle Emissions Rate",
+   "link_count": 0,
+   "link_to": "Sars Vehicle Emissions Rate",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "icon": "clap",
+   "is_query_report": 0,
    "label": "Incentives",
-   "link_count": 3,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -121,8 +173,19 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Employee ETI Log",
+   "link_count": 0,
+   "link_to": "Employee ETI Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "icon": "chart",
+   "is_query_report": 0,
    "label": "Payroll Reports",
-   "link_count": 9,
+   "link_count": 8,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -153,16 +216,6 @@
    "label": "Salary Payments Based On Payment Mode",
    "link_count": 0,
    "link_to": "Salary Payments Based On Payment Mode",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Salary Payments via ECS",
-   "link_count": 0,
-   "link_to": "Salary Payments via ECS",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -219,6 +272,7 @@
   },
   {
    "hidden": 0,
+   "icon": "expenses",
    "is_query_report": 0,
    "label": "Deduction Reports",
    "link_count": 2,
@@ -248,6 +302,7 @@
   },
   {
    "hidden": 0,
+   "icon": "accounting",
    "is_query_report": 0,
    "label": "Accounting",
    "link_count": 7,
@@ -327,6 +382,7 @@
   },
   {
    "hidden": 0,
+   "icon": "liabilities",
    "is_query_report": 0,
    "label": "Accounting Reports",
    "link_count": 3,
@@ -366,9 +422,10 @@
   },
   {
    "hidden": 0,
+   "icon": "hr",
    "is_query_report": 0,
    "label": "Payroll",
-   "link_count": 6,
+   "link_count": 8,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -436,21 +493,32 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Statutory",
-   "link_count": 7,
+   "label": "Employee Final Settlement",
+   "link_count": 0,
+   "link_to": "Employee Final Settlement",
    "link_type": "DocType",
    "onboard": 0,
-   "type": "Card Break"
+   "type": "Link"
   },
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "ZA Local Setup",
+   "label": "Leave Encashment Sa",
    "link_count": 0,
-   "link_to": "ZA Local Setup",
+   "link_to": "Leave Encashment Sa",
    "link_type": "DocType",
-   "onboard": 1,
+   "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "icon": "permission",
+   "is_query_report": 0,
+   "label": "Statutory",
+   "link_count": 8,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
   },
   {
    "hidden": 0,
@@ -511,9 +579,139 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Tax Directive",
+   "link_count": 0,
+   "link_to": "Tax Directive",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Uif U19 Declaration",
+   "link_count": 0,
+   "link_to": "Uif U19 Declaration",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "icon": "money-coins-1",
+   "is_query_report": 0,
+   "label": "Benefits",
+   "link_count": 8,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Fringe Benefit",
+   "link_count": 0,
+   "link_to": "Fringe Benefit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Company Car Benefit",
+   "link_count": 0,
+   "link_to": "Company Car Benefit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Housing Benefit",
+   "link_count": 0,
+   "link_to": "Housing Benefit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Low Interest Loan Benefit",
+   "link_count": 0,
+   "link_to": "Low Interest Loan Benefit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bursary Benefit",
+   "link_count": 0,
+   "link_to": "Bursary Benefit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cellphone Benefit",
+   "link_count": 0,
+   "link_to": "Cellphone Benefit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Fuel Card Benefit",
+   "link_count": 0,
+   "link_to": "Fuel Card Benefit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Private Benefit",
+   "link_count": 0,
+   "link_to": "Employee Private Benefit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "icon": "card",
+   "is_query_report": 0,
+   "label": "Payments",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payroll Payment Batch",
+   "link_count": 0,
+   "link_to": "Payroll Payment Batch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-04-23 12:37:42.905322",
+ "modified": "2026-08-03 06:35:31.219446",
  "modified_by": "Administrator",
  "module": "SA Payroll",
  "name": "SA Payroll",
