@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="za_local_payroll/public/images/za_local_payroll_logo.svg" height="128" alt="SA Localisation Payroll logo">
+
 # SA Localisation Payroll
 
 **South African payroll, PAYE and SARS employer reporting for Frappe HR**
