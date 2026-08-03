@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 - 2026-08-03
+
+- The guide pages this app publishes into Frappe Wiki are now withdrawn when the
+  app is uninstalled. Neither Wiki DocType has a module field, so `remove_app`
+  could not reclaim them and all 22 pages stayed live after the app was gone.
+  Pages contributed by the other localisation apps are untouched.
+
 ## 1.1.0 - 2026-08-03
 
 - Added workspace metrics: eight statutory number cards and four charts covering

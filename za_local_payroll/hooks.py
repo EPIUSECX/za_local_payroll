@@ -19,6 +19,7 @@ required_apps = ["frappe", "erpnext", "hrms", "za_local_core"]
 before_install = "za_local_payroll.install.before_install"
 after_install = "za_local_payroll.install.after_install"
 after_migrate = "za_local_payroll.install.after_migrate"
+before_uninstall = "za_local_payroll.install.before_uninstall"
 after_uninstall = "za_local_core.navigation.sync_shared_navigation"
 
 if dedicated_payroll_hooks_active():

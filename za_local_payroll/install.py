@@ -4,6 +4,7 @@ import frappe
 from frappe import _
 from za_local_core.dashboards import seed_dashboards
 from za_local_core.navigation import sync_shared_navigation
+from za_local_core.practitioner_guide.stage import unpublish_app_guide
 
 from za_local_payroll.patches.v1_0.transfer_payroll_ownership import execute as transfer_ownership
 from za_local_payroll.setup.custom_fields import apply_payroll_custom_fields
@@ -90,6 +91,16 @@ def after_migrate() -> None:
 	ensure_default_print_formats()
 	seed_payroll_dashboards()
 	sync_shared_navigation()
+
+
+def before_uninstall() -> None:
+	"""Withdraw this app's contribution to the on-site guides.
+
+	Frappe reclaims records by module and neither Wiki DocType has one, so the
+	pages this app published stay live and reachable unless they are removed here.
+	Business and audit records are deliberately retained.
+	"""
+	unpublish_app_guide("za_local_payroll")
 
 
 def _sync_schema_support() -> None:

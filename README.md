@@ -167,7 +167,9 @@ dual authorisation — this app does not enforce maker/checker on the file itsel
 
 `bench uninstall-app` removes this app's DocTypes and every schema customisation
 it owns; Custom Fields, Property Setters, Print Formats and Workspaces all carry
-an owning module.
+an owning module. It also withdraws the guide pages this app published into Frappe
+Wiki, which have no module for Frappe to reclaim them by, along with any guide
+group left empty. Pages contributed by the other localisation apps stay.
 
 Business and audit records are deliberately retained. Salary Components, Payroll
 Periods, Income Tax Slabs, salary slips, certificates and filing evidence are a
