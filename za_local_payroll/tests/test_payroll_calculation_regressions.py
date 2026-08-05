@@ -303,6 +303,13 @@ class TestSalarySlipBenefitsAndEti(UnitTestCase):
 			start_date="2026-09-01",
 			end_date="2026-09-30",
 		)
+		# No employer contribution on this slip, so the unpaid membership row stays
+		# skipped and the paid one is used.
+		slip.get = lambda field: []
+		slip.get_sa_component_metadata = lambda component: frappe._dict()
+		slip.has_employer_medical_aid_contribution = lambda: (
+			ZASalarySlip.has_employer_medical_aid_contribution(slip)
+		)
 
 		result = ZASalarySlip.get_medical_aid_credits(slip)
 
@@ -312,6 +319,30 @@ class TestSalarySlipBenefitsAndEti(UnitTestCase):
 			2,
 			membership_start_date="2026-09-01",
 			membership_end_date="2027-01-31",
+		)
+
+	@patch("za_local_payroll.overrides.salary_slip.get_medical_aid_credit")
+	@patch("za_local_payroll.overrides.salary_slip.frappe.get_all")
+	def test_employer_funded_membership_earns_the_credit(self, get_all, get_credit):
+		"""A member who pays nothing privately is still entitled under section 6A."""
+		get_all.return_value = [
+			frappe._dict(private_medical_aid=0, medical_aid_dependant=1, effective_from="2023-03-01", to=None)
+		]
+		get_credit.return_value = 728
+		slip = SimpleNamespace(employee="EMP-1", start_date="2023-03-01", end_date="2023-03-31")
+		slip.get = lambda field: (
+			[frappe._dict(salary_component="Medical Aid Company Contribution", amount=2_000)]
+			if field == "earnings"
+			else []
+		)
+		slip.get_sa_component_metadata = lambda component: frappe._dict(za_payroll_treatment="Medical Aid")
+		slip.has_employer_medical_aid_contribution = lambda: (
+			ZASalarySlip.has_employer_medical_aid_contribution(slip)
+		)
+
+		self.assertEqual(728, ZASalarySlip.get_medical_aid_credits(slip))
+		get_credit.assert_called_once_with(
+			slip, 1, membership_start_date="2023-03-01", membership_end_date=None
 		)
 
 	@patch("za_local_payroll.overrides.salary_slip.frappe.get_cached_value", return_value=0)
@@ -375,3 +406,83 @@ class TestSalarySlipBenefitsAndEti(UnitTestCase):
 		check_eligibility.assert_called_once_with("EMP-1", slip, 5_000)
 		calculate.assert_called_once_with("EMP-1", slip, 5_000, eligibility=eligibility)
 		log.assert_not_called()
+
+
+class TestStatutoryLeviableAmount(UnitTestCase):
+	"""SDL and UIF are levied on remuneration, which includes fringe benefits."""
+
+	def _slip(self, earnings, metadata):
+		slip = SimpleNamespace()
+		slip.get = lambda field: earnings if field == "earnings" else []
+		slip.get_sa_component_metadata = lambda component: metadata[component]
+		slip.get_required_sars_code = lambda component, values=None: ZASalarySlip.get_required_sars_code(
+			slip, component, values
+		)
+		return slip
+
+	def test_fringe_benefit_kept_out_of_gross_is_still_leviable(self):
+		"""``do_not_include_in_total`` must not silently override the SDL flag.
+
+		A taxable benefit is excluded from gross and net pay but is remuneration
+		under paragraph 1 of the Fourth Schedule, so the levy applies to it.
+		"""
+		earnings = [
+			frappe._dict(salary_component="Basic", amount=10_000, do_not_include_in_total=0),
+			frappe._dict(
+				salary_component="Medical Aid Company Contribution",
+				amount=2_000,
+				do_not_include_in_total=1,
+			),
+		]
+		metadata = {
+			"Basic": frappe._dict(
+				za_sars_payroll_code="3601", za_payroll_treatment=None, za_sdl_applicable=1
+			),
+			"Medical Aid Company Contribution": frappe._dict(
+				za_sars_payroll_code="4474", za_payroll_treatment="Medical Aid", za_sdl_applicable=1
+			),
+		}
+		basis = ZASalarySlip.get_statutory_earning_basis(self._slip(earnings, metadata), "za_sdl_applicable")
+		self.assertEqual(12_000, basis)
+
+	def test_the_flag_still_excludes_what_it_should(self):
+		"""An earning-side tax adjustment carries the levy flag off, and is excluded."""
+		earnings = [
+			frappe._dict(salary_component="Basic", amount=10_000, do_not_include_in_total=0),
+			frappe._dict(
+				salary_component="Retirement Annuity Private", amount=-3_000, do_not_include_in_total=1
+			),
+		]
+		metadata = {
+			"Basic": frappe._dict(
+				za_sars_payroll_code="3601", za_payroll_treatment=None, za_sdl_applicable=1
+			),
+			"Retirement Annuity Private": frappe._dict(
+				za_sars_payroll_code="4006", za_payroll_treatment=None, za_sdl_applicable=0
+			),
+		}
+		basis = ZASalarySlip.get_statutory_earning_basis(self._slip(earnings, metadata), "za_sdl_applicable")
+		self.assertEqual(10_000, basis)
+
+
+class TestMedicalTaxCreditEntitlement(UnitTestCase):
+	def test_employer_funded_membership_is_recognised(self):
+		"""Section 6A does not turn on who pays the medical scheme contribution."""
+		slip = object.__new__(ZASalarySlip)
+		slip.get = lambda field: (
+			[frappe._dict(salary_component="Medical Aid Company Contribution", amount=2_000)]
+			if field == "earnings"
+			else []
+		)
+		slip.get_sa_component_metadata = lambda component: frappe._dict(za_payroll_treatment="Medical Aid")
+		self.assertTrue(ZASalarySlip.has_employer_medical_aid_contribution(slip))
+
+	def test_no_medical_component_is_not_treated_as_membership(self):
+		slip = object.__new__(ZASalarySlip)
+		slip.get = lambda field: (
+			[frappe._dict(salary_component="Basic", amount=10_000)] if field == "earnings" else []
+		)
+		slip.get_sa_component_metadata = lambda component: frappe._dict(
+			za_payroll_treatment="Regular Remuneration"
+		)
+		self.assertFalse(ZASalarySlip.has_employer_medical_aid_contribution(slip))

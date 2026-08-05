@@ -438,3 +438,36 @@ class TestSARSReportingRegressions(UnitTestCase):
 			self.assertRaisesRegex(frappe.ValidationError, "legacy mixed-record CSV was removed"),
 		):
 			generate_emp501_csv("_Test EMP501")
+
+
+class TestETILogReuse(UnitTestCase):
+	"""Salary slip names are reissued, so a stale log must never be written to."""
+
+	@patch("za_local_payroll.utils.eti_utils.frappe.db.exists")
+	def test_a_submitted_log_is_returned_untouched(self, exists):
+		from za_local_payroll.utils.eti_utils import log_eti_calculation
+
+		exists.side_effect = lambda doctype, filters: (
+			"ETI-SUBMITTED" if filters.get("docstatus") == 1 else None
+		)
+		slip = SimpleNamespace(name="Sal Slip/HR-EMP-00001/00001", end_date="2023-03-31")
+		self.assertEqual("ETI-SUBMITTED", log_eti_calculation("HR-EMP-00001", slip, 0, {}))
+
+	@patch("za_local_payroll.utils.eti_utils.frappe.new_doc")
+	@patch("za_local_payroll.utils.eti_utils.frappe.db.exists")
+	def test_a_cancelled_log_is_not_reused(self, exists, new_doc):
+		"""A cancelled log cannot be saved, so it must not be picked up as reusable."""
+		from za_local_payroll.utils.eti_utils import log_eti_calculation
+
+		# Neither a draft nor a submitted log exists; only a cancelled one, which the
+		# lookup deliberately does not match.
+		exists.return_value = None
+		created = Mock()
+		created.name = "ETI-NEW"
+		new_doc.return_value = created
+
+		slip = SimpleNamespace(
+			name="Sal Slip/HR-EMP-00001/00001", end_date="2023-03-31", employee_name="Test"
+		)
+		self.assertEqual("ETI-NEW", log_eti_calculation("HR-EMP-00001", slip, 0, {}))
+		created.save.assert_called_once()

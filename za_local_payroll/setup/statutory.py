@@ -13,16 +13,19 @@ from za_local_core.localisation import is_south_african_company
 from za_local_payroll.utils.statutory_rates import get_tax_year_for_date
 
 PAYROLL_PERIOD_FILES = (
+	"payroll_period_2024.json",
 	"payroll_period_2025.json",
 	"payroll_period_2026.json",
 	"payroll_period_2027.json",
 )
 INCOME_TAX_SLAB_FILES = (
+	"tax_slabs_2024.json",
 	"tax_slabs_2025.json",
 	"tax_slabs_2026.json",
 	"tax_slabs_2027.json",
 )
 TAX_REBATE_FILES = (
+	"tax_rebates_2024.json",
 	"tax_rebates_2025.json",
 	"tax_rebates_2026.json",
 	"tax_rebates_2027.json",

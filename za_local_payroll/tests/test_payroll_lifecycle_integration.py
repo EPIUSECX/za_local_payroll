@@ -6,6 +6,7 @@ import frappe
 from frappe.tests.classes import IntegrationTestCase
 from frappe.utils import flt, getdate
 from hrms.payroll.doctype.salary_slip.salary_slip import make_salary_slip_from_timesheet
+from za_local_core.tests.utils import ensure_gender
 
 from za_local_payroll.setup.masters import repair_salary_component_accounts, seed_payroll_masters
 from za_local_payroll.setup.statutory import ensure_company_tax_configuration
@@ -259,7 +260,7 @@ class TestSouthAfricanPayrollLifecycle(IntegrationTestCase):
 					"doctype": "Employee",
 					"first_name": "ZA",
 					"last_name": f"{key.title()} {cls.suffix}",
-					"gender": "Male",
+					"gender": ensure_gender("Male"),
 					"date_of_birth": dob,
 					"date_of_joining": joining_date,
 					"company": cls.company,

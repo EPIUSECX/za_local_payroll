@@ -1,5 +1,47 @@
 # Changelog
 
+## 2.1.0 - 2026-08-05
+
+Found by running a real 20-employee March 2023 payroll against a balanced parallel
+register. Every input matched to the cent and PAYE landed exactly on the register's
+figure, which is what made the three defects below visible rather than plausible.
+
+### Added
+
+- Statutory data for tax year 2023-2024, so a prior-year parallel run is possible.
+  The app previously shipped 2024-2025 onward only and could not run an earlier
+  period at all. Brackets, rebates, tax thresholds and medical tax credits are
+  unchanged from 2024-2025; the travel, subsistence and COIDA figures are the
+  2023/24 values.
+
+### Fixed
+
+- SDL and UIF ignored `za_sdl_applicable` and `za_uif_applicable` on any earning
+  flagged `do_not_include_in_total`, because `get_statutory_earning_basis` skipped
+  those rows before reading the flag. Taxable fringe benefits were therefore left
+  out of the leviable amount, under-declaring the levy. The leviable amount is
+  remuneration under the Fourth Schedule, and paragraph 1 of that Schedule includes
+  the cash equivalent of Seventh Schedule taxable benefits, so the flag now decides
+  alone. On the register above this understated SDL by R369.98.
+- Company Car Benefit, Housing Fringe Benefit, Low Interest Loan Fringe Benefit and
+  Other Fringe Benefit shipped as not UIF or SDL leviable despite being taxed at
+  100%. They are remuneration and are now flagged accordingly. COIDA flags are left
+  as shipped: the COID Act defines earnings separately and that needs its own ruling.
+- An employee whose medical scheme is wholly employer-funded received no medical tax
+  credit, because `get_medical_aid_credits` skipped any Employee Private Benefit with
+  no private contribution. Section 6A read with paragraph 12A of the Seventh Schedule
+  treats an employer contribution as a taxable benefit of the employee, so the credit
+  is due regardless of who pays. An employer medical aid contribution on the slip now
+  counts as membership evidence.
+- A cancelled or deleted Salary Slip left its Employee ETI Log behind. The log keys
+  on the slip name, Frappe reissues that name when a slip is re-created for the same
+  employee and period, and the stale log then blocked slip creation, so a period
+  could not be re-run without clearing logs by hand. Only a draft log is reused now,
+  and a slip takes its log with it when deleted.
+- `test_payroll_lifecycle_integration` hardcoded the Gender "Male", which fails on a
+  site where the setup wizard never created the full Gender list. It uses the
+  existing `ensure_gender` helper.
+
 ## 2.0.1 - 2026-08-03
 
 - Documented the two-app suite: `za_local_finance` is retired and the SA VAT module

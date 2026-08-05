@@ -303,8 +303,8 @@ DEFAULT_SALARY_COMPONENT_TREATMENTS = {
 	"Company Car Benefit": {
 		"za_payroll_treatment": "Regular Remuneration",
 		"za_paye_inclusion_percentage": 100,
-		"za_uif_applicable": 0,
-		"za_sdl_applicable": 0,
+		"za_uif_applicable": 1,
+		"za_sdl_applicable": 1,
 		"za_coida_applicable": 0,
 	},
 	"Company Car PAYE Adjustment": {
@@ -317,22 +317,22 @@ DEFAULT_SALARY_COMPONENT_TREATMENTS = {
 	"Housing Fringe Benefit": {
 		"za_payroll_treatment": "Regular Remuneration",
 		"za_paye_inclusion_percentage": 100,
-		"za_uif_applicable": 0,
-		"za_sdl_applicable": 0,
+		"za_uif_applicable": 1,
+		"za_sdl_applicable": 1,
 		"za_coida_applicable": 0,
 	},
 	"Low Interest Loan Fringe Benefit": {
 		"za_payroll_treatment": "Regular Remuneration",
 		"za_paye_inclusion_percentage": 100,
-		"za_uif_applicable": 0,
-		"za_sdl_applicable": 0,
+		"za_uif_applicable": 1,
+		"za_sdl_applicable": 1,
 		"za_coida_applicable": 0,
 	},
 	"Other Fringe Benefit": {
 		"za_payroll_treatment": "Regular Remuneration",
 		"za_paye_inclusion_percentage": 100,
-		"za_uif_applicable": 0,
-		"za_sdl_applicable": 0,
+		"za_uif_applicable": 1,
+		"za_sdl_applicable": 1,
 		"za_coida_applicable": 0,
 	},
 	"PAYE": {

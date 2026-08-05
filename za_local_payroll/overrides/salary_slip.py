@@ -640,10 +640,16 @@ class ZASalarySlip(SalarySlip):
 			order_by="effective_from desc",
 		)
 
+		employer_funded = self.has_employer_medical_aid_contribution()
 		for benefit in benefits:
 			if benefit.to and getdate(benefit.to) < getdate(self.start_date):
 				continue
-			if flt(benefit.private_medical_aid) <= 0:
+			# Membership, not who pays for it, is what the credit turns on. Section 6A
+			# read with paragraph 12A of the Seventh Schedule treats an employer
+			# contribution as a taxable benefit of the employee, so a wholly
+			# employer-funded member is still entitled to the credit. Requiring a
+			# private amount denied it to them.
+			if flt(benefit.private_medical_aid) <= 0 and not employer_funded:
 				continue
 			return get_medical_aid_credit(
 				self,
@@ -652,6 +658,16 @@ class ZASalarySlip(SalarySlip):
 				membership_end_date=benefit.to,
 			)
 		return 0
+
+	def has_employer_medical_aid_contribution(self) -> bool:
+		"""Whether this slip carries an employer contribution to a medical scheme."""
+		for row in self.get("earnings") or []:
+			if not flt(row.amount):
+				continue
+			metadata = self.get_sa_component_metadata(row.salary_component)
+			if metadata.get("za_payroll_treatment") == "Medical Aid":
+				return True
+		return False
 
 	def calculate_net_pay(self, skip_tax_breakup_computation: bool = False):
 		"""
@@ -875,9 +891,20 @@ class ZASalarySlip(SalarySlip):
 				row.depends_on_payment_days = 0
 
 	def get_statutory_earning_basis(self, applicability_field):
+		"""Total the earnings the given statutory levy applies to.
+
+		``do_not_include_in_total`` is deliberately not a reason to skip a row. It
+		keeps a component out of gross and net pay, which is right for a fringe
+		benefit, but the SDL and UIF leviable amounts are remuneration under the
+		Fourth Schedule, and paragraph 1 of that Schedule includes the cash
+		equivalent of Seventh Schedule taxable benefits. Skipping those rows
+		silently ignored ``za_sdl_applicable`` and under-declared the levy.
+
+		The per-component flag is therefore the only thing that decides.
+		"""
 		total = 0
 		for row in self.get("earnings") or []:
-			if not flt(row.amount) or row.get("statistical_component") or row.get("do_not_include_in_total"):
+			if not flt(row.amount) or row.get("statistical_component"):
 				continue
 			metadata = self.get_sa_component_metadata(row.salary_component)
 			self.get_required_sars_code(row.salary_component, metadata)
@@ -979,6 +1006,20 @@ class ZASalarySlip(SalarySlip):
 		if self.za_localisation_applies:
 			cancel_eti_log(self.employee, self)
 		super().on_cancel()
+
+	def on_trash(self):
+		"""Take this slip's ETI evidence with it.
+
+		The log links to the slip by name, and Frappe reissues the same slip name
+		when one is re-created for the same employee and period. A log left behind
+		would then belong to a slip it never described.
+		"""
+		if self.za_localisation_applies:
+			for name in frappe.get_all(
+				"Employee ETI Log", filters={"against_salary_slip": self.name}, pluck="name"
+			):
+				frappe.delete_doc("Employee ETI Log", name, force=True, ignore_permissions=True)
+		super().on_trash()
 
 
 def get_eti_deduction(salary_slip):

@@ -431,16 +431,26 @@ def log_eti_calculation(employee, salary_slip, eti_amount, eligibility_details):
 	    eti_amount (float): Calculated ETI amount
 	    eligibility_details (dict): Eligibility check results
 	"""
+	# Only a draft log can be updated in place. Salary slip names are reused when a
+	# slip is cancelled or deleted and re-created for the same employee and period,
+	# so a log left behind from the previous attempt must not be written to: a
+	# submitted one is already final, and a cancelled one cannot be saved at all.
 	existing_log = frappe.db.exists(
-		"Employee ETI Log", {"employee": employee, "against_salary_slip": salary_slip.name}
+		"Employee ETI Log",
+		{"employee": employee, "against_salary_slip": salary_slip.name, "docstatus": 0},
 	)
+	submitted_log = frappe.db.exists(
+		"Employee ETI Log",
+		{"employee": employee, "against_salary_slip": salary_slip.name, "docstatus": 1},
+	)
+	if submitted_log:
+		return submitted_log
+
 	log_doc = (
 		frappe.get_doc("Employee ETI Log", existing_log)
 		if existing_log
 		else frappe.new_doc("Employee ETI Log")
 	)
-	if log_doc.docstatus == 1:
-		return log_doc.name
 
 	log_doc.employee = employee
 	log_doc.against_salary_slip = salary_slip.name
