@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.1 - 2026-08-03
+
+- Documented the two-app suite: `za_local_finance` is retired and the SA VAT module
+  ships inside `za_local_core` from 2.0.0.
+- The Desk navigation fix for the SA Labour and SA COIDA workspaces lands in
+  `za_local_core` 2.0.0; both apps must be updated together.
+
 ## 2.0.0 - 2026-08-03
 
 ### Absorbed SA Localisation Workplace

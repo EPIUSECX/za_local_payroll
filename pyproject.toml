@@ -23,7 +23,7 @@ required_frappe_version = ">=16.0.0,<17.0.0"
 frappe = ">=16.0.0,<17.0.0"
 erpnext = ">=16.0.0,<17.0.0"
 hrms = ">=16.0.0,<17.0.0"
-za_local_core = ">=0.0.1,<2.0.0"
+za_local_core = ">=2.0.0,<3.0.0"
 
 # These dependencies are only installed when developer mode is enabled
 [tool.bench.dev-dependencies]
