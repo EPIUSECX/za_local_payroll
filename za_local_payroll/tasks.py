@@ -34,8 +34,10 @@ def weekly():
 
 
 def monthly():
-	"""Run monthly payroll compliance checks."""
+	"""Run monthly payroll, labour and COIDA compliance checks."""
 	check_sars_rate_updates()
+	remind_employment_equity_reporting()
+	remind_coida_rate_review()
 
 
 # ==================== Tax Directive Monitoring ====================
@@ -468,3 +470,69 @@ def _log_invalid_notification_recipient(user, reason):
 		title="Invalid HR notification recipient",
 		message=f"Configured notification recipient is invalid: {user}. Reason: {reason}",
 	)
+
+
+# ==================== Labour and COIDA Reminders ====================
+
+
+def remind_employment_equity_reporting() -> None:
+	"""Create one December Employment Equity reminder per recipient."""
+	current_date = getdate(today())
+	if current_date.month != 12:
+		return
+	_notify_roles_once(
+		subject=_("Employment Equity reporting review due: January {0}").format(current_date.year + 1),
+		message=_(
+			"Review the applicable Employment Equity return, supporting analysis, approvals, and portal evidence."
+		),
+		reference_date=getdate(f"{current_date.year}-12-01"),
+	)
+
+
+def remind_coida_rate_review() -> None:
+	"""Create one February reminder to approve the next COIDA rate pack."""
+	current_date = getdate(today())
+	if current_date.month != 2:
+		return
+	_notify_roles_once(
+		subject=_("COIDA assessment values require annual review"),
+		message=_(
+			"Verify the next assessment year's earnings ceiling and company assessment class against an approved source."
+		),
+		reference_date=getdate(f"{current_date.year}-02-01"),
+	)
+
+
+def _notify_roles_once(subject: str, message: str, reference_date) -> None:
+	users = set()
+	for role in ("HR Manager", "System Manager"):
+		users.update(
+			frappe.get_all(
+				"Has Role",
+				filters={"role": role, "parenttype": "User"},
+				pluck="parent",
+			)
+		)
+
+	created = 0
+	for user in users - {"Administrator", "Guest"}:
+		if frappe.db.exists(
+			"Notification Log",
+			{
+				"for_user": user,
+				"subject": subject,
+				"creation": [">=", reference_date],
+			},
+		):
+			continue
+		frappe.get_doc(
+			{
+				"doctype": "Notification Log",
+				"for_user": user,
+				"subject": subject,
+				"email_content": message,
+				"type": "Alert",
+			}
+		).insert(ignore_permissions=True)
+		created += 1
+	LOGGER.info("Workplace reminder '%s': %s notification(s) created", subject, created)

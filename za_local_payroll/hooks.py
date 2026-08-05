@@ -3,11 +3,12 @@
 from za_local_payroll.compat import dedicated_payroll_hooks_active
 
 app_name = "za_local_payroll"
-app_title = "SA Localisation Payroll"
+app_title = "SA Localisation Payroll & HR"
 app_publisher = "Cohenix"
 app_description = (
-	"South African payroll localisation for PAYE, UIF, SDL, ETI, benefits, "
-	"employer declarations, and payment controls on Frappe HRMS."
+	"South African payroll and HR localisation: PAYE, UIF, SDL, ETI, employer "
+	"declarations, payment controls, BCEA, Employment Equity, skills development "
+	"and COIDA on Frappe HRMS."
 )
 app_email = "info@cohenix.com"
 app_license = "mit"
@@ -25,11 +26,14 @@ after_uninstall = "za_local_core.navigation.sync_shared_navigation"
 if dedicated_payroll_hooks_active():
 	app_include_css = "/assets/za_local_payroll/css/payroll.css"
 	doctype_js = {
+		"COIDA Annual Return": "public/js/coida_annual_return.js",
 		"Employee": "public/js/employee.js",
 		"Payroll Entry": "public/js/payroll_entry.js",
 		"Employee Benefit Claim": "public/js/employee_benefit_claim.js",
 		"Salary Structure": "public/js/salary_structure.js",
 		"Salary Structure Assignment": "public/js/salary_structure_assignment.js",
+		"OID Claim": "public/js/oid_claim.js",
+		"Workplace Injury": "public/js/workplace_injury.js",
 	}
 	extend_doctype_class = {
 		"Salary Slip": [
@@ -37,6 +41,8 @@ if dedicated_payroll_hooks_active():
 		],
 	}
 	override_doctype_class = {
+		"Employee Separation": "za_local_payroll.overrides.employee_separation.ZAEmployeeSeparation",
+		"Leave Application": "za_local_payroll.overrides.leave_application.ZALeaveApplication",
 		"Salary Slip": "za_local_payroll.overrides.salary_slip.ZASalarySlip",
 		"Payroll Entry": "za_local_payroll.overrides.payroll_entry.ZAPayrollEntry",
 		"Additional Salary": "za_local_payroll.overrides.additional_salary.ZAAdditionalSalary",

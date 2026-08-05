@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="za_local_payroll/public/images/za_local_payroll_logo.svg" height="128" alt="SA Localisation Payroll logo">
+<img src="za_local_payroll/public/images/za_local_payroll_logo.svg" height="128" alt="SA Localisation Payroll and HR logo">
 
-# SA Localisation Payroll
+# SA Localisation Payroll &amp; HR
 
-**South African payroll, PAYE and SARS employer reporting for Frappe HR**
+**South African payroll, SARS employer reporting, BCEA, Employment Equity, skills development and COIDA for Frappe HR**
 
 [![CI](https://github.com/EPIUSECX/za_local_payroll/actions/workflows/ci.yml/badge.svg)](https://github.com/EPIUSECX/za_local_payroll/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](license.txt)
@@ -14,10 +14,17 @@
 
 ## What this app is
 
-SA Localisation Payroll turns Frappe HR into a South African payroll. It adds
-PAYE with rebates and medical credits, UIF, SDL, the Employment Tax Incentive,
-fringe benefits, and the employer reporting SARS expects — EMP201, IRP5/IT3(a)
-and EMP501.
+SA Localisation Payroll &amp; HR turns Frappe HR into a South African payroll and
+HR system. It adds PAYE with rebates and medical credits, UIF, SDL, the
+Employment Tax Incentive, fringe benefits, and the employer reporting SARS
+expects — EMP201, IRP5/IT3(a) and EMP501.
+
+It also covers what an employer owes to people and to the Department of
+Employment and Labour rather than to SARS: basic conditions of employment,
+employment equity, skills development, workplace injuries and the Compensation
+Fund. Those modules — SA Labour and SA COIDA — were a separate app until 1.x and
+are part of this one from 2.0.0, because they read the same employee and
+remuneration data and are never installed without payroll.
 
 It **extends** HRMS payroll; it does not replace it. Salary Structure, Additional
 Salary, Salary Slip and Payroll Entry remain the documents your team already
@@ -60,13 +67,42 @@ loud failure instead of a silent zero.
 - **Payroll payment batch** — FNB Online Banking Enterprise CSV, generated from
   an immutable snapshot with a source hash and control total, attached privately
   and regenerated idempotently.
+- **BCEA leave and termination** — opt-in per Leave Type, with sick-leave medical
+  evidence rules, the three-day family-responsibility cap, gender-specific leave,
+  service-based notice, operational-requirements severance and a governed
+  annual-leave payout feeding final settlement.
+- **Employment Equity** — workforce profile, remuneration-proxy, target-plan and
+  movement working papers, with small-cell privacy controls and permission-aware
+  company filtering.
+- **Skills development** — SETA, Skills Development Facilitator, OFO occupation,
+  training provider, Workplace Skills Plan, Annual Training Report and completion
+  records.
+- **Business trips** — date-based allowances, mileage at a governed rate,
+  accommodation and expense totals, with optional draft Expense Claim creation.
+- **Workplace injuries and OID claims** — restricted incident records, draft leave
+  and claim creation, one-way claim status transitions, post-submission medical
+  reports and external receipt evidence.
+- **COIDA** — March-to-February Return of Earnings built from the payroll COIDA
+  earnings basis, with per-employee caps, governed rates and minimums, an
+  immutable source snapshot and stale-source detection.
 
 ## Country scope
 
-South African payroll rules apply only to companies whose country is South
-Africa. On a multi-country site, every other company keeps stock HRMS behaviour —
-including the standard HRMS bank entry — and is never blocked by South African
-statutory setup it cannot complete.
+South African payroll and BCEA rules apply only to companies whose country is
+South Africa. On a multi-country site, every other company keeps stock HRMS
+behaviour — including the standard HRMS bank entry — and is never blocked by South
+African statutory setup it cannot complete. BCEA leave controls are additionally
+opt-in per Leave Type through the governed `za_bcea_compliant` flag, so an
+ungoverned leave type is never subject to BCEA rules.
+
+## Privacy
+
+Workplace injuries and OID claims contain health information, and Employment
+Equity records contain race, gender and disability data. Both are
+special-category personal information under POPIA. Review the role and User
+Permission scoping on these DocTypes for your organisation before go-live — a
+default that suits one employer may be too broad for another. Governance
+registers live in `za_local_core`.
 
 ## Capability status
 
@@ -77,6 +113,11 @@ statutory setup it cannot complete.
 | EMP201 working paper | Controlled Manual | Prepared in-app, declared and paid externally |
 | IRP5/IT3(a) and EMP501 | Controlled Manual | Certificates and reconciliation are produced; **no SARS BRS import file or e@syFile submission is generated** |
 | Payroll bank output | Controlled Manual | FNB OBE CSV only; bank-portal dual authorisation and bank acceptance testing are mandatory |
+| BCEA leave and termination | Preview | Decision support, not a complete entitlement, hours-of-work, collective-agreement or case-law engine |
+| Employment Equity working papers | Controlled Manual | Report names are retained for compatibility and are **not** certified EEA forms; nothing is filed with the Department |
+| WSP / ATR working papers | Controlled Manual | SETA-specific templates, grant eligibility, portal submission and B-BBEE scoring stay external |
+| COIDA Return of Earnings | Controlled Manual | Submit is internal approval only; no CF-2A/W.As.8 transmission to eCOID, and no assessment response is captured |
+| Workplace injury and OID claim | Preview | The seven-day tracker is operational support, not a determination of the applicable report, deadline or occupational-disease process |
 
 Read the live values in the Desk under **SA Overview → Feature Readiness**.
 
@@ -142,6 +183,8 @@ site.
 | [TESTING.md](TESTING.md) | How to verify a deployment |
 | [docs/sa_payroll_configuration_and_testing.md](docs/sa_payroll_configuration_and_testing.md) | Configuration and parallel-run guidance |
 | [docs/sa_payroll_compliance_remediation_2026_27.md](docs/sa_payroll_compliance_remediation_2026_27.md) | 2026/27 statutory alignment record |
+| [docs/sa_labour_configuration_and_testing.md](docs/sa_labour_configuration_and_testing.md) | Labour, EE and skills setup and verification |
+| [docs/sa_coida_configuration_and_testing.md](docs/sa_coida_configuration_and_testing.md) | COIDA setup and verification |
 | [MIGRATION_PLAN.md](MIGRATION_PLAN.md) | What this app owns and how it was extracted |
 | [CHANGELOG.md](CHANGELOG.md) | Release history |
 | [SECURITY.md](SECURITY.md) | Reporting a vulnerability |

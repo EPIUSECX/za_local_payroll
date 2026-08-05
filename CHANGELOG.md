@@ -1,5 +1,35 @@
 # Changelog
 
+## 2.0.0 - 2026-08-03
+
+### Absorbed SA Localisation Workplace
+
+The SA Labour and SA COIDA modules moved into this app from the separate
+`za_local_workplace` app, which is retired. The suite is now three apps: core,
+finance, and payroll and HR.
+
+- BCEA leave and termination, Employment Equity, skills development (WSP/ATR),
+  business trips, workplace injuries, OID claims and the COIDA Return of Earnings
+  all ship here now. The app is titled **SA Localisation Payroll & HR**.
+- Nothing was rewritten. Module names, DocType names, fieldnames and tables are
+  unchanged, so no data is migrated or re-entered.
+- `patches.v1_2.adopt_workplace_modules` re-points the two Module Def and
+  Workspace records to this app and de-registers `za_local_workplace` using
+  `remove_from_installed_apps`, never `remove_app` — an uninstall would have
+  dropped every labour, injury, claim and COIDA record.
+- Setup for the absorbed modules lives in `setup/workplace.py` and
+  `setup/workplace_custom_fields.py`; both apps had defined `DEFAULT_PRINT_FORMATS`
+  and a `setup/custom_fields.py`.
+- The absorbed monthly Employment Equity and COIDA rate reminders now run from
+  this app's existing `monthly` scheduler entry rather than a second one.
+- `za_local_workplace_runtime_owner` is superseded by
+  `za_local_payroll_runtime_owner` for the legacy side-by-side cutover gate.
+
+### Upgrading from 1.x
+
+Update this app and run `bench --site <site> migrate`. Do not run
+`bench uninstall-app za_local_workplace`.
+
 ## 1.2.0 - 2026-08-03
 
 - The guide pages this app publishes into Frappe Wiki are now withdrawn when the

@@ -1,0 +1,23 @@
+{
+ "actions":[], "autoname":"field:ofo_code", "doctype":"DocType", "engine":"InnoDB", "module":"SA Labour", "name":"OFO Occupation", "title_field":"occupation_title",
+ "field_order":["ofo_code","occupation_title","ofo_version","major_group","minor_group","effective_from","effective_to","statutory_source","source_reference","source_evidence","active"],
+ "fields":[
+  {"fieldname":"ofo_code","fieldtype":"Data","label":"OFO Code","reqd":1,"unique":1,"in_list_view":1},
+  {"fieldname":"occupation_title","fieldtype":"Data","label":"Occupation Title","reqd":1,"in_list_view":1},
+  {"fieldname":"ofo_version","fieldtype":"Data","label":"OFO Version / Year","reqd":1},
+  {"fieldname":"major_group","fieldtype":"Data","label":"Major Group"},
+  {"fieldname":"minor_group","fieldtype":"Data","label":"Minor Group"},
+  {"fieldname":"effective_from","fieldtype":"Date","label":"Effective From","reqd":1},
+  {"fieldname":"effective_to","fieldtype":"Date","label":"Effective To"},
+  {"fieldname":"statutory_source","fieldtype":"Link","label":"ZA Statutory Source","options":"ZA Statutory Source"},
+  {"fieldname":"source_reference","fieldtype":"Data","label":"OFO Source Reference","reqd":1},
+  {"fieldname":"source_evidence","fieldtype":"Attach","label":"Private Source Evidence","permlevel":1},
+  {"default":"1","fieldname":"active","fieldtype":"Check","label":"Active","in_list_view":1}
+ ],
+ "permissions":[
+  {"role":"HR Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"report":1,"export":1},
+  {"role":"HR User","read":1,"print":1,"report":1},
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"report":1,"export":1},
+  {"role":"HR Manager","permlevel":1,"read":1,"write":1},{"role":"System Manager","permlevel":1,"read":1,"write":1}
+ ], "sort_field":"ofo_code","sort_order":"ASC","track_changes":1
+}

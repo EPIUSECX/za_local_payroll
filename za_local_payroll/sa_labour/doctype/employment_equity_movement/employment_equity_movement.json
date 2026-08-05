@@ -1,0 +1,28 @@
+{
+ "actions":[], "autoname":"format:EE-MOVE-.YYYY.-.#####", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Employment Equity Movement",
+ "field_order":["company","employee","effective_date","movement_type","previous_occupational_level","new_occupational_level","demographic_section","race","gender","is_disabled","source_section","source_document_type","source_document_name","private_evidence","notes","amended_from"],
+ "fields":[
+  {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","reqd":1,"in_list_view":1},
+  {"fieldname":"employee","fieldtype":"Link","label":"Employee","options":"Employee","reqd":1,"in_list_view":1},
+  {"fieldname":"effective_date","fieldtype":"Date","label":"Effective Date","reqd":1,"in_list_view":1},
+  {"fieldname":"movement_type","fieldtype":"Select","label":"Movement Type","options":"Appointment\nPromotion\nDemotion\nTransfer\nTermination\nOther","reqd":1},
+  {"fieldname":"previous_occupational_level","fieldtype":"Data","label":"Previous Occupational Level"},
+  {"fieldname":"new_occupational_level","fieldtype":"Data","label":"New Occupational Level"},
+  {"fieldname":"demographic_section","fieldtype":"Section Break","label":"Reviewed Demographic Snapshot"},
+  {"fieldname":"race","fieldtype":"Data","label":"Race","reqd":1},
+  {"fieldname":"gender","fieldtype":"Data","label":"Gender","reqd":1},
+  {"fieldname":"is_disabled","fieldtype":"Check","label":"Person with Disability"},
+  {"fieldname":"source_section","fieldtype":"Section Break","label":"Source Evidence"},
+  {"fieldname":"source_document_type","fieldtype":"Link","label":"Source Document Type","options":"DocType"},
+  {"fieldname":"source_document_name","fieldtype":"Dynamic Link","label":"Source Document","options":"source_document_type"},
+  {"fieldname":"private_evidence","fieldtype":"Attach","label":"Private Movement Evidence","permlevel":1},
+  {"fieldname":"notes","fieldtype":"Small Text","label":"Practitioner Notes"},
+  {"fieldname":"amended_from","fieldtype":"Link","label":"Amended From","options":"Employment Equity Movement","no_copy":1,"read_only":1}
+ ],
+ "permissions":[
+  {"role":"HR Manager","read":1,"write":1,"create":1,"delete":1,"submit":1,"cancel":1,"amend":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"submit":1,"cancel":1,"amend":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"HR Manager","permlevel":1,"read":1,"write":1},
+  {"role":"System Manager","permlevel":1,"read":1,"write":1}
+ ], "sort_field":"effective_date","sort_order":"DESC","track_changes":1
+}

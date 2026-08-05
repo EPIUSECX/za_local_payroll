@@ -1,0 +1,123 @@
+{
+ "app": "za_local_payroll",
+ "charts": [
+  {
+   "chart_name": "SA OID Claims by Status",
+   "label": "SA OID Claims by Status"
+  },
+  {
+   "chart_name": "SA Workplace Injuries by Severity",
+   "label": "SA Workplace Injuries by Severity"
+  },
+  {
+   "chart_name": "SA COIDA Assessable Earnings by Year",
+   "label": "SA COIDA Assessable Earnings by Year"
+  }
+ ],
+ "content": "[{\"id\": \"sa-coida-nc-0\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"COIDA Assessable Earnings\", \"col\": 4}}, {\"id\": \"sa-coida-nc-1\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"COIDA Assessment Fee\", \"col\": 4}}, {\"id\": \"sa-coida-nc-2\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"Workplace Injuries Open\", \"col\": 4}}, {\"id\": \"sa-coida-nc-3\", \"type\": \"number_card\", \"data\": {\"number_card_name\": \"OID Claims Awaiting Outcome\", \"col\": 4}}, {\"id\": \"sa-coida-ch-0\", \"type\": \"chart\", \"data\": {\"chart_name\": \"SA OID Claims by Status\", \"col\": 6}}, {\"id\": \"sa-coida-ch-1\", \"type\": \"chart\", \"data\": {\"chart_name\": \"SA Workplace Injuries by Severity\", \"col\": 6}}, {\"id\": \"sa-coida-ch-2\", \"type\": \"chart\", \"data\": {\"chart_name\": \"SA COIDA Assessable Earnings by Year\", \"col\": 6}}, {\"id\": \"sa-coid-sp\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"sa-coid-h\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Transactions &amp; Reports</b></span>\", \"col\": 12}}, {\"id\": \"sa-coid-p\", \"type\": \"paragraph\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Return of Earnings, workplace injuries, OID claims, and COIDA configuration.</span>\", \"col\": 12}}, {\"id\": \"sa-coid-c1\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 6}}, {\"id\": \"sa-coid-c2\", \"type\": \"card\", \"data\": {\"card_name\": \"Returns & incidents\", \"col\": 6}}]",
+ "creation": "2026-03-17 12:29:54.974394",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "support",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "SA COIDA",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "icon": "setting-gear",
+   "is_query_report": 0,
+   "label": "Setup",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "COIDA Settings",
+   "link_count": 0,
+   "link_to": "COIDA Settings",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "icon": "healthcare",
+   "is_query_report": 0,
+   "label": "Returns & incidents",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "COIDA Annual Return",
+   "link_count": 0,
+   "link_to": "COIDA Annual Return",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Workplace Injury",
+   "link_count": 0,
+   "link_to": "Workplace Injury",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "OID Claim",
+   "link_count": 0,
+   "link_to": "OID Claim",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-03 07:36:13.134938",
+ "modified_by": "Administrator",
+ "module": "SA COIDA",
+ "name": "SA COIDA",
+ "number_cards": [
+  {
+   "label": "COIDA Assessable Earnings",
+   "number_card_name": "COIDA Assessable Earnings"
+  },
+  {
+   "label": "COIDA Assessment Fee",
+   "number_card_name": "COIDA Assessment Fee"
+  },
+  {
+   "label": "Workplace Injuries Open",
+   "number_card_name": "Workplace Injuries Open"
+  },
+  {
+   "label": "OID Claims Awaiting Outcome",
+   "number_card_name": "OID Claims Awaiting Outcome"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "SA Overview",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 27.0,
+ "shortcuts": [],
+ "title": "SA COIDA",
+ "type": "Workspace"
+}

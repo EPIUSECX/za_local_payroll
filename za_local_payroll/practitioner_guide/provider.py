@@ -58,6 +58,15 @@ def get_guide_sections() -> dict:
 				),
 			},
 			{
+				"key": "sa-labour-coida",
+				"title": "Labour, Skills, Employment Equity and COIDA",
+				"order": 60,
+				"pages": _pages(
+					("sa-labour", "SA Labour and Skills", "70_sa_labour.md"),
+					("sa-coida", "COIDA, Injuries and Claims", "71_sa_coida.md"),
+				),
+			},
+			{
 				"key": "reference-operations",
 				"title": "Reference and Operations",
 				"order": 80,
@@ -83,7 +92,10 @@ def get_guide_sections() -> dict:
 				"key": "reports",
 				"title": "Reports",
 				"order": 35,
-				"pages": _pages(("payroll-reports", "Payroll Reports", "u42_payroll_reports.md")),
+				"pages": _pages(
+					("payroll-reports", "Payroll Reports", "u42_payroll_reports.md"),
+					("labour-coida-reports", "Labour and COIDA Reports", "u43_labour_coida_reports.md"),
+				),
 			},
 		],
 	}

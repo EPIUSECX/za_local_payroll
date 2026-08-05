@@ -3,7 +3,7 @@ name = "za_local_payroll"
 authors = [
     { name = "Cohenix", email = "info@cohenix.com"}
 ]
-description = "South African payroll localisation for PAYE, UIF, SDL, ETI, benefits, employer declarations, and payment controls on Frappe HRMS."
+description = "South African payroll and HR localisation: PAYE, UIF, SDL, ETI, employer declarations, payment controls, BCEA, Employment Equity, skills development and COIDA on Frappe HRMS."
 requires-python = ">=3.14,<3.15"
 readme = "README.md"
 dynamic = ["version"]

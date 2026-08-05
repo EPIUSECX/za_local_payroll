@@ -12,6 +12,15 @@ from za_local_payroll.setup.masters import seed_payroll_masters
 from za_local_payroll.setup.property_setters import apply_payroll_property_setters
 from za_local_payroll.setup.records import install_payroll_doctype_links
 from za_local_payroll.setup.statutory import ensure_all_company_tax_configuration
+from za_local_payroll.setup.workplace import (
+	claim_workplace_module_ownership,
+	ensure_workplace_print_formats,
+	seed_2026_labour_reference_rows,
+	seed_workplace_dashboards,
+	seed_workplace_readiness,
+)
+from za_local_payroll.setup.workplace_custom_fields import ensure_workplace_custom_fields
+from za_local_payroll.utils.csv_importer import import_default_master_data
 
 REQUIRED_APPS = {"erpnext", "hrms", "za_local_core"}
 
@@ -79,6 +88,7 @@ def after_install() -> None:
 	seed_payroll_readiness()
 	ensure_default_print_formats()
 	seed_payroll_dashboards()
+	_setup_workplace_modules()
 	sync_shared_navigation()
 
 
@@ -90,6 +100,7 @@ def after_migrate() -> None:
 	seed_payroll_readiness()
 	ensure_default_print_formats()
 	seed_payroll_dashboards()
+	_setup_workplace_modules()
 	sync_shared_navigation()
 
 
@@ -108,6 +119,17 @@ def _sync_schema_support() -> None:
 	apply_payroll_property_setters()
 	install_payroll_doctype_links()
 	transfer_ownership()
+
+
+def _setup_workplace_modules() -> None:
+	"""Set up the SA Labour and SA COIDA modules this app absorbed."""
+	claim_workplace_module_ownership()
+	ensure_workplace_custom_fields()
+	import_default_master_data()
+	seed_2026_labour_reference_rows()
+	seed_workplace_readiness()
+	ensure_workplace_print_formats()
+	seed_workplace_dashboards()
 
 
 def seed_payroll_readiness() -> None:

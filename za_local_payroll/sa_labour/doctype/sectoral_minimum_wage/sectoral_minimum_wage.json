@@ -1,0 +1,35 @@
+{
+ "actions":[], "autoname":"format:{worker_category}-{sector}-{position_category}-{effective_from}", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Sectoral Minimum Wage",
+ "field_order":["worker_category","sector","position_category","effective_from","effective_to","hourly_rate","monthly_rate","schedule_reference","special_category_reason","source_section","statutory_source","source_reference","source_evidence","control_section","prepared_by","reviewed_by","review_evidence","reviewed_on","governance_status","automation_status","amended_from"],
+ "fields":[
+  {"fieldname":"worker_category","fieldtype":"Select","label":"Worker / Rule Category","options":"General NMW\nEPWP\nLearnership Schedule 2\nSector-specific\nSpecial or Excluded Category","reqd":1,"in_list_view":1},
+  {"fieldname":"sector","fieldtype":"Data","label":"Sector","reqd":1,"in_list_view":1},
+  {"fieldname":"position_category","fieldtype":"Data","label":"Position Category","reqd":1},
+  {"fieldname":"effective_from","fieldtype":"Date","label":"Effective From","reqd":1,"in_list_view":1},
+  {"fieldname":"effective_to","fieldtype":"Date","label":"Effective To"},
+  {"fieldname":"hourly_rate","fieldtype":"Currency","label":"Hourly Rate"},
+  {"fieldname":"monthly_rate","fieldtype":"Currency","label":"Monthly Rate"},
+  {"fieldname":"schedule_reference","fieldtype":"Data","label":"Schedule / Allowance Table Reference"},
+  {"fieldname":"special_category_reason","fieldtype":"Small Text","label":"Special / Excluded Category Basis"},
+  {"fieldname":"source_section","fieldtype":"Section Break","label":"Effective Source"},
+  {"fieldname":"statutory_source","fieldtype":"Link","label":"ZA Statutory Source","options":"ZA Statutory Source"},
+  {"fieldname":"source_reference","fieldtype":"Data","label":"Gazette / Source Reference","reqd":1},
+  {"fieldname":"source_evidence","fieldtype":"Attach","label":"Private Source Evidence","permlevel":1},
+  {"fieldname":"control_section","fieldtype":"Section Break","label":"Independent Review"},
+  {"fieldname":"prepared_by","fieldtype":"Link","label":"Prepared By","options":"User","read_only":1},
+  {"fieldname":"reviewed_by","fieldtype":"Link","label":"Independent Reviewer","options":"User","reqd":1},
+  {"fieldname":"review_evidence","fieldtype":"Attach","label":"Private Review Evidence","permlevel":1},
+  {"fieldname":"reviewed_on","fieldtype":"Datetime","label":"Reviewed On","read_only":1},
+  {"default":"Draft Reference","fieldname":"governance_status","fieldtype":"Select","label":"Governance Status","options":"Draft Reference\nInternally Approved\nCancelled","read_only":1},
+  {"default":"Controlled Manual - No Automatic Employee Assignment","fieldname":"automation_status","fieldtype":"Data","label":"Automation Status","read_only":1},
+  {"fieldname":"amended_from","fieldtype":"Link","label":"Amended From","options":"Sectoral Minimum Wage","no_copy":1,"read_only":1}
+ ],
+ "permissions":[
+  {"role":"HR User","read":1,"print":1,"report":1},
+  {"role":"HR Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"report":1,"export":1},
+  {"role":"ZA Compliance Reviewer","read":1,"write":1,"submit":1,"print":1,"report":1},
+  {"role":"ZA Compliance Manager","read":1,"write":1,"create":1,"delete":1,"submit":1,"cancel":1,"amend":1,"print":1,"report":1,"export":1},
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"submit":1,"cancel":1,"amend":1,"print":1,"report":1,"export":1},
+  {"role":"HR Manager","permlevel":1,"read":1,"write":1},{"role":"ZA Compliance Reviewer","permlevel":1,"read":1},{"role":"ZA Compliance Manager","permlevel":1,"read":1,"write":1},{"role":"System Manager","permlevel":1,"read":1,"write":1}
+ ], "sort_field":"effective_from","sort_order":"DESC","track_changes":1
+}

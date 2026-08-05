@@ -1,0 +1,3 @@
+{
+ "add_total_row":0,"columns":[],"disable_prepared_report":0,"doctype":"Report","filters":[],"is_standard":"Yes","letter_head":null,"module":"SA Labour","name":"EE Workforce Movement","prepared_report":0,"ref_doctype":"Employment Equity Movement","report_name":"EE Workforce Movement","report_type":"Script Report","roles":[{"role":"HR Manager"},{"role":"ZA Compliance Reviewer"},{"role":"ZA Compliance Manager"},{"role":"System Manager"}]
+}

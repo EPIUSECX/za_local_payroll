@@ -1,0 +1,14 @@
+{
+ "actions": [], "doctype":"DocType", "engine":"InnoDB", "istable":1, "module":"SA Labour", "name":"Employment Equity Target",
+ "field_order":["effective_date","occupational_level","race","gender","disability_status","target_percentage","target_headcount","notes"],
+ "fields":[
+  {"fieldname":"effective_date","fieldtype":"Date","label":"Effective Date","reqd":1,"in_list_view":1},
+  {"fieldname":"occupational_level","fieldtype":"Select","label":"Occupational Level","options":"Top Management\nSenior Management\nProfessionally Qualified\nSkilled Technical\nSemi-Skilled\nUnskilled\nTemporary Employees\nNon-Permanent","reqd":1,"in_list_view":1},
+  {"fieldname":"race","fieldtype":"Select","label":"Race","options":"All\nAfrican\nColoured\nIndian\nWhite\nOther","default":"All","reqd":1},
+  {"fieldname":"gender","fieldtype":"Select","label":"Gender","options":"All\nMale\nFemale","default":"All","reqd":1},
+  {"fieldname":"disability_status","fieldtype":"Select","label":"Disability Status","options":"All\nPersons with Disabilities\nPersons without Disabilities","default":"All","reqd":1},
+  {"fieldname":"target_percentage","fieldtype":"Percent","label":"Target Percentage"},
+  {"fieldname":"target_headcount","fieldtype":"Int","label":"Target Headcount"},
+  {"fieldname":"notes","fieldtype":"Small Text","label":"Practitioner Notes"}
+ ], "permissions":[], "track_changes":1
+}

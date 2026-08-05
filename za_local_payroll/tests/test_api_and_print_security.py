@@ -19,9 +19,24 @@ GET_ENDPOINTS = {
 	"sa_payroll.doctype.low_interest_loan_benefit.low_interest_loan_benefit.get_current_official_rate",
 	"sa_payroll.doctype.tax_directive.tax_directive.get_active_directive",
 	"utils.hrms.is_hrms_installed",
+	# Absorbed with the SA Labour and SA COIDA modules; verbs unchanged.
+	"sa_labour.doctype.business_trip_region.business_trip_region.get_active_regions",
+	"sa_labour.doctype.business_trip_settings.business_trip_settings.get_expense_claim_types",
+	"sa_labour.doctype.business_trip_settings.business_trip_settings.get_mileage_rate",
 }
 
 POST_ENDPOINTS = {
+	# Absorbed with the SA Labour and SA COIDA modules; verbs unchanged.
+	"overrides.employee_separation.ZAEmployeeSeparation.create_final_settlement",
+	"sa_coida.doctype.coida_annual_return.coida_annual_return.COIDAAnnualReturn.fetch_employee_data",
+	"sa_coida.doctype.coida_settings.coida_settings.COIDASettings.approve_legacy_rate_fallback",
+	"sa_coida.doctype.oid_claim.oid_claim.OIDClaim.add_medical_report",
+	"sa_coida.doctype.oid_claim.oid_claim.OIDClaim.update_claim_status",
+	"sa_coida.doctype.workplace_injury.workplace_injury.WorkplaceInjury.create_leave_application_after_submit",
+	"sa_coida.doctype.workplace_injury.workplace_injury.WorkplaceInjury.create_oid_claim_after_submit",
+	"sa_labour.doctype.bargaining_council.bargaining_council.import_common_councils",
+	"sa_labour.doctype.business_trip.business_trip.create_expense_claim_from_trip",
+	"sa_labour.doctype.business_trip.business_trip.generate_allowances_for_date_range",
 	"overrides.journal_entry.force_delete_all_cancelled_payroll_journal_entries",
 	"overrides.journal_entry.force_delete_cancelled_payroll_journal_entry",
 	"overrides.payroll_entry.ZAPayrollEntry.create_salary_slips",

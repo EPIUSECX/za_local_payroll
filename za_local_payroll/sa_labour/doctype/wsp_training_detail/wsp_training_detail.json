@@ -1,0 +1,14 @@
+{
+ "actions":[], "doctype":"DocType", "engine":"InnoDB", "istable":1, "module":"SA Labour", "name":"Wsp Training Detail",
+ "field_order":["ofo_occupation","occupational_level","planned_training","intervention_type","qualification_reference","training_provider","number_of_employees","estimated_cost"],
+ "fields":[
+  {"fieldname":"ofo_occupation","fieldtype":"Link","label":"OFO Occupation","options":"OFO Occupation","reqd":1,"in_list_view":1},
+  {"fieldname":"occupational_level","fieldtype":"Select","label":"Occupational Level","options":"Top Management\nSenior Management\nProfessionally Qualified\nSkilled Technical\nSemi-Skilled\nUnskilled\nTemporary Employees\nNon-Permanent","reqd":1},
+  {"fieldname":"planned_training","fieldtype":"Data","label":"Planned Training","reqd":1,"in_list_view":1},
+  {"fieldname":"intervention_type","fieldtype":"Data","label":"Learning Intervention Type","reqd":1},
+  {"fieldname":"qualification_reference","fieldtype":"Data","label":"Qualification / Programme Reference"},
+  {"fieldname":"training_provider","fieldtype":"Link","label":"Training Provider","options":"Training Provider","reqd":1},
+  {"fieldname":"number_of_employees","fieldtype":"Int","label":"Number of Employees","reqd":1,"in_list_view":1},
+  {"fieldname":"estimated_cost","fieldtype":"Currency","label":"Estimated Cost","reqd":1,"in_list_view":1}
+ ], "permissions":[], "track_changes":1
+}

@@ -1,0 +1,34 @@
+{
+ "actions":[], "autoname":"format:SKI-.YYYY.-.#####", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Skills Development Record",
+ "field_order":["company","fiscal_year","seta","workplace_skills_plan","annual_training_report","employee","ofo_occupation","training_program","intervention_type","qualification_reference","training_provider","provider_accreditation_required","start_date","end_date","training_cost","bursary_amount","is_disabled_learner","completion_evidence","control_section","bbbee_scoring_status","bec_points","amended_from"],
+ "fields":[
+  {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","reqd":1,"in_list_view":1},
+  {"fieldname":"fiscal_year","fieldtype":"Link","label":"Fiscal Year","options":"Fiscal Year","reqd":1},
+  {"fieldname":"seta","fieldtype":"Link","label":"SETA","options":"SETA","reqd":1},
+  {"fieldname":"workplace_skills_plan","fieldtype":"Link","label":"Approved Workplace Skills Plan","options":"Workplace Skills Plan","reqd":1},
+  {"fieldname":"annual_training_report","fieldtype":"Link","label":"Annual Training Report","options":"Annual Training Report"},
+  {"fieldname":"employee","fieldtype":"Link","label":"Employee","options":"Employee","reqd":1,"in_list_view":1},
+  {"fieldname":"ofo_occupation","fieldtype":"Link","label":"OFO Occupation","options":"OFO Occupation","reqd":1},
+  {"fieldname":"training_program","fieldtype":"Data","label":"Training Programme","reqd":1},
+  {"fieldname":"intervention_type","fieldtype":"Data","label":"Learning Intervention Type","reqd":1},
+  {"fieldname":"qualification_reference","fieldtype":"Data","label":"Qualification / Programme Reference"},
+  {"fieldname":"training_provider","fieldtype":"Link","label":"Training Provider","options":"Training Provider","reqd":1},
+  {"fieldname":"provider_accreditation_required","fieldtype":"Check","label":"Provider Accreditation Required"},
+  {"fieldname":"start_date","fieldtype":"Date","label":"Start Date","reqd":1},
+  {"fieldname":"end_date","fieldtype":"Date","label":"End Date","reqd":1},
+  {"fieldname":"training_cost","fieldtype":"Currency","label":"Training Cost"},
+  {"fieldname":"bursary_amount","fieldtype":"Currency","label":"Bursary Amount"},
+  {"fieldname":"is_disabled_learner","fieldtype":"Check","label":"Learner Is a Person with Disability"},
+  {"fieldname":"completion_evidence","fieldtype":"Attach","label":"Private Completion Evidence","permlevel":1},
+  {"fieldname":"control_section","fieldtype":"Section Break","label":"Controlled Manual B-BBEE Scoring"},
+  {"default":"Controlled Manual - Not Calculated","fieldname":"bbbee_scoring_status","fieldtype":"Select","label":"B-BBEE Scoring Status","options":"Controlled Manual - Not Calculated","read_only":1},
+  {"default":"0","fieldname":"bec_points","fieldtype":"Float","label":"Deprecated BEC Points","hidden":1,"read_only":1,"no_copy":1},
+  {"fieldname":"amended_from","fieldtype":"Link","label":"Amended From","options":"Skills Development Record","no_copy":1,"read_only":1}
+ ],
+ "permissions":[
+  {"role":"HR User","read":1,"print":1,"report":1},
+  {"role":"HR Manager","read":1,"write":1,"create":1,"delete":1,"submit":1,"cancel":1,"amend":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"submit":1,"cancel":1,"amend":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"HR Manager","permlevel":1,"read":1,"write":1},{"role":"System Manager","permlevel":1,"read":1,"write":1}
+ ], "sort_field":"modified","sort_order":"DESC","track_changes":1
+}

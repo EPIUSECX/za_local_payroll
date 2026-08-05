@@ -1,0 +1,33 @@
+{
+ "actions":[], "autoname":"format:WSP-.YYYY.-.#####", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Workplace Skills Plan",
+ "field_order":["company","fiscal_year","seta","skills_development_facilitator","source_reference","total_training_budget","training_details","control_section","prepared_by","reviewed_by","review_evidence","reviewed_on","status","submission_date","external_filing_status","external_filing_reference","external_filing_date","external_filing_evidence","amended_from"],
+ "fields":[
+  {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","reqd":1,"in_list_view":1},
+  {"fieldname":"fiscal_year","fieldtype":"Link","label":"Fiscal Year","options":"Fiscal Year","reqd":1,"in_list_view":1},
+  {"fieldname":"seta","fieldtype":"Link","label":"SETA","options":"SETA","reqd":1},
+  {"fieldname":"skills_development_facilitator","fieldtype":"Link","label":"Skills Development Facilitator","options":"Skills Development Facilitator","reqd":1},
+  {"fieldname":"source_reference","fieldtype":"Data","label":"WSP Guidance / Source Reference","reqd":1},
+  {"fieldname":"total_training_budget","fieldtype":"Currency","label":"Total Training Budget","read_only":1},
+  {"fieldname":"training_details","fieldtype":"Table","label":"Planned Training","options":"Wsp Training Detail","reqd":1},
+  {"fieldname":"control_section","fieldtype":"Section Break","label":"Controlled Manual Review and Filing"},
+  {"fieldname":"prepared_by","fieldtype":"Link","label":"Prepared By","options":"User","read_only":1},
+  {"fieldname":"reviewed_by","fieldtype":"Link","label":"Independent Reviewer","options":"User","reqd":1},
+  {"fieldname":"review_evidence","fieldtype":"Attach","label":"Private Review Evidence","permlevel":1},
+  {"fieldname":"reviewed_on","fieldtype":"Datetime","label":"Reviewed On","read_only":1},
+  {"default":"Draft Working Paper","fieldname":"status","fieldtype":"Select","label":"Internal Status","options":"Draft Working Paper\nInternally Approved\nCancelled","read_only":1,"in_list_view":1},
+  {"fieldname":"submission_date","fieldtype":"Date","label":"Internal Approval Date","read_only":1},
+  {"default":"Not Filed","fieldname":"external_filing_status","fieldtype":"Select","label":"External Filing Status (Controlled Manual)","options":"Not Filed\nFiled Externally\nNot Applicable"},
+  {"fieldname":"external_filing_reference","fieldtype":"Data","label":"External Filing Reference","depends_on":"eval:doc.external_filing_status=='Filed Externally'"},
+  {"fieldname":"external_filing_date","fieldtype":"Date","label":"External Filing Date","depends_on":"eval:doc.external_filing_status=='Filed Externally'"},
+  {"fieldname":"external_filing_evidence","fieldtype":"Attach","label":"Private External Filing Evidence","permlevel":1,"depends_on":"eval:doc.external_filing_status=='Filed Externally'"},
+  {"fieldname":"amended_from","fieldtype":"Link","label":"Amended From","options":"Workplace Skills Plan","no_copy":1,"read_only":1}
+ ],
+ "permissions":[
+  {"role":"HR User","read":1,"print":1,"report":1},
+  {"role":"HR Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"ZA Compliance Reviewer","read":1,"write":1,"submit":1,"print":1,"email":1,"report":1,"export":1},
+  {"role":"ZA Compliance Manager","read":1,"write":1,"create":1,"delete":1,"submit":1,"cancel":1,"amend":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"submit":1,"cancel":1,"amend":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"HR Manager","permlevel":1,"read":1,"write":1},{"role":"ZA Compliance Reviewer","permlevel":1,"read":1},{"role":"ZA Compliance Manager","permlevel":1,"read":1,"write":1},{"role":"System Manager","permlevel":1,"read":1,"write":1}
+ ], "sort_field":"modified","sort_order":"DESC","track_changes":1
+}

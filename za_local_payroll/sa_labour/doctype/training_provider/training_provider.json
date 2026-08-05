@@ -1,0 +1,24 @@
+{
+ "actions":[], "autoname":"format:{provider_name}", "doctype":"DocType", "engine":"InnoDB", "module":"SA Labour", "name":"Training Provider", "title_field":"provider_name",
+ "field_order":["provider_name","registration_number","contact_details","accreditation_section","accredited","accreditation_body","accreditation_number","accreditation_scope","accreditation_from","accreditation_to","accreditation_evidence","active"],
+ "fields":[
+  {"fieldname":"provider_name","fieldtype":"Data","label":"Provider Name","reqd":1,"unique":1,"in_list_view":1},
+  {"fieldname":"registration_number","fieldtype":"Data","label":"Registration Number"},
+  {"fieldname":"contact_details","fieldtype":"Small Text","label":"Contact Details"},
+  {"fieldname":"accreditation_section","fieldtype":"Section Break","label":"Governed Accreditation"},
+  {"fieldname":"accredited","fieldtype":"Check","label":"Accredited"},
+  {"fieldname":"accreditation_body","fieldtype":"Data","label":"Accreditation Body","depends_on":"accredited"},
+  {"fieldname":"accreditation_number","fieldtype":"Data","label":"Accreditation Number","depends_on":"accredited"},
+  {"fieldname":"accreditation_scope","fieldtype":"Small Text","label":"Accreditation Scope","depends_on":"accredited"},
+  {"fieldname":"accreditation_from","fieldtype":"Date","label":"Accreditation From","depends_on":"accredited"},
+  {"fieldname":"accreditation_to","fieldtype":"Date","label":"Accreditation To","depends_on":"accredited"},
+  {"fieldname":"accreditation_evidence","fieldtype":"Attach","label":"Private Accreditation Evidence","permlevel":1,"depends_on":"accredited"},
+  {"default":"1","fieldname":"active","fieldtype":"Check","label":"Active","in_list_view":1}
+ ],
+ "permissions":[
+  {"role":"HR Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"report":1,"export":1},
+  {"role":"HR User","read":1,"print":1,"report":1},
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"report":1,"export":1},
+  {"role":"HR Manager","permlevel":1,"read":1,"write":1},{"role":"System Manager","permlevel":1,"read":1,"write":1}
+ ], "sort_field":"provider_name","sort_order":"ASC","track_changes":1
+}

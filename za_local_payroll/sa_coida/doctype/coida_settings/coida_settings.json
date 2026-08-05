@@ -1,0 +1,198 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-05-06 16:53:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "registration_section",
+  "registration_number",
+  "reference_number",
+  "column_break_4",
+  "submission_deadline",
+  "assessment_year",
+  "industry_rates_section",
+  "industry_rates",
+  "legacy_rate_section",
+  "allow_legacy_rate_fallback",
+  "legacy_rate_fallback_status",
+  "legacy_rate_effective_from",
+  "legacy_rate_effective_to",
+  "legacy_rate_source_reference",
+  "legacy_minimum_assessment",
+  "legacy_domestic_minimum_assessment",
+  "legacy_rate_evidence",
+  "legacy_rate_prepared_by",
+  "legacy_rate_reviewed_by",
+  "legacy_rate_reviewed_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "registration_section",
+   "fieldtype": "Section Break",
+   "label": "Registration Details"
+  },
+  {
+   "fieldname": "registration_number",
+   "fieldtype": "Data",
+   "label": "COIDA Registration Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reference_number",
+   "fieldtype": "Data",
+   "label": "Reference Number"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "submission_deadline",
+   "fieldtype": "Date",
+   "label": "Submission Deadline"
+  },
+  {
+   "fieldname": "assessment_year",
+   "fieldtype": "Link",
+   "label": "Assessment Year",
+   "options": "Fiscal Year"
+  },
+  {
+   "fieldname": "industry_rates_section",
+   "fieldtype": "Section Break",
+   "label": "Industry Rates"
+  },
+  {
+   "fieldname": "industry_rates",
+   "fieldtype": "Table",
+   "label": "Industry Rates",
+   "options": "COIDA Industry Rate",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "description": "Temporary migration control used only when no approved ZA Statutory Rate Pack applies.",
+   "fieldname": "legacy_rate_section",
+   "fieldtype": "Section Break",
+   "label": "Controlled Legacy Rate Fallback"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_legacy_rate_fallback",
+   "fieldtype": "Check",
+   "label": "Allow Approved Legacy Rate Fallback"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "legacy_rate_fallback_status",
+   "fieldtype": "Select",
+   "label": "Fallback Approval Status",
+   "options": "Draft\nApproved",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.allow_legacy_rate_fallback==1",
+   "fieldname": "legacy_rate_effective_from",
+   "fieldtype": "Date",
+   "label": "Legacy Rate Effective From"
+  },
+  {
+   "depends_on": "eval:doc.allow_legacy_rate_fallback==1",
+   "fieldname": "legacy_rate_effective_to",
+   "fieldtype": "Date",
+   "label": "Legacy Rate Effective To"
+  },
+  {
+   "depends_on": "eval:doc.allow_legacy_rate_fallback==1",
+   "fieldname": "legacy_rate_source_reference",
+   "fieldtype": "Data",
+   "label": "Legacy Rate Source Reference"
+  },
+  {
+   "depends_on": "eval:doc.allow_legacy_rate_fallback==1",
+   "fieldname": "legacy_minimum_assessment",
+   "fieldtype": "Currency",
+   "label": "General Minimum Assessment"
+  },
+  {
+   "depends_on": "eval:doc.allow_legacy_rate_fallback==1",
+   "fieldname": "legacy_domestic_minimum_assessment",
+   "fieldtype": "Currency",
+   "label": "Domestic Employer Minimum Assessment"
+  },
+  {
+   "depends_on": "eval:doc.allow_legacy_rate_fallback==1",
+   "fieldname": "legacy_rate_evidence",
+   "fieldtype": "Attach",
+   "label": "Private Source Evidence",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "legacy_rate_prepared_by",
+   "fieldtype": "Link",
+   "label": "Prepared By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "legacy_rate_reviewed_by",
+   "fieldtype": "Link",
+   "label": "Reviewed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "legacy_rate_reviewed_on",
+   "fieldtype": "Datetime",
+   "label": "Reviewed On",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-05-06 16:53:00.000000",
+ "modified_by": "Administrator",
+ "module": "SA COIDA",
+ "name": "COIDA Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "HR Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
