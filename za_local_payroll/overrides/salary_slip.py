@@ -250,9 +250,9 @@ class ZASalarySlip(SalarySlip):
 
 		self.apply_retirement_fund_deduction_cap()
 
-		# Track taxable earnings without full-tax additional components
+		# Track taxable earnings without annual payments, which carry their own tax
 		self.total_taxable_earnings_without_full_tax_addl_components = self.total_taxable_earnings - getattr(
-			self, "current_additional_earnings_with_full_tax", 0
+			self, "za_annual_payments_to_date", 0
 		)
 
 	def get_total_sub_periods(self):
@@ -271,30 +271,93 @@ class ZASalarySlip(SalarySlip):
 			)[0]
 		)
 
+	def get_periods_employed_to_date(self):
+		"""Pay periods this employee has been paid in the tax year, including this one.
+
+		Counted from the slips actually raised rather than from the calendar, so an
+		employer that starts running payroll mid-year annualises on the periods it
+		has paid instead of crediting the employee with months it never processed.
+		"""
+		if not self.payroll_period:
+			return 1
+		return (
+			frappe.db.count(
+				"Salary Slip",
+				{
+					"employee": self.employee,
+					"company": self.company,
+					"docstatus": 1,
+					"start_date": [">=", self.payroll_period.start_date],
+					"end_date": ["<", self.start_date],
+				},
+			)
+			+ 1
+		)
+
+	def get_previous_annual_payment_earnings(self):
+		"""Annual payments already taxed in earlier periods of this tax year."""
+		if not self.payroll_period:
+			return 0
+
+		previous_slips = frappe.get_all(
+			"Salary Slip",
+			filters={
+				"employee": self.employee,
+				"company": self.company,
+				"docstatus": 1,
+				"start_date": [">=", self.payroll_period.start_date],
+				"end_date": ["<", self.start_date],
+			},
+			pluck="name",
+		)
+		if not previous_slips:
+			return 0
+
+		total = 0
+		for row in frappe.get_all(
+			"Salary Detail",
+			filters={"parent": ["in", previous_slips], "parentfield": "earnings"},
+			fields=["salary_component", "amount", "is_tax_applicable"],
+		):
+			if not row.is_tax_applicable:
+				continue
+			if self.is_once_off_full_tax(self.get_sa_component_metadata(row.salary_component)):
+				total += flt(row.amount)
+		return total
+
 	def apply_sars_annual_equivalent(self):
-		"""Annualise the current period instead of carrying year-to-date actuals.
+		"""Annualise the average of remuneration to date, not a forward projection.
 
 		Paragraph 9(3) of the Fourth Schedule taxes the annual equivalent of the
-		current period's balance of remuneration. HRMS instead sums actual
-		year-to-date earnings with a projection of the remaining periods, so the
-		annual equivalent drifts whenever remuneration changes mid-year and is then
-		corrected by a catch-up in later periods. That converges over a full year but
-		puts the wrong PAYE on every intervening EMP201.
+		balance of remuneration, and the annual equivalent is the year-to-date
+		balance divided by the periods worked and multiplied by the periods in the
+		tax year. HRMS instead adds actual year-to-date earnings to a projection of
+		the current period across the periods remaining, which overstates the
+		equivalent whenever earnings are lumpy and then corrects it later.
 
-		Annual payments stay outside this: they are added un-annualised and taxed in
-		full in the period they accrue.
+		Annual payments are excluded from the average. They are not annualised: they
+		are added to the annualised balance and taxed in full when they accrue.
 		"""
 		periods = self.get_total_sub_periods()
-		if periods <= 0:
+		elapsed = self.get_periods_employed_to_date()
+		if periods <= 0 or elapsed <= 0:
 			return
 
-		self.total_taxable_earnings = (
-			flt(self.current_structured_taxable_earnings) * periods
+		annual_payments = flt(self.current_additional_earnings_with_full_tax) + flt(
+			self.get_previous_annual_payment_earnings()
+		)
+		earnings_to_date = (
+			flt(self.previous_taxable_earnings)
+			+ flt(self.current_structured_taxable_earnings)
 			+ flt(self.current_additional_earnings)
 			+ flt(self.other_incomes)
 			+ flt(self.unclaimed_taxable_benefits)
 			- flt(self.total_exemption_amount)
+			- annual_payments
 		)
+
+		self.total_taxable_earnings = earnings_to_date / elapsed * periods + annual_payments
+		self.za_annual_payments_to_date = annual_payments
 
 	def apply_retirement_fund_deduction_cap(self):
 		"""Add back retirement fund deductions above the SARS annual cap.
@@ -566,20 +629,25 @@ class ZASalarySlip(SalarySlip):
 				- medical_credits,
 			)
 
-			# Recalculate structured PAYE after rebates/credits. Full-tax
-			# additional earnings remain payable in the selected payroll run.
-			# The annual liability is spread evenly over the pay periods in the tax
-			# year, so an employee employed for part of it pays exactly their
-			# pro-rata share. Dividing the shortfall over the remaining periods
-			# instead would back-load the deduction and misstate every EMP201.
+			# The employee is liable for the share of the annual liability that the
+			# periods worked so far represent, less what has already been deducted.
+			# Deducting the shortfall over the periods remaining instead would
+			# back-load the tax and misstate every EMP201 along the way.
+			previous_total_paid_taxes = self._component_based_variable_tax[tax_component][
+				"previous_total_paid_taxes"
+			]
 			total_sub_periods = self.get_total_sub_periods()
+			elapsed = self.get_periods_employed_to_date()
 			current_structured_tax_amount = 0
 			if total_sub_periods > 0:
-				current_structured_tax_amount = max(0, annual_tax_after_rebates / total_sub_periods)
+				# May be negative once an annual payment has been taxed in full: the
+				# tax already deducted then runs ahead of the liability to date.
+				liability_to_date = annual_tax_after_rebates * elapsed / total_sub_periods
+				current_structured_tax_amount = liability_to_date - previous_total_paid_taxes
 			full_tax_amount = flt(
 				self._component_based_variable_tax[tax_component].get("full_tax_on_additional_earnings")
 			)
-			current_tax_amount = current_structured_tax_amount + full_tax_amount
+			current_tax_amount = max(0, current_structured_tax_amount + full_tax_amount)
 
 			self.total_structured_tax_amount = annual_tax_after_rebates
 			self.current_structured_tax_amount = current_structured_tax_amount
@@ -619,18 +687,24 @@ class ZASalarySlip(SalarySlip):
 				eval_locals if eval_locals is not None else {},  # Ensure not None
 			)
 
-			# Spread the annual liability evenly across the tax year's pay periods
+			# Charge the share of the annual liability earned so far, net of tax paid
 			total_sub_periods = self.get_total_sub_periods()
+			elapsed = self.get_periods_employed_to_date()
 			if has_additional_salary_tax_component:
 				self.current_structured_tax_amount = self.additional_salary_amount
 			elif total_sub_periods > 0:
-				self.current_structured_tax_amount = self.total_structured_tax_amount / total_sub_periods
+				self.current_structured_tax_amount = (
+					self.total_structured_tax_amount * elapsed / total_sub_periods
+					- self.previous_total_paid_taxes
+				)
 			else:
 				self.current_structured_tax_amount = 0.0
 
-			# Handle additional earnings with full tax (standard HRMS logic)
+			# Tax on annual payments, carried for the rest of the year. The structured
+			# liability is settled net of tax already deducted, so this has to be
+			# restated in every later period, not only the one the payment fell in.
 			self.full_tax_on_additional_earnings = 0.0
-			if self.current_additional_earnings_with_full_tax:
+			if getattr(self, "za_annual_payments_to_date", 0):
 				self.total_tax_amount, __ = calculate_tax_by_tax_slab(
 					self.total_taxable_earnings,
 					self.tax_slab,
