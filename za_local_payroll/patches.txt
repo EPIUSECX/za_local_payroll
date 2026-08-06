@@ -7,3 +7,4 @@ za_local_payroll.patches.v1_0.backfill_payment_batch_keys
 za_local_payroll.patches.v1_0.tag_property_setter_ownership
 za_local_payroll.patches.v1_1.repair_dashboard_filters
 za_local_payroll.patches.v1_2.adopt_workplace_modules
+za_local_payroll.patches.v1_3.repair_metric_currency
