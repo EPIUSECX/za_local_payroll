@@ -64,6 +64,12 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 			def get_statutory_earning_basis(self, _fieldname):
 				return 10_000
 
+			def get_current_retirement_fund_contribution(self):
+				return 0
+
+			def get_sdl_leviable_amount(self):
+				return ZASalarySlip.get_sdl_leviable_amount(self)
+
 			def get_configured_statutory_component(self, settings_field, *_args):
 				return {
 					"za_uif_employer_salary_component": "UIF Employer Contribution",
@@ -142,6 +148,12 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		is_processed.assert_not_called()
 
 	def test_full_tax_additional_earning_survives_rebate_adjustment(self):
+		"""The annual liability is spread over the tax year, not over the periods left.
+
+		Nine periods remain and R1 000 has already been paid, but neither figure may
+		move the deduction: the register charges one twelfth of the annual liability
+		in every period.
+		"""
 		slip = SimpleNamespace(
 			za_localisation_applies=True,
 			payroll_period=frappe._dict(name="2026-2027"),
@@ -157,17 +169,18 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		slip.calculate_variable_tax = Mock()
 		slip.get_tax_rebates = Mock(return_value=2_000)
 		slip.get_medical_aid_credits = Mock(return_value=1_000)
+		slip.get_total_sub_periods = Mock(return_value=12)
 
 		ZASalarySlip.calculate_variable_based_on_taxable_salary(slip, "PAYE")
 
-		self.assertAlmostEqual(slip.current_structured_tax_amount, 888.8888889)
-		self.assertAlmostEqual(slip.current_tax_amount, 1_388.8888889)
+		self.assertAlmostEqual(slip.current_structured_tax_amount, 750)
+		self.assertAlmostEqual(slip.current_tax_amount, 1_250)
 		self.assertEqual(
 			slip._component_based_variable_tax["PAYE"]["full_tax_on_additional_earnings"],
 			500,
 		)
 
-	def test_rebate_adjustment_handles_zero_remaining_periods(self):
+	def test_rebate_adjustment_handles_zero_pay_periods(self):
 		slip = SimpleNamespace(
 			za_localisation_applies=True,
 			payroll_period=frappe._dict(name="2026-2027"),
@@ -183,6 +196,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		slip.calculate_variable_tax = Mock()
 		slip.get_tax_rebates = Mock(return_value=2_000)
 		slip.get_medical_aid_credits = Mock(return_value=1_000)
+		slip.get_total_sub_periods = Mock(return_value=0)
 
 		ZASalarySlip.calculate_variable_based_on_taxable_salary(slip, "PAYE")
 
@@ -193,7 +207,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		"hrms.payroll.doctype.salary_slip.salary_slip.calculate_tax_by_tax_slab",
 		return_value=(12_000, None),
 	)
-	def test_variable_tax_handles_zero_remaining_periods(self, _calculate_tax):
+	def test_variable_tax_handles_zero_pay_periods(self, _calculate_tax):
 		slip = SimpleNamespace(
 			za_localisation_applies=True,
 			payroll_period=frappe._dict(start_date="2026-03-01"),
@@ -208,11 +222,45 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		)
 		slip.get_tax_paid_in_period = Mock(return_value=5_000)
 		slip.get_data_for_eval = Mock(return_value=({}, {}))
+		slip.get_total_sub_periods = Mock(return_value=0)
 
 		ZASalarySlip.calculate_variable_tax(slip, "PAYE")
 
 		self.assertEqual(slip.current_structured_tax_amount, 0)
 		self.assertEqual(slip.current_tax_amount, 0)
+
+	def test_sdl_leviable_amount_is_net_of_retirement_fund_contributions(self):
+		"""Section 3(4) of the SDLA follows the Fourth Schedule as applied to
+		employees' tax, so the levy sits on the balance of remuneration."""
+		slip = SimpleNamespace()
+		slip.get_statutory_earning_basis = Mock(return_value=121_808.0)
+		slip.get_current_retirement_fund_contribution = Mock(return_value=29_000.0)
+
+		self.assertEqual(ZASalarySlip.get_sdl_leviable_amount(slip), 92_808.0)
+
+	def test_sdl_leviable_amount_never_goes_negative(self):
+		slip = SimpleNamespace()
+		slip.get_statutory_earning_basis = Mock(return_value=1_000.0)
+		slip.get_current_retirement_fund_contribution = Mock(return_value=5_000.0)
+
+		self.assertEqual(ZASalarySlip.get_sdl_leviable_amount(slip), 0)
+
+	def test_annual_equivalent_annualises_the_current_period(self):
+		"""Year-to-date actuals must not drag the annual equivalent: a mid-year
+		change takes full effect immediately, and annual payments are added once."""
+		slip = SimpleNamespace(
+			current_structured_taxable_earnings=22_783.95,
+			current_additional_earnings=10_164.0,
+			other_incomes=0,
+			unclaimed_taxable_benefits=0,
+			total_exemption_amount=0,
+			total_taxable_earnings=0,
+		)
+		slip.get_total_sub_periods = Mock(return_value=12)
+
+		ZASalarySlip.apply_sars_annual_equivalent(slip)
+
+		self.assertAlmostEqual(slip.total_taxable_earnings, 22_783.95 * 12 + 10_164.0, places=2)
 
 	def test_statutory_recalculation_delegates_to_hrms_net_pay(self):
 		slip = SimpleNamespace(set_net_pay=Mock())

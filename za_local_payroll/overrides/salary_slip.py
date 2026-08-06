@@ -123,10 +123,28 @@ class ZASalarySlip(SalarySlip):
 		self.validate_payroll_frequency()
 
 	def apply_sa_component_classification_defaults(self):
-		"""Apply retirement classification after deduction rows have been built."""
+		"""Apply retirement and variable-pay classification once rows have been built."""
 		for deduction in self.get("deductions") or []:
 			if self.is_retirement_fund_component(deduction.salary_component):
 				deduction.exempted_from_income_tax = 1
+
+		for earning in self.get("earnings") or []:
+			metadata = self.get_sa_component_metadata(earning.salary_component)
+			if self.is_once_off_full_tax(metadata):
+				earning.deduct_full_tax_on_selected_payroll_date = 1
+
+	def is_once_off_full_tax(self, metadata):
+		"""Whether a component's variable pay is taxed in full in the period it accrues.
+
+		An annual payment is added to the annualised balance of remuneration and taxed
+		in full when it accrues, rather than being spread across the year. The
+		component declares this through za_variable_pay_treatment or by being
+		classified as an Annual Payment.
+		"""
+		return (
+			metadata.get("za_variable_pay_treatment") == "Once-Off Full Tax"
+			or metadata.get("za_payroll_treatment") == "Annual Payment"
+		)
 
 	def add_tax_components(self):
 		"""Classify populated deduction rows immediately before HRMS calculates PAYE."""
@@ -223,6 +241,7 @@ class ZASalarySlip(SalarySlip):
 			return super().compute_taxable_earnings_for_year()
 		super().compute_taxable_earnings_for_year()
 
+		self.apply_sars_annual_equivalent()
 		self.apply_sa_paye_inclusion_adjustments()
 
 		# Add annual bonus to taxable earnings
@@ -234,6 +253,47 @@ class ZASalarySlip(SalarySlip):
 		# Track taxable earnings without full-tax additional components
 		self.total_taxable_earnings_without_full_tax_addl_components = self.total_taxable_earnings - getattr(
 			self, "current_additional_earnings_with_full_tax", 0
+		)
+
+	def get_total_sub_periods(self):
+		"""Pay periods in the tax year, independent of when the employee joined."""
+		if not self.payroll_period:
+			return 0
+		return flt(
+			get_period_factor(
+				self.employee,
+				self.start_date,
+				self.end_date,
+				self.payroll_frequency,
+				self.payroll_period,
+				joining_date=self.joining_date,
+				relieving_date=self.relieving_date,
+			)[0]
+		)
+
+	def apply_sars_annual_equivalent(self):
+		"""Annualise the current period instead of carrying year-to-date actuals.
+
+		Paragraph 9(3) of the Fourth Schedule taxes the annual equivalent of the
+		current period's balance of remuneration. HRMS instead sums actual
+		year-to-date earnings with a projection of the remaining periods, so the
+		annual equivalent drifts whenever remuneration changes mid-year and is then
+		corrected by a catch-up in later periods. That converges over a full year but
+		puts the wrong PAYE on every intervening EMP201.
+
+		Annual payments stay outside this: they are added un-annualised and taxed in
+		full in the period they accrue.
+		"""
+		periods = self.get_total_sub_periods()
+		if periods <= 0:
+			return
+
+		self.total_taxable_earnings = (
+			flt(self.current_structured_taxable_earnings) * periods
+			+ flt(self.current_additional_earnings)
+			+ flt(self.other_incomes)
+			+ flt(self.unclaimed_taxable_benefits)
+			- flt(self.total_exemption_amount)
 		)
 
 	def apply_retirement_fund_deduction_cap(self):
@@ -264,14 +324,19 @@ class ZASalarySlip(SalarySlip):
 			self.total_taxable_earnings += disallowed_deduction
 			self.za_retirement_fund_taxable_excess = disallowed_deduction
 
-	def get_annual_retirement_fund_contribution(self):
-		"""Annualise retirement-fund deduction rows used before PAYE."""
-		current_contribution = 0
+	def get_current_retirement_fund_contribution(self):
+		"""Total this period's retirement-fund deduction rows."""
+		total = 0
 		for deduction in self.get("deductions") or []:
 			if not deduction.get("exempted_from_income_tax"):
 				continue
 			if self.is_retirement_fund_component(deduction.salary_component):
-				current_contribution += flt(deduction.amount)
+				total += flt(deduction.amount)
+		return flt(total, 2)
+
+	def get_annual_retirement_fund_contribution(self):
+		"""Annualise retirement-fund deduction rows used before PAYE."""
+		current_contribution = self.get_current_retirement_fund_contribution()
 
 		if not current_contribution:
 			return 0
@@ -503,16 +568,14 @@ class ZASalarySlip(SalarySlip):
 
 			# Recalculate structured PAYE after rebates/credits. Full-tax
 			# additional earnings remain payable in the selected payroll run.
-			previous_total_paid_taxes = self._component_based_variable_tax[tax_component][
-				"previous_total_paid_taxes"
-			]
-			remaining_sub_periods = flt(self.remaining_sub_periods)
+			# The annual liability is spread evenly over the pay periods in the tax
+			# year, so an employee employed for part of it pays exactly their
+			# pro-rata share. Dividing the shortfall over the remaining periods
+			# instead would back-load the deduction and misstate every EMP201.
+			total_sub_periods = self.get_total_sub_periods()
 			current_structured_tax_amount = 0
-			if remaining_sub_periods > 0:
-				current_structured_tax_amount = max(
-					0,
-					(annual_tax_after_rebates - previous_total_paid_taxes) / remaining_sub_periods,
-				)
+			if total_sub_periods > 0:
+				current_structured_tax_amount = max(0, annual_tax_after_rebates / total_sub_periods)
 			full_tax_amount = flt(
 				self._component_based_variable_tax[tax_component].get("full_tax_on_additional_earnings")
 			)
@@ -556,13 +619,12 @@ class ZASalarySlip(SalarySlip):
 				eval_locals if eval_locals is not None else {},  # Ensure not None
 			)
 
-			# Calculate current structured tax amount (standard HRMS logic)
+			# Spread the annual liability evenly across the tax year's pay periods
+			total_sub_periods = self.get_total_sub_periods()
 			if has_additional_salary_tax_component:
 				self.current_structured_tax_amount = self.additional_salary_amount
-			elif self.remaining_sub_periods > 0:
-				self.current_structured_tax_amount = (
-					self.total_structured_tax_amount - self.previous_total_paid_taxes
-				) / self.remaining_sub_periods
+			elif total_sub_periods > 0:
+				self.current_structured_tax_amount = self.total_structured_tax_amount / total_sub_periods
 			else:
 				self.current_structured_tax_amount = 0.0
 
@@ -851,7 +913,7 @@ class ZASalarySlip(SalarySlip):
 
 	def apply_statutory_company_contribution_amounts(self):
 		uif_basis = self.get_statutory_earning_basis("za_uif_applicable")
-		sdl_basis = self.get_statutory_earning_basis("za_sdl_applicable")
+		sdl_basis = self.get_sdl_leviable_amount()
 		_employee_uif, employer_uif = calculate_uif_contribution(uif_basis, self.end_date)
 		sdl = sdl_basis * get_sdl_rate(self.end_date)
 
@@ -889,6 +951,20 @@ class ZASalarySlip(SalarySlip):
 				row.amount = flt(sdl, 2)
 				row.default_amount = row.amount
 				row.depends_on_payment_days = 0
+
+	def get_sdl_leviable_amount(self):
+		"""SDL leviable amount: leviable earnings less the retirement fund deduction.
+
+		Section 3(4) of the Skills Development Levies Act sets the leviable amount by
+		reference to the Fourth Schedule as applied in determining employees' tax, and
+		employees' tax is determined on the balance of remuneration. Paragraph 2(4)
+		allows the retirement fund contribution to be deducted in arriving at that
+		balance, so it reduces the levy as well. UIF is deliberately left on
+		remuneration: the Unemployment Insurance Contributions Act defines its own
+		base and does not carry the paragraph 2(4) deduction across.
+		"""
+		leviable = self.get_statutory_earning_basis("za_sdl_applicable")
+		return flt(max(leviable - self.get_current_retirement_fund_contribution(), 0), 2)
 
 	def get_statutory_earning_basis(self, applicability_field):
 		"""Total the earnings the given statutory levy applies to.
@@ -946,8 +1022,11 @@ class ZASalarySlip(SalarySlip):
 		self.set_net_pay()
 
 	def add_additional_salary_components(self, component_type):
-		"""
-		Add additional salary components, filtering out company contributions.
+		"""Add earning or deduction Additional Salaries to the slip.
+
+		Company contributions are partitioned out upstream by
+		payroll_utils.get_additional_salaries, which routes them to
+		calculate_company_contributions instead.
 		"""
 		additional_salaries = get_additional_salaries(
 			self.employee, self.start_date, self.end_date, component_type

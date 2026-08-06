@@ -167,6 +167,46 @@ def is_payroll_processed(employee, frequency_period, company=None):
 	)
 
 
+def get_company_contribution_additional_salaries(employee, from_date, to_date):
+	"""Return Additional Salaries whose own Salary Component is a Company Contribution.
+
+	Additional Salary fetches `type` from the linked Salary Component, so a row for a
+	Company Contribution component is never returned by HRMS, which only ever selects
+	"Earning" or "Deduction". Those rows would otherwise be silently dropped. Date
+	eligibility mirrors HRMS: a recurring row spans the period end, a one-off row falls
+	on a payroll date inside the period.
+	"""
+	additional_salary = frappe.qb.DocType("Additional Salary")
+	recurring = (
+		(additional_salary.is_recurring == 1)
+		& (additional_salary.from_date <= to_date)
+		& (additional_salary.to_date >= to_date)
+	)
+	one_off = (additional_salary.is_recurring == 0) & additional_salary.payroll_date[from_date:to_date]
+
+	return (
+		frappe.qb.from_(additional_salary)
+		.select(
+			additional_salary.name,
+			additional_salary.salary_component.as_("component"),
+			additional_salary.type,
+			additional_salary.amount,
+			additional_salary.is_recurring,
+			additional_salary.overwrite_salary_structure_amount.as_("overwrite"),
+			additional_salary.deduct_full_tax_on_selected_payroll_date,
+			additional_salary.ref_doctype,
+		)
+		.where(
+			(additional_salary.employee == employee)
+			& (additional_salary.docstatus == 1)
+			& (additional_salary.disabled == 0)
+			& (additional_salary.type == "Company Contribution")
+			& (recurring | one_off)
+		)
+		.run(as_dict=True)
+	)
+
+
 def get_additional_salaries(employee, from_date, to_date, component_type="earnings"):
 	"""Return HRMS-selected Additional Salaries for the requested ZA bucket.
 
@@ -174,11 +214,19 @@ def get_additional_salaries(employee, from_date, to_date, component_type="earnin
 	overwrite aliases, and duplicate-overwrite validation. ZA Local only adds
 	the company-contribution partition and the reference name needed by the
 	Employee Benefit Ledger.
+
+	A company contribution reaches the slip either by flagging
+	za_is_company_contribution on an earning or deduction, or by using a Salary
+	Component that is itself typed Company Contribution. Both are honoured.
 	"""
+	component_typed_contributions = []
 	if component_type == "company_contributions":
 		additional_salaries = hrms_get_additional_salaries(
 			employee, from_date, to_date, "earnings"
 		) + hrms_get_additional_salaries(employee, from_date, to_date, "deductions")
+		component_typed_contributions = get_company_contribution_additional_salaries(
+			employee, from_date, to_date
+		)
 		include_company_contributions = True
 	elif component_type in {"earnings", "deductions"}:
 		additional_salaries = hrms_get_additional_salaries(employee, from_date, to_date, component_type)
@@ -186,14 +234,17 @@ def get_additional_salaries(employee, from_date, to_date, component_type="earnin
 	else:
 		frappe.throw(frappe._("Unsupported Additional Salary component type: {0}").format(component_type))
 
-	if not additional_salaries:
+	if not additional_salaries and not component_typed_contributions:
 		return []
 
+	selected_names = [row.name for row in additional_salaries] + [
+		row.name for row in component_typed_contributions
+	]
 	details_by_name = {
 		row.name: row
 		for row in frappe.get_all(
 			"Additional Salary",
-			filters={"name": ["in", [row.name for row in additional_salaries]]},
+			filters={"name": ["in", selected_names]},
 			fields=["name", "za_is_company_contribution", "ref_docname"],
 		)
 	}
@@ -206,6 +257,12 @@ def get_additional_salaries(employee, from_date, to_date, component_type="earnin
 			continue
 
 		additional_salary.za_is_company_contribution = is_company_contribution
+		additional_salary.ref_docname = details.get("ref_docname")
+		filtered_salaries.append(additional_salary)
+
+	for additional_salary in component_typed_contributions:
+		details = details_by_name.get(additional_salary.name, frappe._dict())
+		additional_salary.za_is_company_contribution = True
 		additional_salary.ref_docname = details.get("ref_docname")
 		filtered_salaries.append(additional_salary)
 
