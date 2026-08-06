@@ -148,11 +148,11 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		is_processed.assert_not_called()
 
 	def test_full_tax_additional_earning_survives_rebate_adjustment(self):
-		"""The annual liability is spread over the tax year, not over the periods left.
+		"""The liability is settled to date, not spread over the periods left.
 
-		Nine periods remain and R1 000 has already been paid, but neither figure may
-		move the deduction: the register charges one twelfth of the annual liability
-		in every period.
+		Nine periods remain, but that must not set the deduction: what is due is the
+		share of the annual liability the periods worked represent, net of tax
+		already deducted.
 		"""
 		slip = SimpleNamespace(
 			za_localisation_applies=True,
@@ -170,11 +170,14 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		slip.get_tax_rebates = Mock(return_value=2_000)
 		slip.get_medical_aid_credits = Mock(return_value=1_000)
 		slip.get_total_sub_periods = Mock(return_value=12)
+		slip.get_periods_employed_to_date = Mock(return_value=6)
 
 		ZASalarySlip.calculate_variable_based_on_taxable_salary(slip, "PAYE")
 
-		self.assertAlmostEqual(slip.current_structured_tax_amount, 750)
-		self.assertAlmostEqual(slip.current_tax_amount, 1_250)
+		# half the year worked, so half of the R9 000 annual liability is due,
+		# less the R1 000 already deducted, plus the annual payment's own tax
+		self.assertAlmostEqual(slip.current_structured_tax_amount, 3_500)
+		self.assertAlmostEqual(slip.current_tax_amount, 4_000)
 		self.assertEqual(
 			slip._component_based_variable_tax["PAYE"]["full_tax_on_additional_earnings"],
 			500,
@@ -197,6 +200,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		slip.get_tax_rebates = Mock(return_value=2_000)
 		slip.get_medical_aid_credits = Mock(return_value=1_000)
 		slip.get_total_sub_periods = Mock(return_value=0)
+		slip.get_periods_employed_to_date = Mock(return_value=1)
 
 		ZASalarySlip.calculate_variable_based_on_taxable_salary(slip, "PAYE")
 
@@ -223,6 +227,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		slip.get_tax_paid_in_period = Mock(return_value=5_000)
 		slip.get_data_for_eval = Mock(return_value=({}, {}))
 		slip.get_total_sub_periods = Mock(return_value=0)
+		slip.get_periods_employed_to_date = Mock(return_value=1)
 
 		ZASalarySlip.calculate_variable_tax(slip, "PAYE")
 
@@ -245,22 +250,29 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 
 		self.assertEqual(ZASalarySlip.get_sdl_leviable_amount(slip), 0)
 
-	def test_annual_equivalent_annualises_the_current_period(self):
-		"""Year-to-date actuals must not drag the annual equivalent: a mid-year
-		change takes full effect immediately, and annual payments are added once."""
+	def test_annual_equivalent_averages_earnings_to_date(self):
+		"""The annual equivalent is the balance of remuneration to date over the
+		periods worked, grossed to a year. Annual payments sit outside the average
+		and are added once."""
 		slip = SimpleNamespace(
-			current_structured_taxable_earnings=22_783.95,
-			current_additional_earnings=10_164.0,
+			previous_taxable_earnings=60_000.0,
+			current_structured_taxable_earnings=20_000.0,
+			current_additional_earnings=5_000.0,
+			current_additional_earnings_with_full_tax=5_000.0,
 			other_incomes=0,
 			unclaimed_taxable_benefits=0,
 			total_exemption_amount=0,
 			total_taxable_earnings=0,
 		)
 		slip.get_total_sub_periods = Mock(return_value=12)
+		slip.get_periods_employed_to_date = Mock(return_value=4)
+		slip.get_previous_annual_payment_earnings = Mock(return_value=0)
 
 		ZASalarySlip.apply_sars_annual_equivalent(slip)
 
-		self.assertAlmostEqual(slip.total_taxable_earnings, 22_783.95 * 12 + 10_164.0, places=2)
+		# (60 000 + 20 000) / 4 x 12 = 240 000, plus the 5 000 annual payment
+		self.assertAlmostEqual(slip.total_taxable_earnings, 245_000.0, places=2)
+		self.assertAlmostEqual(slip.za_annual_payments_to_date, 5_000.0, places=2)
 
 	def test_statutory_recalculation_delegates_to_hrms_net_pay(self):
 		slip = SimpleNamespace(set_net_pay=Mock())
