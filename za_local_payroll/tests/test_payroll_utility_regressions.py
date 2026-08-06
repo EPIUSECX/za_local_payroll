@@ -65,9 +65,12 @@ class TestAdditionalSalarySelection(UnitTestCase):
 		self.assertEqual(result[0].ref_docname, "EBC-0001")
 		get_hrms_salaries.assert_called_once_with("EMP-1", "2026-03-01", "2026-03-31", "earnings")
 
+	@patch.object(payroll_utils, "get_company_contribution_additional_salaries", return_value=[])
 	@patch.object(payroll_utils.frappe, "get_all")
 	@patch.object(payroll_utils, "hrms_get_additional_salaries")
-	def test_company_contributions_are_partitioned_from_both_hrms_types(self, get_hrms_salaries, get_all):
+	def test_company_contributions_are_partitioned_from_both_hrms_types(
+		self, get_hrms_salaries, get_all, _get_component_typed
+	):
 		earning = frappe._dict(name="AS-EARN", component="UIF Employer")
 		deduction = frappe._dict(name="AS-DED", component="SDL Employer")
 		get_hrms_salaries.side_effect = [[earning], [deduction]]
@@ -82,6 +85,44 @@ class TestAdditionalSalarySelection(UnitTestCase):
 
 		self.assertEqual(result, [earning])
 		self.assertEqual(get_hrms_salaries.call_count, 2)
+
+	@patch.object(payroll_utils, "get_company_contribution_additional_salaries")
+	@patch.object(payroll_utils.frappe, "get_all")
+	@patch.object(payroll_utils, "hrms_get_additional_salaries", return_value=[])
+	def test_company_contribution_component_type_is_selected(
+		self, _get_hrms_salaries, get_all, get_component_typed
+	):
+		"""Additional Salary fetches `type` from its component, so a Company Contribution
+		component never appears in the HRMS earning or deduction buckets."""
+		contribution = frappe._dict(
+			name="AS-CC", component="Medical Aid Employer", amount=802, type="Company Contribution"
+		)
+		get_component_typed.return_value = [contribution]
+		get_all.return_value = [
+			frappe._dict(name="AS-CC", za_is_company_contribution=0, ref_docname=None)
+		]
+
+		result = payroll_utils.get_additional_salaries(
+			"EMP-1", "2026-03-01", "2026-03-31", "company_contributions"
+		)
+
+		self.assertEqual([row.component for row in result], ["Medical Aid Employer"])
+		self.assertTrue(result[0].za_is_company_contribution)
+
+	@patch.object(payroll_utils, "get_company_contribution_additional_salaries")
+	@patch.object(payroll_utils.frappe, "get_all")
+	@patch.object(payroll_utils, "hrms_get_additional_salaries", return_value=[])
+	def test_company_contribution_component_type_is_absent_from_deductions(
+		self, _get_hrms_salaries, get_all, get_component_typed
+	):
+		get_all.return_value = []
+
+		result = payroll_utils.get_additional_salaries(
+			"EMP-1", "2026-03-01", "2026-03-31", "deductions"
+		)
+
+		self.assertEqual(result, [])
+		get_component_typed.assert_not_called()
 
 
 class TestEmployerEtiUtilisation(UnitTestCase):
