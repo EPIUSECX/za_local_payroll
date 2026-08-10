@@ -15,7 +15,7 @@ app_license = "mit"
 
 za_local_practitioner_guide_provider = "za_local_payroll.practitioner_guide.provider.get_guide_sections"
 
-required_apps = ["frappe", "erpnext", "hrms", "za_local_core"]
+required_apps = ["erpnext", "hrms", "za_local_core"]
 
 before_install = "za_local_payroll.install.before_install"
 after_install = "za_local_payroll.install.after_install"

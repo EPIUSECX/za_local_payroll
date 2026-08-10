@@ -62,13 +62,12 @@ class OIDClaim(Document):
 		self._validate_status_fields(self.claim_status, self.compensation_amount, self.payment_date)
 
 	def on_submit(self):
-		claim_date = self.claim_date or today()
+		# db_set with a dict writes the database and updates this document in
+		# memory, so the sync below already sees the submitted status and date.
 		self.db_set(
-			{"claim_status": "Submitted", "claim_date": claim_date},
+			{"claim_status": "Submitted", "claim_date": self.claim_date or today()},
 			update_modified=False,
 		)
-		self.claim_status = "Submitted"
-		self.claim_date = claim_date
 		self._sync_workplace_injury_status()
 
 	def on_update_after_submit(self):

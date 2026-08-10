@@ -92,31 +92,42 @@ def get_coida_salary_slip_rows(company, from_date, to_date):
 			as_dict=True,
 		)
 
+	# Every field below is created at install and refreshed on migrate. Dropping a
+	# condition because its field is absent would silently narrow the leviable base
+	# of a statutory return, so an incomplete install fails here instead.
 	component_meta = frappe.get_meta("Salary Component")
-	if not component_meta.has_field("za_coida_applicable"):
+	detail_meta = frappe.get_meta("Salary Detail")
+	missing_fields = [
+		f"Salary Component.{fieldname}"
+		for fieldname in ("za_coida_applicable", "za_is_reimbursement", "za_payroll_treatment")
+		if not component_meta.has_field(fieldname)
+	] + [
+		f"Salary Detail.{fieldname}"
+		for fieldname in ("statistical_component", "do_not_include_in_total")
+		if not detail_meta.has_field(fieldname)
+	]
+	if missing_fields:
 		frappe.throw(
-			_(
-				"Salary Component field za_coida_applicable is required before COIDA earnings can be calculated."
+			_("COIDA earnings cannot be calculated. Run bench migrate to restore: {0}").format(
+				", ".join(missing_fields)
 			)
 		)
-	conditions = ["IFNULL(sc.za_coida_applicable, 0) = 1"]
-	if component_meta.has_field("za_is_reimbursement"):
-		conditions.append("IFNULL(sc.za_is_reimbursement, 0) = 0")
-	if component_meta.has_field("za_payroll_treatment"):
-		conditions.append("IFNULL(sc.za_payroll_treatment, '') NOT IN %(excluded_treatments)s")
-
-	detail_meta = frappe.get_meta("Salary Detail")
-	if detail_meta.has_field("statistical_component"):
-		conditions.append("IFNULL(sd.statistical_component, 0) = 0")
-	if detail_meta.has_field("do_not_include_in_total"):
-		conditions.append("IFNULL(sd.do_not_include_in_total, 0) = 0")
 
 	return frappe.db.sql(
-		f"""
+		"""
 			SELECT ss.name AS salary_slip, ss.employee, ss.start_date, ss.end_date,
 				ss.gross_pay AS gross_earnings,
-				SUM(CASE WHEN {" AND ".join(conditions)} THEN IFNULL(sd.amount, 0) ELSE 0 END)
-					AS assessable_earnings
+				SUM(
+					CASE
+						WHEN IFNULL(sc.za_coida_applicable, 0) = 1
+							AND IFNULL(sc.za_is_reimbursement, 0) = 0
+							AND IFNULL(sc.za_payroll_treatment, '') NOT IN %(excluded_treatments)s
+							AND IFNULL(sd.statistical_component, 0) = 0
+							AND IFNULL(sd.do_not_include_in_total, 0) = 0
+						THEN IFNULL(sd.amount, 0)
+						ELSE 0
+					END
+				) AS assessable_earnings
 			FROM `tabSalary Slip` ss
 			LEFT JOIN `tabSalary Detail` sd
 				ON sd.parent = ss.name

@@ -6,10 +6,18 @@ import frappe
 from frappe import _
 from frappe.utils import cint, getdate, today
 
-CONTROLLED_MANUAL_MESSAGE = _(
-	"Controlled Manual working paper: review the reporting basis, effective source, privacy suppression, "
-	"and current Department of Employment and Labour submission requirements before external use."
-)
+
+def get_controlled_manual_message() -> str:
+	"""Build the working-paper banner at call time.
+
+	Translating at module level would resolve the string once per process, in
+	whichever language happened to import it first, and then serve that to every
+	site and user the worker handles afterwards.
+	"""
+	return _(
+		"Controlled Manual working paper: review the reporting basis, effective source, privacy suppression, "
+		"and current Department of Employment and Labour submission requirements before external use."
+	)
 
 
 def get_permitted_company(filters):

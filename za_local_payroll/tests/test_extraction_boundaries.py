@@ -88,8 +88,12 @@ class TestPayrollExtractionBoundaries(UnitTestCase):
 
 		self.assertEqual(
 			set(hooks.required_apps),
-			{"frappe", "erpnext", "hrms", "za_local_core"},
+			{"erpnext", "hrms", "za_local_core"},
 		)
+		# frappe is always installed, so the marketplace review rejects it here.
+		self.assertNotIn("frappe", hooks.required_apps)
+		self.assertTrue(all(hooks.required_apps))
+		self.assertEqual(len(hooks.required_apps), len(set(hooks.required_apps)))
 
 	def test_statutory_records_are_company_scoped_and_submitted(self):
 		doc = SimpleNamespace(

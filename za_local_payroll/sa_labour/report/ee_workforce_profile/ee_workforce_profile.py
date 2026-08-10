@@ -4,7 +4,7 @@ import frappe
 from frappe import _
 
 from za_local_payroll.sa_labour.report_utils import (
-	CONTROLLED_MANUAL_MESSAGE,
+	get_controlled_manual_message,
 	get_permitted_company,
 	get_reporting_date,
 	get_small_cell_control,
@@ -14,7 +14,7 @@ from za_local_payroll.sa_labour.report_utils import (
 
 
 def execute(filters=None):
-	return get_columns(), get_data(filters), CONTROLLED_MANUAL_MESSAGE
+	return get_columns(), get_data(filters), get_controlled_manual_message()
 
 
 def get_columns():

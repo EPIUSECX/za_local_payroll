@@ -389,7 +389,7 @@ def _get_employees(employee_names: list[str]) -> dict[str, frappe._dict]:
 def _get_bank_accounts(account_names: list[str]) -> dict[str, frappe._dict]:
 	rows = frappe.get_all(
 		"Bank Account",
-		filters={"name": ["in", sorted(set(filter(None, account_names)))]},
+		filters={"name": ["in", sorted({name for name in account_names if name})]},
 		fields=[
 			"name",
 			"account_name",
