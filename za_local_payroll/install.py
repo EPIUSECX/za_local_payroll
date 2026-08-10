@@ -2,7 +2,7 @@
 
 import frappe
 from frappe import _
-from za_local_core.dashboards import seed_dashboards
+from za_local_core.dashboards import repair_metric_presentation, seed_dashboards
 from za_local_core.navigation import sync_shared_navigation
 from za_local_core.practitioner_guide.stage import unpublish_app_guide
 
@@ -13,6 +13,12 @@ from za_local_payroll.setup.property_setters import apply_payroll_property_sette
 from za_local_payroll.setup.records import install_payroll_doctype_links
 from za_local_payroll.setup.statutory import ensure_all_company_tax_configuration
 from za_local_payroll.setup.workplace import (
+	COIDA_CHARTS,
+	COIDA_MODULE,
+	COIDA_NUMBER_CARDS,
+	LABOUR_CHARTS,
+	LABOUR_MODULE,
+	LABOUR_NUMBER_CARDS,
 	claim_workplace_module_ownership,
 	ensure_workplace_print_formats,
 	seed_2026_labour_reference_rows,
@@ -100,8 +106,36 @@ def after_migrate() -> None:
 	seed_payroll_readiness()
 	ensure_default_print_formats()
 	seed_payroll_dashboards()
+	repair_payroll_metrics()
 	_setup_workplace_modules()
 	sync_shared_navigation()
+
+
+def repair_payroll_metrics(user_input: dict | None = None) -> dict:
+	"""Restamp metric presentation from the currency in force now.
+
+	Number Card and Dashboard Chart persist a currency on the record. Nothing
+	corrected a wrong one on a fresh install: ``install_app`` marks every patch
+	complete before it runs ``after_install``, so the repair patch could never
+	execute, and ``seed_dashboards`` skips records that already exist. Whatever
+	currency was resolvable during install was therefore permanent, and Frappe
+	ships INR, so South African statutory figures rendered in rupees forever.
+
+	Called from ``after_migrate`` and from ``setup_wizard_complete``, which is the
+	first moment the real company currency is known. ``user_input`` is the setup
+	wizard payload and is unused.
+	"""
+	return {
+		PAYROLL_MODULE: repair_metric_presentation(
+			PAYROLL_MODULE, cards=PAYROLL_NUMBER_CARDS, charts=PAYROLL_CHARTS
+		),
+		COIDA_MODULE: repair_metric_presentation(
+			COIDA_MODULE, cards=COIDA_NUMBER_CARDS, charts=COIDA_CHARTS
+		),
+		LABOUR_MODULE: repair_metric_presentation(
+			LABOUR_MODULE, cards=LABOUR_NUMBER_CARDS, charts=LABOUR_CHARTS
+		),
+	}
 
 
 def before_uninstall() -> None:

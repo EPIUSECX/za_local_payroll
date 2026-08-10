@@ -23,6 +23,10 @@ after_migrate = "za_local_payroll.install.after_migrate"
 before_uninstall = "za_local_payroll.install.before_uninstall"
 after_uninstall = "za_local_core.navigation.sync_shared_navigation"
 
+# The wizard is the first point at which the real company currency exists, and
+# metrics seeded during install carry whatever default preceded it.
+setup_wizard_complete = "za_local_payroll.install.repair_payroll_metrics"
+
 if dedicated_payroll_hooks_active():
 	app_include_css = "/assets/za_local_payroll/css/payroll.css"
 	doctype_js = {
