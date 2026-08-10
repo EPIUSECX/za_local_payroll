@@ -129,9 +129,7 @@ def repair_payroll_metrics(user_input: dict | None = None) -> dict:
 		PAYROLL_MODULE: repair_metric_presentation(
 			PAYROLL_MODULE, cards=PAYROLL_NUMBER_CARDS, charts=PAYROLL_CHARTS
 		),
-		COIDA_MODULE: repair_metric_presentation(
-			COIDA_MODULE, cards=COIDA_NUMBER_CARDS, charts=COIDA_CHARTS
-		),
+		COIDA_MODULE: repair_metric_presentation(COIDA_MODULE, cards=COIDA_NUMBER_CARDS, charts=COIDA_CHARTS),
 		LABOUR_MODULE: repair_metric_presentation(
 			LABOUR_MODULE, cards=LABOUR_NUMBER_CARDS, charts=LABOUR_CHARTS
 		),

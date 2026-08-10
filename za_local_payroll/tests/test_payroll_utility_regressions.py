@@ -98,9 +98,7 @@ class TestAdditionalSalarySelection(UnitTestCase):
 			name="AS-CC", component="Medical Aid Employer", amount=802, type="Company Contribution"
 		)
 		get_component_typed.return_value = [contribution]
-		get_all.return_value = [
-			frappe._dict(name="AS-CC", za_is_company_contribution=0, ref_docname=None)
-		]
+		get_all.return_value = [frappe._dict(name="AS-CC", za_is_company_contribution=0, ref_docname=None)]
 
 		result = payroll_utils.get_additional_salaries(
 			"EMP-1", "2026-03-01", "2026-03-31", "company_contributions"
@@ -117,9 +115,7 @@ class TestAdditionalSalarySelection(UnitTestCase):
 	):
 		get_all.return_value = []
 
-		result = payroll_utils.get_additional_salaries(
-			"EMP-1", "2026-03-01", "2026-03-31", "deductions"
-		)
+		result = payroll_utils.get_additional_salaries("EMP-1", "2026-03-01", "2026-03-31", "deductions")
 
 		self.assertEqual(result, [])
 		get_component_typed.assert_not_called()
