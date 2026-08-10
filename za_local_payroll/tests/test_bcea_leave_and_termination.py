@@ -176,6 +176,14 @@ class TestBCEALeaveLedgerIntegration(IntegrationTestCase):
 		company = frappe.db.get_value("Company", {}, "name")
 		if company:
 			return company
+
+		# ERPNext's Company.on_update builds the default warehouses, and "Goods In
+		# Transit" links to Warehouse Type "Transit". That record comes from the setup
+		# wizard, which never runs in CI, so inserting a company on a bare site fails
+		# on a missing link rather than anything this test is about.
+		if not frappe.db.exists("Warehouse Type", "Transit"):
+			frappe.get_doc({"doctype": "Warehouse Type", "name": "Transit"}).insert(ignore_permissions=True)
+
 		return (
 			frappe.get_doc(
 				{
