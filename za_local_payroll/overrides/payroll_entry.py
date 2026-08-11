@@ -37,6 +37,7 @@ except ImportError:
 # Import ZA Local utilities
 from za_local_core.localisation import is_south_african_company
 
+from za_local_payroll.setup.preflight import validate_company_payroll_setup
 from za_local_payroll.setup.statutory import validate_current_tax_configuration
 from za_local_payroll.utils.payroll_utils import (
 	get_current_block_period,
@@ -459,6 +460,7 @@ class ZAPayrollEntry(PayrollEntry):
 			return super().create_salary_slips()
 		self.check_permission("write")
 		validate_current_tax_configuration(self.company, self.end_date)
+		validate_company_payroll_setup(self.company)
 
 		# Validate mandatory fields before proceeding
 		self.validate_mandatory_fields()

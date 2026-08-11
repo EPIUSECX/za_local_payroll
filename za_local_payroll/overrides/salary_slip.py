@@ -191,8 +191,12 @@ class ZASalarySlip(SalarySlip):
 
 	def validate_component_accounts(self):
 		"""
-		Ensure all salary components have associated GL accounts.
+		Ensure posting salary components have associated GL accounts.
 		Required for accurate financial reporting.
+
+		A component marked "do not include in accounts" writes no GL entry, so it
+		needs no ledger. Demanding one blocks payroll over the shipped fringe
+		benefits, which are all flagged that way, and invites a meaningless mapping.
 
 		Collects all components missing accounts and provides links to configure them.
 		"""
@@ -200,6 +204,10 @@ class ZASalarySlip(SalarySlip):
 
 		for component_type in ["earnings", "deductions"]:
 			for row in self.get(component_type):
+				if frappe.db.get_value(
+					"Salary Component", row.salary_component, "do_not_include_in_accounts"
+				):
+					continue
 				if not frappe.db.exists(
 					"Salary Component Account", {"parent": row.salary_component, "company": self.company}
 				):

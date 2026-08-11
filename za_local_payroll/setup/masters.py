@@ -96,6 +96,22 @@ def seed_payroll_masters() -> None:
 	repair_salary_component_accounts()
 
 
+def configure_company_payroll_masters(company: str) -> None:
+	"""Classify and map the components that only exist once a company does.
+
+	HRMS creates its own default salary components from the Company on_update
+	hook, so install-time seeding never sees them: they end up with no SARS payroll
+	code, no South African treatment and no company account, and the payroll engine
+	refuses to calculate. Re-running the classification here is idempotent, because
+	each step only fills a field that is still empty.
+	"""
+	if not frappe.db.exists("DocType", "Salary Component"):
+		return
+	_seed_component_links()
+	_seed_component_treatments()
+	repair_salary_component_accounts(company)
+
+
 def repair_salary_component_accounts(company: str | None = None) -> int:
 	"""Map components to existing company accounts without creating a chart."""
 	if not frappe.db.table_exists("Salary Component Account"):
@@ -128,6 +144,7 @@ def repair_salary_component_accounts(company: str | None = None) -> int:
 						"Salary Component Account",
 						row_name,
 						"account",
+						account,
 						update_modified=False,
 					)
 					repaired += 1

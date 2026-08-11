@@ -57,6 +57,7 @@ if dedicated_payroll_hooks_active():
 	doc_events = {
 		"Company": {
 			"after_insert": "za_local_payroll.setup.statutory.configure_new_south_african_company",
+			"on_update": "za_local_payroll.setup.statutory.classify_company_salary_components",
 		},
 		"Journal Entry": {
 			"on_trash": "za_local_payroll.overrides.journal_entry.on_trash",

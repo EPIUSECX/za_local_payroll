@@ -258,6 +258,8 @@ DEFAULT_SALARY_COMPONENT_SARS_CODES = {
 	"Retirement Fund": "4001",
 	"Retirement Annuity Fund": "4006",
 	"Medical Aid": "4005",
+	# 4474 is the employer's own contribution, distinct from the 4005 deduction above.
+	"Medical Aid Company Contribution": "4474",
 	"Medical Aid Contribution": "4005",
 	"Medical Scheme": "4005",
 	"Medical Insurance": "4005",

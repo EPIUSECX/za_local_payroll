@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import frappe
 from za_local_core.dashboards import seed_dashboards
+from za_local_core.localisation import resolve_south_african_companies
 
 WORKPLACE_MODULES = ("SA Labour", "SA COIDA")
 
@@ -82,20 +83,19 @@ def claim_workplace_module_ownership() -> None:
 	frappe.clear_cache()
 
 
-def seed_workplace_readiness() -> None:
+def seed_workplace_readiness(company: str | None = None) -> None:
 	"""Advertise capabilities conservatively without overwriting practitioner sign-off."""
 	if not frappe.db.exists("DocType", "ZA Feature Readiness"):
 		return
-	companies = frappe.get_all("Company", filters={"country": "South Africa"}, pluck="name")
-	for company in companies:
+	for company_name in resolve_south_african_companies(company):
 		for feature_code, feature_name, domain, status, limitation in WORKPLACE_FEATURES:
-			key = f"{company}|{feature_code}"
+			key = f"{company_name}|{feature_code}"
 			if frappe.db.exists("ZA Feature Readiness", key):
 				continue
 			frappe.get_doc(
 				{
 					"doctype": "ZA Feature Readiness",
-					"company": company,
+					"company": company_name,
 					"feature_code": feature_code,
 					"feature_name": feature_name,
 					"domain": domain,

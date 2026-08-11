@@ -26,6 +26,7 @@ class TestSouthAfricanPayrollLifecycle(IntegrationTestCase):
 		cls.company_bank_account = None
 		cls.cost_center = None
 		cls.employees = {}
+		cls._stage_erpnext_wizard_fixtures()
 		cls._stage_company_and_statutory_masters()
 		cls._stage_salary_components()
 		cls._stage_employees_and_bank_accounts()
@@ -33,6 +34,24 @@ class TestSouthAfricanPayrollLifecycle(IntegrationTestCase):
 		cls.timesheet_structure = cls._make_timesheet_structure()
 		cls._make_assignments()
 		cls._make_additional_salaries()
+
+	@classmethod
+	def _stage_erpnext_wizard_fixtures(cls):
+		"""Records the ERPNext setup wizard creates that a bare CI site lacks.
+
+		Staging an employee address needs a default Address Template, and no app in
+		this suite owns one, so on a site that never ran a wizard the class fails to
+		set up for a reason unrelated to payroll.
+		"""
+		if not frappe.db.exists("Address Template", {"is_default": 1}):
+			frappe.get_doc(
+				{
+					"doctype": "Address Template",
+					"country": "South Africa",
+					"is_default": 1,
+					"template": "{{ address_line1 }}<br>{{ city }}<br>{{ country }}",
+				}
+			).insert(ignore_permissions=True)
 
 	@classmethod
 	def _stage_company_and_statutory_masters(cls):

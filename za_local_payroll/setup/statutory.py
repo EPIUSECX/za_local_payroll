@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate
 from za_local_core.files import read_packaged_json
-from za_local_core.localisation import is_south_african_company
+from za_local_core.localisation import COUNTRY, is_south_african_company
 
 from za_local_payroll.utils.statutory_rates import get_tax_year_for_date
 
@@ -97,10 +97,32 @@ def ensure_sa_public_holiday_lists() -> list[str]:
 	return synchronized
 
 
+def classify_company_salary_components(doc, method=None) -> None:
+	"""Classify salary components HRMS creates from its own Company on_update hook.
+
+	This runs on update rather than insert because those components do not exist
+	yet when after_insert fires.
+	"""
+	if doc.country != COUNTRY:
+		return
+
+	from za_local_payroll.setup.masters import configure_company_payroll_masters
+
+	configure_company_payroll_masters(doc.name)
+
+
 def configure_new_south_african_company(doc, method=None) -> None:
 	"""Create statutory masters after a South African Company is inserted."""
-	if doc.country == "South Africa":
-		ensure_company_tax_configuration(doc.name)
+	if doc.country != COUNTRY:
+		return
+
+	ensure_company_tax_configuration(doc.name)
+
+	from za_local_payroll.install import seed_payroll_readiness
+	from za_local_payroll.setup.workplace import seed_workplace_readiness
+
+	seed_payroll_readiness(doc.name)
+	seed_workplace_readiness(doc.name)
 
 
 def ensure_company_tax_configuration(company: str) -> dict:

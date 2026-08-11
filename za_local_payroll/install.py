@@ -3,6 +3,7 @@
 import frappe
 from frappe import _
 from za_local_core.dashboards import repair_metric_presentation, seed_dashboards
+from za_local_core.localisation import resolve_south_african_companies
 from za_local_core.navigation import sync_shared_navigation
 from za_local_core.practitioner_guide.stage import unpublish_app_guide
 
@@ -164,20 +165,19 @@ def _setup_workplace_modules() -> None:
 	seed_workplace_dashboards()
 
 
-def seed_payroll_readiness() -> None:
+def seed_payroll_readiness(company: str | None = None) -> None:
 	"""Advertise payroll capabilities conservatively without changing sign-off."""
 	if not frappe.db.exists("DocType", "ZA Feature Readiness"):
 		return
-	companies = frappe.get_all("Company", filters={"country": "South Africa"}, pluck="name")
-	for company in companies:
+	for company_name in resolve_south_african_companies(company):
 		for feature_code, feature_name, domain, status, limitation in PAYROLL_FEATURES:
-			key = f"{company}|{feature_code}"
+			key = f"{company_name}|{feature_code}"
 			if frappe.db.exists("ZA Feature Readiness", key):
 				continue
 			frappe.get_doc(
 				{
 					"doctype": "ZA Feature Readiness",
-					"company": company,
+					"company": company_name,
 					"feature_code": feature_code,
 					"feature_name": feature_name,
 					"domain": domain,
