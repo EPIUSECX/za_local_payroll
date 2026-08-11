@@ -101,9 +101,12 @@ def classify_company_salary_components(doc, method=None) -> None:
 	"""Classify salary components HRMS creates from its own Company on_update hook.
 
 	This runs on update rather than insert because those components do not exist
-	yet when after_insert fires.
+	yet when after_insert fires, and only while the company is being created:
+	on_update also fires on every later save, and sweeping every component then
+	would put a pile of queries on a path that has nothing to do with payroll.
+	Companies that predate the app are covered by install and migrate.
 	"""
-	if doc.country != COUNTRY:
+	if doc.country != COUNTRY or not doc.flags.in_insert:
 		return
 
 	from za_local_payroll.setup.masters import configure_company_payroll_masters

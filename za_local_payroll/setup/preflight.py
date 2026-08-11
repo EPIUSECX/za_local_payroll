@@ -65,19 +65,24 @@ def _unmapped_salary_components(company: str) -> list[str]:
 			)
 		)
 
-	unmapped = []
-	for component in sorted(used):
-		if not frappe.db.exists("Salary Component", component):
-			continue
-		if frappe.db.get_value("Salary Component", component, "do_not_include_in_accounts"):
-			continue
-		if frappe.db.exists("Salary Component Account", {"parent": component, "company": company}):
-			continue
-		unmapped.append(component)
-
-	if not unmapped:
+	posting = frappe.get_all(
+		"Salary Component",
+		filters={"name": ["in", list(used)], "do_not_include_in_accounts": 0},
+		pluck="name",
+	)
+	if not posting:
 		return []
-	return [_("Salary Component {0} has no account for this company").format(name) for name in unmapped]
+	mapped = set(
+		frappe.get_all(
+			"Salary Component Account",
+			filters={"parent": ["in", posting], "company": company},
+			pluck="parent",
+		)
+	)
+	return [
+		_("Salary Component {0} has no account for this company").format(name)
+		for name in sorted(set(posting) - mapped)
+	]
 
 
 def _untyped_payroll_payable_account(company: str) -> list[str]:
