@@ -286,7 +286,8 @@ COMPONENTS = {
 		{},
 		"Medical Aid Payable",
 	),
-	# A non-IRP5 deduction still needs a SARS code to calculate (gap PAY-CFG-1).
+	# PAY-CFG-1 fixed: a deduction excluded from the IRP5 needs no SARS code. Union dues
+	# stay in Payroll Payable until paid to the union (a configuration choice).
 	"Union Subscription": (
 		"Deduction",
 		"UNION",
