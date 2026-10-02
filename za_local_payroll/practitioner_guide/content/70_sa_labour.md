@@ -84,7 +84,7 @@ EAP/employer-plan source and effective target rows with independent review. Reco
 appointments, promotions, demotions, transfers, and terminations as submitted
 **Employment Equity Movement** evidence.
 
-| Compatibility report name | Actual implemented basis |
+| Report | Basis |
 |---|---|
 | **EE Workforce Profile** | Active-at-date workforce composition |
 | **EEA4 Income Differential Statement** | Latest effective submitted Salary Structure Assignment base; monthly proxy. Working paper for the EEA4 form |
@@ -93,7 +93,9 @@ appointments, promotions, demotions, transfers, and terminations as submitted
 
 These are not certified EEA forms. Company/date filters and permissions are
 mandatory. Positive cells below the configured threshold (default five) are
-suppressed; only ZA Compliance Reviewer/Manager or System Manager may reveal them.
+suppressed. Revealing them needs ZA Compliance Reviewer or Manager (or System Manager) **and** Employee read
+access, so grant Employee read only to the named EE reviewer. An HR Manager without the reviewer role cannot
+reveal small cells. The preparer of a target plan cannot submit it; a ZA Compliance Reviewer does.
 
 The Employment Equity Amendment Act baseline is 1 January 2025; the 18-sector
 numerical-target regulations commenced on 15 April 2025 and the current five-year

@@ -11,9 +11,9 @@ A SARS tax directive is required for lump-sum amounts such as severance/retrench
 Apply for the directive on SARS eFiling, then record it in `za_local_payroll`:
 
 1. Go to **Tax Directive → New**.
-2. Set the **Employee**, **Company** and **directive type** (Severance, Leave Payout, Retirement Lump Sum, or Combination).
-3. Enter the **directive number** and date issued by SARS.
-4. Capture the directive amounts and the tax SARS specified.
+2. Set the **Employee**, **Company** and **Directive Type**: *Severance / Lump Sum* (tax on a lump sum = the directive amount, under 4115), *Fixed Amount* (a fixed monthly PAYE), *Reduced Tax Rate* (PAYE at the directed rate), *Standard Directive* or *Garnishee Order*.
+3. Enter the **Directive Number**, **Effective From / To** and the amount or rate SARS specified, and attach the SARS directive as a private **Directive Attachment**.
+4. Set **Status** to *Active*. Only an Active directive covering the slip date is applied. Payroll Managers can create, submit, cancel and amend directives.
 
 ## 2. Process the final settlement
 
@@ -33,7 +33,7 @@ The settlement record is a controlled calculation and approval record. It does n
 
 ## 3. Leave encashment
 
-For leave paid out outside a full termination, `za_local_payroll` provides a **Leave Encashment SA** process. Use it to process the leave payout with correct SA tax treatment, separate from the final-settlement flow.
+For leave paid out outside a full termination, `za_local_payroll` provides a **Leave Encashment** process (DocType *Leave Encashment Sa*). Use it to process the leave payout with correct SA tax treatment, separate from the final-settlement flow.
 
 ## 4. Verify on the certificate
 

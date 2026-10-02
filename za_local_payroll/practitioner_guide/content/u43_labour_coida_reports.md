@@ -12,7 +12,8 @@ and Company before running these reports.
 | **EE Plan Progress** | Headcount compared with latest effective rows of one submitted target plan; supports the EEA2 report's progress section |
 | **EE Workforce Movement** | Submitted explicit movement records between From/To dates |
 
-The names are retained for compatibility; the outputs are not certified EEA forms.
+On the Department of Employment and Labour's forms, EEA2 is the Employment Equity Report and EEA4 the Income
+Differential Statement; the report names follow that. The outputs are working papers, not certified EEA forms.
 Company/date filters and permissions are mandatory. Positive small cells are
 suppressed by default, and only authorised compliance roles may reveal them. Use
 the current official form and portal as a Controlled Manual process.

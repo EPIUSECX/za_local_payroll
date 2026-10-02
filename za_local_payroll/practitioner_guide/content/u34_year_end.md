@@ -12,7 +12,8 @@
 1. SA Payroll workspace → generate the **IRP5 Certificate** records for the company and tax year (individually or in bulk).
 2. The system sums each employee's salary-slip amounts for the year and groups them under their **SARS payroll codes** (income, deductions, employer contributions).
 3. **Review each certificate:** ID/passport and income tax reference number present, residential and postal addresses complete, codes and amounts correct, and totals matching the year's slips.
-4. **Print** with the **IRP5 Employee Certificate** format (or **IRP5-it3 Certificate** for IT3(a) cases).
+4. **Second-person review.** A different Payroll Manager, named in **Reviewed By**, submits the certificates. From the EMP501, **Submit Certificates as Reviewer** submits all reviewed draft certificates at once.
+5. **Print** with the **IRP5 Employee Certificate** format (or **IRP5-it3 Certificate** for IT3(a) cases).
 
 ## 2. Build the EMP501 reconciliation
 
@@ -20,7 +21,8 @@
 2. **Link the twelve EMP201s** and the **IRP5 certificates**.
 3. **Run the readiness checks.** The reconciliation verifies employer references, that all months are covered, that every employee has an IRP5, that SARS codes are complete, and that directive numbers exist for any lump sums.
 4. **Reconcile.** The legs must agree: sum of monthly EMP201 PAYE = sum of IRP5 PAYE = PAYE actually paid to SARS.
-5. **Submit the internal working paper, then file externally** through approved SARS tooling once the checks pass and the legs reconcile. The app does not produce the SARS BRS payroll-import/encrypted reconciliation formats; retain the external receipt.
+5. **Second-person review and filing record.** A different Payroll Manager submits the EMP501. Then **Create ZA Filing** (filing reviewer and approver) and, after filing, record the SARS receipt.
+6. **Submit the internal working paper, then file externally** through approved SARS tooling once the checks pass and the legs reconcile. The app does not produce the SARS BRS payroll-import/encrypted reconciliation formats; retain the external receipt.
 
 > If the EMP501 won't submit, a readiness check failed — read the message (missing month, unlinked IRP5, missing reference or directive) and fix the underlying record. This is intentional.
 

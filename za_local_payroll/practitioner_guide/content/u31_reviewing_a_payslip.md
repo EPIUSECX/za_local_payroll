@@ -18,6 +18,7 @@
 ## Two things people get wrong
 
 - **ETI doesn't reduce the employee's pay.** It's an *employer* incentive that reduces the PAYE the employer pays to SARS on the EMP201. The employee's PAYE and net pay are unaffected.
+- **Fringe benefits are taxed but not paid.** A company car, housing or low-interest loan benefit appears under earnings and increases PAYE, but it is not cash, so it does not increase net pay.
 - **Travel allowances are partly taxed.** A fixed travel allowance is taxed at 80% by default (only 80% enters PAYE monthly). That's correct, not an error.
 
 ## Quick sanity-check per slip

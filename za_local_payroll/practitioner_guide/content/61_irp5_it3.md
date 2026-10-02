@@ -13,8 +13,12 @@ The app's certificate/PDF and generic exports are not the SARS BRS payroll-impor
 For each employee, the engine sums all submitted salary-slip components for the tax year and groups them by **SARS Payroll Code** into:
 
 - **Income details** (e.g. 3601 normal income, 3605 annual payment, travel allowance codes, fringe-benefit codes).
-- **Deduction details** (e.g. 4001 retirement, 4005 medical, 4102 PAYE, 4141 UIF).
-- **Employer contribution details** (e.g. employer retirement/medical).
+- **Deduction details** (e.g. 4001/4003/4006 retirement, 4005 medical including the employer's contribution deemed paid by the employee, 4102 PAYE, 4115 directive tax, 4141 UIF).
+- **Employer contribution details** (e.g. 4472 employer pension, 4474 employer medical, equal to 3810).
+- **Tax credits**: 4116 medical scheme fees tax credit and 4118 ETI.
+- **Totals**: 3696/3697/3698 gross totals and 4149 total tax, SDL and UIF.
+
+The employer's tax ID on the certificate is the Company's **Income Tax Reference Number**, never its VAT number.
 
 Components marked **Exclude from IRP5** are omitted. The header pulls the employee's identity, tax reference and addresses from the [Employee master](../full-suite-employees/employee-master), and the employer details (name, PAYE reference) from the Company.
 
@@ -28,9 +32,11 @@ Components marked **Exclude from IRP5** are omitted. The header pulls the employ
    - Income, deduction and contribution lines carry the right **SARS codes** and amounts.
    - The certificate totals agree with the employee's salary-slip sums for the year.
 
-3. **Handle directives.** If the employee had a lump sum or final settlement, the relevant **Tax Directive** number must appear — see [Tax Directives & Final Settlements](directives-and-final-settlements).
+3. **Independent review.** Each certificate records **Prepared By** (the user who generated it). A different Payroll Manager, named in **Reviewed By**, submits it; the preparer cannot. From the EMP501 Reconciliation, **Submit Certificates as Reviewer** submits every reviewed draft certificate in one step and submits none if one fails.
 
-4. **Print / export.** Use the **IRP5 Employee Certificate** print format (or **IRP5-it3 Certificate** for IT3(a) cases) to produce the PDF.
+4. **Handle directives.** If the employee had a lump sum or final settlement, the relevant **Tax Directive** number must appear — see [Tax Directives & Final Settlements](directives-and-final-settlements).
+
+5. **Print / export.** Use the **IRP5 Employee Certificate** print format (or **IRP5-it3 Certificate** for IT3(a) cases) to produce the PDF.
 
 ## Audit trail
 

@@ -32,9 +32,10 @@ The **SA Payroll** workspace provides the validation and reconciliation reports:
 |---|---|
 | **Payroll Register** | All employees with earnings, deductions, net pay and statutory amounts for the period. Your primary review and reconciliation view. |
 | **EMP201 Report** | PAYE, UIF, SDL and ETI totals for the month — the basis for the EMP201 declaration. |
-| **Statutory Submissions Summary** | Consolidated statutory totals across periods. |
+| **Statutory Submissions Summary** | PAYE (including directive tax, 4115), employee and employer UIF and SDL, less ETI generated, for any period. Its total equals the EMP201 liability for the month. |
 | **Retirement Fund Deductions** | Retirement contributions by employee/component, to reconcile against fund schedules. |
 | **Department Cost Analysis** | Payroll cost by department. |
+| **EMP201 Report** / **Payroll Register** | Use with company and period filters; restricted to payroll roles. |
 
 Standard HRMS reports (Salary Register, Bank Remittance, Income Tax Computation) remain available too.
 

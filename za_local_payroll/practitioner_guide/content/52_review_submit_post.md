@@ -22,19 +22,21 @@ Submit each Salary Slip (or use the Payroll Entry's submit action to submit the 
 
 ## 3. Submit the Payroll Entry and post accounting
 
-Use the submitted Payroll Entry's **Submit Salary Slips** action. HRMS creates the ordinary payroll accrual and `za_local_payroll` atomically creates one additional submitted accrual for employer contributions (UIF employer and SDL). Repeating the action reuses the existing employer-contribution entry; it does not double-post. Cancelling the Payroll Entry cancels both linked accruals.
+Use the submitted Payroll Entry's **Submit Salary Slips** action. HRMS creates the ordinary payroll accrual and `za_local_payroll` atomically creates one additional submitted accrual for employer contributions (UIF employer, SDL and any employer fund contributions). Each employer contribution is credited to the **Contribution Liability Account** on its Salary Component's Accounts row, so UIF, SDL and fund liabilities reconcile to the EMP201 and the fund schedules; set it for every company-contribution component before the first run. Repeating the action reuses the existing employer-contribution entry; it does not double-post. Cancelling the Payroll Entry cancels both linked accruals.
 
 A typical posting per period aggregates to:
 
 | Account | Dr | Cr |
 |---|---|---|
-| Salaries and Wages | gross earnings | |
+| Salaries and Wages (and allowance / commission expense accounts) | gross earnings | |
 | UIF Employer Expense | employer UIF | |
 | SDL Expense | SDL | |
-| PAYE Payable – SARS | | PAYE |
-| UIF (employee + employer) liability | | UIF |
-| Medical Aid / Pension payable | | employee deductions |
-| Payroll Payable | | net pay |
+| Fund employer expense (pension, medical) | employer contributions | |
+| PAYE Payable – SARS | | PAYE (including 4115 directive tax) |
+| UIF Employee Contribution / UIF Employer Contribution | | UIF |
+| SDL Payable – SARS | | SDL |
+| Pension / Provident / RA / Medical Aid payable | | employee deductions and employer contributions |
+| Payroll Payable | | net pay plus deductions paid to third parties (for example union dues) |
 
 The entry balances: total debits (gross + employer costs) equal total credits (statutory liabilities + other deductions + net pay).
 

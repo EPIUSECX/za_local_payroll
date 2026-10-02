@@ -6,7 +6,7 @@ Found in the **SA Payroll** workspace (Frappe HR required). Use these to review 
 |---|---|---|
 | **Payroll Register** | Every employee's earnings, deductions, net pay and statutory amounts for the period | Review the whole run; reconcile to the General Ledger. |
 | **EMP201 Report** | PAYE, UIF, SDL and ETI totals for the month | Prepare and check the monthly EMP201. |
-| **Statutory Submissions Summary** | Consolidated statutory totals across periods | See PAYE/UIF/SDL/ETI trends and coverage. |
+| **Statutory Submissions Summary** | PAYE (including directive tax), UIF and SDL less ETI generated, for any period | Its total equals the EMP201 liability for the month. |
 | **Retirement Fund Deductions** | Retirement contributions by employee/component | Reconcile against the fund's schedules. |
 | **Department Cost Analysis** | Payroll cost by department | Management and budgeting. |
 

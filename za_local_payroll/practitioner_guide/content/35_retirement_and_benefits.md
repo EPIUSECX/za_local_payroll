@@ -16,7 +16,7 @@ Create a **Retirement Fund** record for each pension, provident or retirement-an
 
 Then create the matching **Salary Components**:
 
-- An employee deduction component (treatment **Retirement Fund**, 0% PAYE inclusion — contributions reduce taxable income), mapped to SARS code 4001 and the retirement liability account.
+- An employee deduction component (treatment **Retirement Fund**, 0% PAYE inclusion — contributions reduce taxable income), mapped to SARS code **4001** (pension), **4003** (provident) or **4006** (retirement annuity), and to the fund's liability account.
 - An employer contribution component in the Salary Structure's **Company Contribution** table, if the employer contributes.
 
 ### The retirement-deduction cap

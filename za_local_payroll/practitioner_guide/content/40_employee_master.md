@@ -23,6 +23,9 @@ For each **Employee** set the usual HRMS fields: name, company, department, desi
 | Has Children / Has Other Employments | Leave and PAYE-directive scenarios. |
 | Number of Dependants | Drives the medical scheme tax credit. |
 | Payroll Payable Bank Account | The bank account net pay is paid from/to. |
+| Domestic Worker / Connected Person to Employer | Both exclude the employee from ETI. |
+| ETI Minimum Wage Basis / Applicable ETI Minimum Hourly Wage | Which wage floor applies for ETI (a wage regulating measure, or the unregulated minimum in Payroll Settings). |
+| COIDA Director Classification | Marks a director, whose earnings the COIDA Return of Earnings reports separately. |
 
 ## 4. Tax Certificate section (for IRP5)
 

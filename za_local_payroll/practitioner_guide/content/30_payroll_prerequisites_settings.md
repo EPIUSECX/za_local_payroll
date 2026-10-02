@@ -24,11 +24,17 @@ Before configuring payroll, confirm:
 | UIF Employer Salary Component | `UIF Employer Contribution` | Employer's 1% UIF (company contribution). |
 | SDL Salary Component | `SDL Contribution` | Skills Development Levy (company contribution). |
 | COIDA Salary Component | (optional) | If you track COIDA via a component. |
+| Tax on Lump Sum Salary Component | `Tax on Lump Sum` | The deduction for directive tax on severance and other lump sums (SARS code 4115). A lump sum is refused without an Active Severance / Lump Sum directive. |
 
 Also set:
 
 - **Calculate Annual Taxable Amount Based On** — *Payroll Period* (default, recommended) or *Joining/Relieving Date*. This controls how income is annualised for PAYE.
 - **Disable ETI Calculation** — leave unticked unless the employer does not claim ETI.
+- **ETI Unregulated Minimum Monthly Wage** — the floor used for ETI where no wage regulating measure applies. Confirm it against the current ETI guide.
+- **EMP201 Compliance Obligation** and **EMP501 Compliance Obligation** — the approved `ZA Compliance Obligation` records (for example `ZA-EMP201`, `ZA-EMP501`) that a submitted EMP201 or EMP501 uses when it creates its **ZA Filing**. Without them, *Create ZA Filing* is refused.
+- **Allow Packaged Statutory Rates** — off on a new site. Leave it off and approve a source-backed **Payroll** rate pack; tick it only as a recorded practitioner decision to use the values packaged with the app (see [Statutory Rate Data](statutory-rate-data)).
+
+Payroll Managers can read Payroll Settings; changing it needs HR Manager or System Manager.
 
 > These statutory components are seeded when HRMS is present. If a dropdown is empty, preserve logs and diagnose setup/migration on staging; do not repeatedly migrate production as a repair shortcut.
 

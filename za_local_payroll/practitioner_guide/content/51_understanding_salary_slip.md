@@ -15,7 +15,9 @@
 | **ETI** (`za_monthly_eti`) | Employment Tax Incentive for eligible employees, from the ETI Slab band for their remuneration and employment-month, prorated by hours. Stored on the slip and consumed by the EMP201. |
 | **Retirement excess** (`za_retirement_fund_taxable_excess`) | Retirement contributions above the deductible cap, added back to taxable income. |
 | **Total company contribution** | Sum of employer contributions (UIF employer, SDL, employer retirement/medical). |
-| **Net pay** | Gross less employee deductions (PAYE, employee UIF, medical, retirement, etc.). |
+| **Fringe benefits** | Company car, housing and low-interest loan benefits are non-cash earnings: they are taxed (PAYE, IRP5) but do not increase net pay. **PAYE Inclusion Adjustment** records the part of a benefit or allowance excluded from PAYE. |
+| **Tax Directive Applied** | The Active directive used on the slip. A severance or lump sum is taxed at the directive amount under 4115 and is excluded from the normal PAYE average. |
+| **Net pay** | Gross cash earnings less employee deductions (PAYE, employee UIF, medical, retirement, etc.). |
 
 ## Reading the statutory bases
 

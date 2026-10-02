@@ -19,11 +19,15 @@ The localisation currently enables only **FNB Online Banking Enterprise CSV**. A
 
 - Create and review a **Payroll Payment Batch** from the submitted Payroll Entry, then submit it and generate its private FNB OBE CSV.
 - Reconcile its source hash and control total, download securely, and upload through FNB's approved portal.
-- The total in the file should equal the **Payroll Payable** amount from the posting.
+- The total in the file should equal the employees' net pay in the posting.
+
+## 4. Record the bank settlement
+
+When FNB confirms the payment, open the submitted batch and select **Record Bank Settlement** with the bank's posting date. This posts the Bank Entry that clears Payroll Payable for the employees' net pay. What remains on Payroll Payable is any deduction you pay to a third party separately (for example union dues).
 
 > Employees must have valid banking details and not be marked *Not Paid Electronically*. Export is restricted to authorised HR Manager, Accounts Manager or System Manager users with batch write access. Complete an FNB low-value acceptance test before production use.
 
-## 4. Distribute payslips
+## 5. Distribute payslips
 
 Print or email the **SA Salary Slip** print format to each employee. It reflects the SA earnings, deductions, employer contributions and statutory figures.
 

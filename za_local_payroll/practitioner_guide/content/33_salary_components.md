@@ -15,6 +15,8 @@ Salary Components are the building blocks of pay. `za_local_payroll` extends eac
 | COIDA Applicable | Include in the COIDA base. | 1 |
 | Is Reimbursement | Mark non-taxable reimbursements. | 0 |
 | Variable Pay Treatment | How variable pay is annualised (Recurring Annualised / Once-Off Full Tax / Manual Review). | Recurring Annualised |
+| Annual Bonus Component | Marks the component that pays the bonus declared as **Annual Bonus** on the Salary Structure Assignment, so it is not annualised twice. | 0 |
+| ETI Wage Component | Counts towards the monthly remuneration used for ETI. | 0 |
 
 ### Payroll Treatment options
 
@@ -42,7 +44,7 @@ A practical starting point for a standard employer:
 |---|---|---|---|---|---|---|---|
 | Basic Salary | Earning | Regular Remuneration | 100 | 1 | 1 | 1 | 3601 |
 | Travel Allowance | Earning | Fixed Travel Allowance | 80 | 1 | 1 | 1 | 3701 |
-| Overtime | Earning | Overtime | 100 | 1 | 1 | 1 | 3601 |
+| Overtime | Earning | Overtime | 100 | 1 | 1 | 1 | 3607 |
 | Commission | Earning | Commission | 100 | 1 | 1 | 1 | 3606 |
 | 13th Cheque / Bonus | Earning | Annual Payment | 100 | 1 | 1 | 1 | 3605 |
 | PAYE | Deduction | PAYE | 0 | 0 | 0 | 0 | 4102 |
@@ -50,9 +52,10 @@ A practical starting point for a standard employer:
 | UIF Employer Contribution | Company Contribution | UIF | 0 | 0 | 0 | 0 | 4141 |
 | SDL Contribution | Company Contribution | SDL | 0 | 0 | 0 | 0 | 4142 |
 | Medical Aid | Deduction | Medical Aid | 0 | 0 | 0 | 0 | 4005 |
-| Pension / Provident | Deduction | Retirement Fund | 0 | 0 | 0 | 0 | 4001 |
+| Pension Fund | Deduction | Retirement Fund | 0 | 0 | 0 | 0 | 4001 |
+| Provident Fund | Deduction | Retirement Fund | 0 | 0 | 0 | 0 | 4003 |
 | Severance Benefit | Earning | Severance Benefit | 100 | 0 | 0 | 0 | 3901 |
-| Leave Payout | Earning | Leave Payout | 100 | 1 | 1 | 1 | 3907 |
+| Leave Payout | Earning | Leave Payout | 100 | 1 | 1 | 1 | 3605 |
 | Notice Pay | Earning | Notice Pay | 100 | 1 | 1 | 1 | 3601 |
 
 > Treat this as a template, not gospel. Confirm SARS codes and treatments against the current SARS PAYE BRS and the client's actual remuneration policy. Where a component's statutory treatment is unusual, set the SA fields explicitly rather than relying on the default.
