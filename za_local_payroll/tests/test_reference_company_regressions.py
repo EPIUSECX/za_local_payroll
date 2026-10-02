@@ -564,3 +564,89 @@ class TestCertificateAndAccountingRegressions(IntegrationTestCase):
 		):
 			with self.assertRaisesRegex(frappe.ValidationError, "changed"):
 				batch.record_bank_settlement()
+
+
+class TestCOIDAReturnRegressions(IntegrationTestCase):
+	"""COIDA-ROE-1, COIDA-SOD-1, COIDA-ISO-1, INJ-4."""
+
+	def test_monthly_declaration_counts_people_and_capped_earnings(self):
+		from za_local_payroll.sa_coida.doctype.coida_annual_return.coida_annual_return import (
+			COIDAAnnualReturn,
+		)
+
+		rows = [
+			{
+				"employee": "E1",
+				"period_end": "2026-03-31",
+				"is_director": 0,
+				"capped_assessable_earnings": 100.0,
+			},
+			{
+				"employee": "E1",
+				"period_end": "2026-03-31",
+				"is_director": 0,
+				"capped_assessable_earnings": 50.0,
+			},
+			{
+				"employee": "D1",
+				"period_end": "2026-03-31",
+				"is_director": 1,
+				"capped_assessable_earnings": 300.0,
+			},
+			{
+				"employee": "E2",
+				"period_end": "2027-02-28",
+				"is_director": 0,
+				"capped_assessable_earnings": 70.0,
+			},
+		]
+		months = COIDAAnnualReturn._monthly_declaration(None, rows)
+		self.assertEqual(["Mar", "Feb"], [m["month"] for m in months])
+		self.assertEqual(
+			(1, 150.0, 1, 300.0),
+			tuple(months[0][k] for k in ("employees", "employee_earnings", "directors", "director_earnings")),
+		)
+
+	def test_assessment_includes_free_food_and_quarters(self):
+		doc = frappe.new_doc("COIDA Annual Return")
+		doc.update(
+			{
+				"company": "X",
+				"industry_class": "Y",
+				"from_date": "2026-03-01",
+				"total_annual_earnings": 1000,
+				"free_food_and_quarters": 200,
+			}
+		)
+		module = "za_local_payroll.sa_coida.doctype.coida_annual_return.coida_annual_return"
+		with (
+			patch(
+				f"{module}.resolve_coida_industry_rate",
+				return_value=frappe._dict(value=1.0, rule_key="r", source_reference="s"),
+			),
+			patch(
+				f"{module}.resolve_coida_minimum_assessment",
+				return_value=frappe._dict(value=0, rule_key="m", source_reference="s"),
+			),
+		):
+			doc.calculate_assessment_fee()
+		self.assertEqual(1200, doc.grand_total_earnings)
+		self.assertEqual(12, doc.assessment_fee)
+
+	def test_return_is_refused_for_a_foreign_company(self):
+		doc = frappe.new_doc("COIDA Annual Return")
+		doc.company = "Foreign"
+		module = "za_local_payroll.sa_coida.doctype.coida_annual_return.coida_annual_return"
+		with patch(f"{module}.is_south_african_company", return_value=False):
+			with self.assertRaisesRegex(frappe.ValidationError, "South Africa"):
+				doc.validate()
+
+	def test_preparer_cannot_review_their_own_return(self):
+		source = (APP / "sa_coida/doctype/coida_annual_return/coida_annual_return.py").read_text()
+		self.assertIn("additional_excluded_users=(self.prepared_by,)", source)
+
+	def test_hr_manager_can_cancel_and_amend_coida_records(self):
+		for doctype in ("coida_annual_return", "workplace_injury", "oid_claim"):
+			meta = json.loads((APP / f"sa_coida/doctype/{doctype}/{doctype}.json").read_text())
+			hr = [p for p in meta["permissions"] if p["role"] == "HR Manager"]
+			self.assertTrue(hr and hr[0].get("cancel") and hr[0].get("amend"), doctype)

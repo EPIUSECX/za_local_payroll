@@ -42,9 +42,9 @@ COIDA_CLASSIFICATION = {
 	"Leave Encashment": (True, True),
 	"Leave Payout": (True, True),
 	"Notice Pay": (True, True),
-	"Cellphone Allowance": (False, True),
-	"Fixed Travel Allowance": (False, True),
-	"Uniform Allowance": (False, True),  # "any other non-pensionable allowance" unless a reimbursement
+	"Cellphone Allowance": (True, True),
+	"Fixed Travel Allowance": (True, True),
+	"Uniform Allowance": (True, True),  # "any other non-pensionable allowance" unless a reimbursement
 	"Reimbursive Travel": (False, False),
 	"Business Expense Reimbursement": (False, False),
 	"Severance Benefit": (False, False),
@@ -172,6 +172,8 @@ def stage_coida_return() -> dict:
 			outcome(r, "source_changed_after_fetch_rejected", director_flip, True)
 			frappe.db.set_value("Employee", employee_for("P03_high_income"), "za_coida_director", 0)
 			frappe.db.commit()
+		frappe.db.set_value("COIDA Annual Return", name, "reviewed_by", user("hr_reviewer"))
+		frappe.db.commit()
 		with acting_as(user("payroll_user")):
 			outcome(
 				r,
@@ -180,10 +182,16 @@ def stage_coida_return() -> dict:
 				True,
 			)
 		with acting_as(user("hr_manager")):
-			# COIDA-SOD-1: the preparer can submit their own return (no reviewer step).
 			outcome(
 				r,
 				"preparer_submits_own_return",
+				lambda: frappe.get_doc("COIDA Annual Return", name).submit(),
+				True,
+			)
+		with acting_as(user("hr_reviewer")):
+			outcome(
+				r,
+				"independent_reviewer_submits",
 				lambda: frappe.get_doc("COIDA Annual Return", name).submit(),
 				False,
 			)
@@ -216,6 +224,14 @@ def stage_coida_return() -> dict:
 			("assessment_before_minimum", "assessment_before_minimum", "assessment_before_minimum"),
 			("assessment_fee", "assessment_fee", "assessment_fee"),
 		)
+	}
+	monthly = doc.get("monthly_earnings") or []
+	monthly_total = flt(sum(flt(m.employee_earnings) + flt(m.director_earnings) for m in monthly), 2)
+	checks["monthly_rows"] = {"golden": 12, "actual": len(monthly), "pass": len(monthly) == 12}
+	checks["monthly_total_equals_annual"] = {
+		"golden": flt(doc.total_annual_earnings),
+		"actual": monthly_total,
+		"pass": abs(monthly_total - flt(doc.total_annual_earnings)) <= 0.01,
 	}
 	checks["cap_value"] = {
 		"golden": GOLDEN["annual_earnings_cap"],

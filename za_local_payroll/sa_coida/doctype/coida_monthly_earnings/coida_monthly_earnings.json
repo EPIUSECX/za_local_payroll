@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "creation": "2026-10-02 08:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "month",
+  "period_end",
+  "employees",
+  "employee_earnings",
+  "directors",
+  "director_earnings",
+  "provisional_section",
+  "provisional_employees",
+  "provisional_employee_earnings",
+  "provisional_directors",
+  "provisional_director_earnings"
+ ],
+ "fields": [
+  {
+   "fieldname": "month",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Month",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Month End",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employees",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Employees",
+   "read_only": 1
+  },
+  {
+   "description": "Earnings of employees other than directors or members, each capped at the annual maximum.",
+   "fieldname": "employee_earnings",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Employee Earnings",
+   "read_only": 1
+  },
+  {
+   "fieldname": "directors",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Directors / Members",
+   "read_only": 1
+  },
+  {
+   "fieldname": "director_earnings",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Director / Member Earnings",
+   "read_only": 1
+  },
+  {
+   "fieldname": "provisional_section",
+   "fieldtype": "Section Break",
+   "label": "Provisional (estimate for the next assessment year)"
+  },
+  {
+   "fieldname": "provisional_employees",
+   "fieldtype": "Int",
+   "label": "Provisional Employees"
+  },
+  {
+   "fieldname": "provisional_employee_earnings",
+   "fieldtype": "Currency",
+   "label": "Provisional Employee Earnings"
+  },
+  {
+   "fieldname": "provisional_directors",
+   "fieldtype": "Int",
+   "label": "Provisional Directors / Members"
+  },
+  {
+   "fieldname": "provisional_director_earnings",
+   "fieldtype": "Currency",
+   "label": "Provisional Director / Member Earnings"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-02 08:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SA COIDA",
+ "name": "COIDA Monthly Earnings",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

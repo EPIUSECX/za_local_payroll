@@ -23,6 +23,10 @@
   "excluded_annual_earnings",
   "director_earnings",
   "earnings_snapshot",
+  "free_food_and_quarters",
+  "grand_total_earnings",
+  "monthly_section",
+  "monthly_earnings",
   "column_break_11",
   "total_employees",
   "source_slip_count",
@@ -43,6 +47,10 @@
   "column_break_16",
   "status",
   "submission_date",
+  "review_section",
+  "prepared_by",
+  "reviewed_by",
+  "reviewed_on",
   "amended_from"
  ],
  "fields": [
@@ -150,6 +158,30 @@
    "label": "Salary Slip Source Snapshot",
    "options": "COIDA Earnings Snapshot",
    "read_only": 1
+  },
+  {
+   "description": "Cash value of free food and/or quarters provided to employees, added to the grand total of earnings (CF-2A).",
+   "fieldname": "free_food_and_quarters",
+   "fieldtype": "Currency",
+   "label": "Free Food and Quarters"
+  },
+  {
+   "fieldname": "grand_total_earnings",
+   "fieldtype": "Currency",
+   "label": "Grand Total of Earnings",
+   "read_only": 1
+  },
+  {
+   "fieldname": "monthly_section",
+   "fieldtype": "Section Break",
+   "label": "Monthly Declaration (CF-2A Section B)"
+  },
+  {
+   "description": "Actual earnings per month are calculated from submitted Salary Slips; enter the provisional estimates for the next year.",
+   "fieldname": "monthly_earnings",
+   "fieldtype": "Table",
+   "label": "Monthly Earnings",
+   "options": "COIDA Monthly Earnings"
   },
   {
    "fieldname": "column_break_11",
@@ -271,6 +303,31 @@
    "label": "Submission Date"
   },
   {
+   "fieldname": "review_section",
+   "fieldtype": "Section Break",
+   "label": "Independent Review"
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "label": "Prepared By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "description": "An HR Manager other than the preparer, who submits the return.",
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "label": "Reviewed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "reviewed_on",
+   "fieldtype": "Datetime",
+   "label": "Reviewed On",
+   "read_only": 1
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -302,6 +359,8 @@
    "write": 1
   },
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 0,
    "email": 1,

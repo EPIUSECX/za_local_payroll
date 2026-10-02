@@ -34,6 +34,7 @@ USERS = {
 	"payroll_user": ("za.payroll.user@cohenix-ref.test", "Pia Payroll", ["Payroll User", "HR User"]),
 	"payroll_manager": ("za.payroll.manager@cohenix-ref.test", "Pam Payroll", ["Payroll Manager", "HR User"]),
 	"hr_manager": ("za.hr.manager@cohenix-ref.test", "Hal HR", ["HR Manager", "HR User"]),
+	"hr_reviewer": ("za.hr.reviewer@cohenix-ref.test", "Rio Review", ["HR Manager", "HR User"]),
 	"employee": ("za.employee.self@cohenix-ref.test", "Eve Employee", ["Employee"]),
 	"foreign_accounts": ("uk.accounts@cohenix-ref.test", "Uma UK", ["Accounts User"]),
 }

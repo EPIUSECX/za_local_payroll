@@ -136,11 +136,11 @@
   },
   {
    "allow_on_submit": 1,
-      "fieldname": "claim_date",
-      "fieldtype": "Date",
-      "label": "Claim Date",
-      "read_only": 1,
-      "search_index": 1
+   "fieldname": "claim_date",
+   "fieldtype": "Date",
+   "label": "Claim Date",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "allow_on_submit": 1,
@@ -149,10 +149,10 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Claim Status",
-      "options": "Pending\nSubmitted\nUnder Review\nApproved\nRejected\nPaid\nCancelled",
-      "read_only": 1,
-      "reqd": 1,
-      "search_index": 1
+   "options": "Pending\nSubmitted\nUnder Review\nApproved\nRejected\nPaid\nCancelled",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "column_break_19",
@@ -160,26 +160,26 @@
   },
   {
    "allow_on_submit": 1,
-      "fieldname": "compensation_amount",
-      "fieldtype": "Currency",
-      "label": "Compensation Amount",
-      "read_only": 1
+   "fieldname": "compensation_amount",
+   "fieldtype": "Currency",
+   "label": "Compensation Amount",
+   "read_only": 1
   },
   {
    "allow_on_submit": 1,
-      "fieldname": "payment_date",
-      "fieldtype": "Date",
-      "label": "Payment Date",
-      "read_only": 1
+   "fieldname": "payment_date",
+   "fieldtype": "Date",
+   "label": "Payment Date",
+   "read_only": 1
   },
   {
    "fieldname": "medical_details_section",
    "fieldtype": "Section Break",
    "label": "Medical Details"
   },
-    {
-      "allow_on_submit": 1,
-      "fieldname": "medical_reports",
+  {
+   "allow_on_submit": 1,
+   "fieldname": "medical_reports",
    "fieldtype": "Table",
    "label": "Medical Reports",
    "options": "OID Medical Report"
@@ -216,6 +216,8 @@
    "write": 1
   },
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 0,
    "email": 1,

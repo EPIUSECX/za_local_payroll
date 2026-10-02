@@ -35,6 +35,8 @@ def a(name: str) -> str:
 
 # name: (type, abbr, code, treatment, paye%, uif, sdl, coida, variable, extra fields, account)
 COMPONENTS = {
+	# Regular allowances are COIDA earnings per the 25 April 2025 Ministerial notice on
+	# calculating the return of earnings (practitioner decision, recorded in the register).
 	# Earnings
 	"Basic": (
 		"Earning",
@@ -122,7 +124,7 @@ COMPONENTS = {
 		80,
 		1,
 		1,
-		0,
+		1,
 		"Recurring Annualised",
 		{},
 		"Travel Allowance Expense",
@@ -161,7 +163,7 @@ COMPONENTS = {
 		100,
 		1,
 		1,
-		0,
+		1,
 		"Recurring Annualised",
 		{},
 		"Salaries and Wages",
@@ -174,7 +176,7 @@ COMPONENTS = {
 		0,
 		0,
 		0,
-		0,
+		1,
 		"Recurring Annualised",
 		{"is_tax_applicable": 0},
 		"Salaries and Wages",
