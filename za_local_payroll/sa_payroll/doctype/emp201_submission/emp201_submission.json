@@ -18,6 +18,24 @@
         {
             "role": "Accounts User",
             "read": 1
+        },
+        {
+            "role": "ZA Compliance User",
+            "read": 1,
+            "print": 1,
+            "report": 1
+        },
+        {
+            "role": "ZA Compliance Reviewer",
+            "read": 1,
+            "print": 1,
+            "report": 1
+        },
+        {
+            "role": "ZA Compliance Manager",
+            "read": 1,
+            "print": 1,
+            "report": 1
         }
     ],
     "autoname": "EMP201-.#####",
@@ -25,7 +43,7 @@
     "creation": "2024-05-06 16:00:00.000000",
     "modified": "2024-05-06 16:00:00.000000",
     "modified_by": "Administrator",
-    "title_field": "company", 
+    "title_field": "company",
     "track_changes": 1,
     "is_submittable": 1,
     "fields": [
@@ -69,7 +87,7 @@
         {
             "fieldname": "main_details_section",
             "fieldtype": "Section Break",
-            "label": "Details" 
+            "label": "Details"
         },
         {
             "fieldname": "fiscal_year",
@@ -120,6 +138,88 @@
             "default": "Draft",
             "print_hide": 1,
             "in_list_view": 1
+        },
+        {
+            "fieldname": "review_section",
+            "fieldtype": "Section Break",
+            "label": "Preparation and Review"
+        },
+        {
+            "fieldname": "prepared_by",
+            "fieldtype": "Link",
+            "options": "User",
+            "label": "Prepared By",
+            "read_only": 1
+        },
+        {
+            "fieldname": "reviewed_by",
+            "fieldtype": "Link",
+            "options": "User",
+            "label": "Reviewed By",
+            "description": "A Payroll Manager other than the preparer. Only this user may submit."
+        },
+        {
+            "fieldname": "column_break_review",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "reviewed_on",
+            "fieldtype": "Datetime",
+            "label": "Reviewed On",
+            "read_only": 1,
+            "no_copy": 1
+        },
+        {
+            "fieldname": "filing_section",
+            "fieldtype": "Section Break",
+            "label": "SARS Filing",
+            "description": "After submission, Create ZA Filing hands this working paper to the compliance filing, review, approval and receipt controls."
+        },
+        {
+            "fieldname": "filing_due_date",
+            "fieldtype": "Date",
+            "label": "Filing Due Date",
+            "allow_on_submit": 1
+        },
+        {
+            "fieldname": "filing_reviewer",
+            "fieldtype": "Link",
+            "options": "User",
+            "label": "Filing Reviewer",
+            "allow_on_submit": 1
+        },
+        {
+            "fieldname": "filing_approver",
+            "fieldtype": "Link",
+            "options": "User",
+            "label": "Filing Approver",
+            "allow_on_submit": 1
+        },
+        {
+            "fieldname": "column_break_filing",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "za_filing",
+            "fieldtype": "Link",
+            "options": "ZA Filing",
+            "label": "ZA Filing",
+            "read_only": 1,
+            "no_copy": 1
+        },
+        {
+            "fieldname": "working_paper_file",
+            "fieldtype": "Attach",
+            "label": "Working Paper",
+            "read_only": 1,
+            "no_copy": 1
+        },
+        {
+            "fieldname": "working_paper_sha256",
+            "fieldtype": "Data",
+            "label": "Working Paper SHA-256",
+            "read_only": 1,
+            "no_copy": 1
         },
         {
             "fieldname": "section_break_summary",

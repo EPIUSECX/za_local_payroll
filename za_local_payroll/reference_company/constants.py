@@ -33,6 +33,12 @@ USERS = {
 	"accounts_manager": ("za.accounts.manager@cohenix-ref.test", "Ama Accounts", ["Accounts Manager"]),
 	"payroll_user": ("za.payroll.user@cohenix-ref.test", "Pia Payroll", ["Payroll User", "HR User"]),
 	"payroll_manager": ("za.payroll.manager@cohenix-ref.test", "Pam Payroll", ["Payroll Manager", "HR User"]),
+	# EMP201-1: EMP201, IRP5 and EMP501 are submitted by a Payroll Manager other than the preparer.
+	"payroll_reviewer": (
+		"za.payroll.reviewer@cohenix-ref.test",
+		"Ravi Payroll",
+		["Payroll Manager", "HR User"],
+	),
 	"hr_manager": ("za.hr.manager@cohenix-ref.test", "Hal HR", ["HR Manager", "HR User"]),
 	"hr_reviewer": ("za.hr.reviewer@cohenix-ref.test", "Rio Review", ["HR Manager", "HR User"]),
 	"employee": ("za.employee.self@cohenix-ref.test", "Eve Employee", ["Employee"]),

@@ -43,8 +43,12 @@ class TestSARSReportingRegressions(UnitTestCase):
 			}
 		)
 
-		EMP201Submission.before_submit(doc)
+		with patch(
+			"za_local_payroll.sa_payroll.doctype.emp201_submission.emp201_submission.require_independent_review"
+		) as review:
+			EMP201Submission.before_submit(doc)
 
+		review.assert_called_once_with(doc)
 		doc._calculate_emp201_data.assert_called_once_with(require_salary_slips=True)
 		self.assertEqual(doc.net_paye_payable, 800)
 		self.assertEqual(doc.status, "Prepared Working Paper")

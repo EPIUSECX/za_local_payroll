@@ -39,6 +39,19 @@
   "previous_submission",
   "section_break_29",
   "notes",
+  "review_section",
+  "prepared_by",
+  "reviewed_by",
+  "column_break_review",
+  "reviewed_on",
+  "filing_section",
+  "filing_due_date",
+  "filing_reviewer",
+  "filing_approver",
+  "column_break_filing",
+  "za_filing",
+  "working_paper_file",
+  "working_paper_sha256",
   "section_break_31",
   "sars_submission_status",
   "sars_submission_date",
@@ -240,6 +253,88 @@
    "label": "Notes"
   },
   {
+   "fieldname": "review_section",
+   "fieldtype": "Section Break",
+   "label": "Preparation and Review"
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Prepared By",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Reviewed By",
+   "description": "A Payroll Manager other than the preparer. Only this user may submit."
+  },
+  {
+   "fieldname": "column_break_review",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reviewed_on",
+   "fieldtype": "Datetime",
+   "label": "Reviewed On",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "filing_section",
+   "fieldtype": "Section Break",
+   "label": "SARS Filing",
+   "description": "After submission, Create ZA Filing hands this working paper to the compliance filing, review, approval and receipt controls."
+  },
+  {
+   "fieldname": "filing_due_date",
+   "fieldtype": "Date",
+   "label": "Filing Due Date",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "filing_reviewer",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Filing Reviewer",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "filing_approver",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Filing Approver",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "column_break_filing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "za_filing",
+   "fieldtype": "Link",
+   "options": "ZA Filing",
+   "label": "ZA Filing",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "working_paper_file",
+   "fieldtype": "Attach",
+   "label": "Working Paper",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "working_paper_sha256",
+   "fieldtype": "Data",
+   "label": "Working Paper SHA-256",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "section_break_31",
    "fieldtype": "Section Break",
    "label": "SARS Submission Details"
@@ -286,43 +381,68 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
    "role": "System Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "cancel": 1,
+   "read": 1,
+   "write": 1,
    "create": 1,
    "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "HR Manager",
-   "share": 1,
    "submit": 1,
-   "write": 1
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1,
+   "email": 1,
+   "share": 1
   },
   {
+   "role": "Payroll Manager",
+   "read": 1,
+   "write": 1,
    "create": 1,
-   "email": 1,
-   "export": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
    "print": 1,
+   "export": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Payroll User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1
+  },
+  {
+   "role": "HR Manager",
    "read": 1,
    "report": 1,
-   "role": "HR User",
-   "share": 1,
-   "write": 1
+   "print": 1,
+   "export": 1
+  },
+  {
+   "role": "ZA Compliance User",
+   "read": 1,
+   "print": 1,
+   "report": 1
+  },
+  {
+   "role": "ZA Compliance Reviewer",
+   "read": 1,
+   "print": 1,
+   "report": 1
+  },
+  {
+   "role": "ZA Compliance Manager",
+   "read": 1,
+   "print": 1,
+   "report": 1
   }
  ],
  "sort_field": "modified",

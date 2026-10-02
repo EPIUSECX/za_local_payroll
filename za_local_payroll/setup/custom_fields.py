@@ -129,6 +129,24 @@ PAYROLL_CUSTOM_FIELDS = {
 			"description": "Deduction (SARS code 4115) that carries the tax on a lump sum set by a "
 			"Severance / Lump Sum Tax Directive.",
 		},
+		{
+			"module": "SA Payroll",
+			"label": "EMP201 Compliance Obligation",
+			"fieldname": "za_emp201_compliance_obligation",
+			"fieldtype": "Link",
+			"options": "ZA Compliance Obligation",
+			"insert_after": "za_lump_sum_tax_salary_component",
+			"description": "Approved obligation used when a submitted EMP201 creates its ZA Filing.",
+		},
+		{
+			"module": "SA Payroll",
+			"label": "EMP501 Compliance Obligation",
+			"fieldname": "za_emp501_compliance_obligation",
+			"fieldtype": "Link",
+			"options": "ZA Compliance Obligation",
+			"insert_after": "za_emp201_compliance_obligation",
+			"description": "Approved obligation used when a submitted EMP501 creates its ZA Filing.",
+		},
 	],
 	"Employee": [
 		{

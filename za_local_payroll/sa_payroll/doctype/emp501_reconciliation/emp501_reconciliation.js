@@ -277,3 +277,37 @@ frappe.ui.form.on('EMP501 Reconciliation', {
         }
     }
 });
+
+frappe.ui.form.on("EMP501 Reconciliation", {
+    refresh(frm) {
+        // A submitted working paper is handed to the ZA Filing review, approval and receipt controls.
+        if (frm.doc.docstatus === 1 && !frm.doc.za_filing) {
+            frm.add_custom_button(__("Create ZA Filing"), () =>
+                frm.call({ doc: frm.doc, method: "create_za_filing", freeze: true }).then(() => frm.reload_doc())
+            );
+        }
+    },
+});
+
+frappe.ui.form.on("EMP501 Reconciliation", {
+    refresh(frm) {
+        const drafts = (frm.doc.irp5_certificates || []).filter((row) => row.status !== "Submitted");
+        if (frm.doc.docstatus === 0 && drafts.length) {
+            frm.add_custom_button(__("Submit Certificates as Reviewer"), () =>
+                frm.call({ doc: frm.doc, method: "submit_reviewed_certificates", freeze: true }).then((r) => {
+                    const failed = Object.entries((r.message && r.message.failed) || {});
+                    if (failed.length) {
+                        frappe.msgprint({
+                            title: __("Certificates Not Submitted"),
+                            indicator: "orange",
+                            message: failed
+                                .map(([name, error]) => `${frappe.utils.escape_html(name)}: ${frappe.utils.escape_html(error)}`)
+                                .join("<br>"),
+                        });
+                    }
+                    frm.reload_doc();
+                })
+            );
+        }
+    },
+});

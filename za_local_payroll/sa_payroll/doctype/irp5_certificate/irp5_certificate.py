@@ -9,6 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, escape_html, flt, getdate, today
 
+from za_local_payroll.sa_payroll.statutory_filing import require_independent_review, set_preparer
 from za_local_payroll.utils.statutory_rates import get_rate_pack
 
 pdf_generation_available = False
@@ -217,9 +218,13 @@ class IRP5Certificate(Document):
 			)
 		)
 
+	def before_insert(self):
+		set_preparer(self)
+
 	def before_submit(self):
 		self.calculate_totals()
 		self.validate_statutory_readiness(throw=True)
+		require_independent_review(self)
 		self.status = "Submitted"
 
 	def on_cancel(self):
@@ -464,6 +469,8 @@ class IRP5Certificate(Document):
 			)
 
 		self.status = "Prepared"
+		# Whoever last generated the figures is their preparer and cannot review them.
+		self.prepared_by = frappe.session.user
 		return {
 			**counts,
 			"certificate_number": self.certificate_number,

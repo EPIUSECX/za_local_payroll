@@ -9,6 +9,15 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_months, flt, get_first_day, get_last_day, getdate
 
+from za_local_payroll.sa_payroll.statutory_filing import (
+	create_filing,
+	emp201_due_date,
+	payroll_liability_ledger_amount,
+	record_receipt,
+	require_independent_review,
+	set_preparer,
+)
+
 PAYE_CODES = {"4102", "4115"}
 UIF_CODES = {"4141"}
 SDL_CODES = {"4142"}
@@ -95,6 +104,9 @@ def calculate_eti_utilisation(gross_paye, eti_generated, previous_carry_forward,
 
 class EMP201Submission(Document):
 	# Main class for EMP201 Submission
+	def before_insert(self):
+		set_preparer(self)
+
 	def validate(self):
 		self.set_submission_key()
 		# Ensure company, fiscal_year, and month are set before checking for duplicates
@@ -128,6 +140,8 @@ class EMP201Submission(Document):
 				)
 
 		self.set_submission_period_dates()
+		if self.submission_period_end_date and not self.filing_due_date:
+			self.filing_due_date = emp201_due_date(self.submission_period_end_date, self.company)
 		if self.docstatus == 1:
 			self._set_authoritative_snapshot()
 
@@ -203,6 +217,8 @@ class EMP201Submission(Document):
 		uif = 0
 		sdl = 0
 		unmapped_statutory_components = set()
+		# Statutory components by slip table, to locate their liability accounts.
+		self._statutory_components = {}
 
 		salary_slips = frappe.get_all(
 			"Salary Slip",
@@ -240,6 +256,8 @@ class EMP201Submission(Document):
 						continue
 
 					bucket, metadata = _get_emp201_bucket(component_name)
+					if bucket in ("paye", "uif", "sdl"):
+						self._statutory_components[component_name] = table_name
 					if bucket == "paye":
 						gross_paye += amount
 					elif bucket == "uif":
@@ -301,7 +319,88 @@ class EMP201Submission(Document):
 
 	def before_submit(self):
 		"""Freeze an authoritative working-paper snapshot at submission."""
+		require_independent_review(self)
 		self._set_authoritative_snapshot()
+
+	@frappe.whitelist(methods=["POST"])
+	def create_za_filing(self):
+		"""Hand the submitted EMP201 to the compliance filing, review and receipt controls."""
+		self.check_permission("submit")
+		self._calculate_emp201_data(require_salary_slips=True)
+		gl_liability, unidentified = payroll_liability_ledger_amount(
+			self.company,
+			self.submission_period_start_date,
+			self.submission_period_end_date,
+			self._statutory_components,
+		)
+		if unidentified:
+			frappe.throw(
+				_("Set a Liability Account on {0} so the EMP201 can be reconciled to the ledger.").format(
+					", ".join(unidentified)
+				)
+			)
+		declared = flt(self.net_paye_payable) + flt(self.uif_payable) + flt(self.sdl_payable)
+		return create_filing(
+			self,
+			obligation_setting="za_emp201_compliance_obligation",
+			period_start=self.submission_period_start_date,
+			period_end=self.submission_period_end_date,
+			declared_amount=declared,
+			# ETI reduces PAYE payable to SARS but never the PAYE withheld in the ledger.
+			ledger_amount=flt(gl_liability) - flt(self.eti_utilized_current_month),
+			payload=self._working_paper(gl_liability),
+		)
+
+	@frappe.whitelist(methods=["POST"])
+	def record_submission_receipt(
+		self,
+		authority_reference: str,
+		response_status: str,
+		evidence_file: str,
+		sha256_checksum: str,
+		submitted_by: str,
+		submitted_at: str | None = None,
+		notes: str | None = None,
+	):
+		"""Record the SARS acknowledgement from eFiling or e@syFile against the ZA Filing."""
+		return record_receipt(
+			self,
+			authority_reference=authority_reference,
+			response_status=response_status,
+			evidence_file=evidence_file,
+			sha256_checksum=sha256_checksum,
+			submitted_by=submitted_by,
+			submitted_at=submitted_at,
+			notes=notes,
+		)
+
+	def _working_paper(self, gl_liability):
+		fields = (
+			"gross_paye_before_eti",
+			"eti_carried_forward_from_previous",
+			"eti_generated_current_month",
+			"total_eti_available",
+			"eti_utilized_current_month",
+			"net_paye_payable",
+			"eti_to_be_carried_forward",
+			"eti_reconciliation_refund",
+			"uif_payable",
+			"sdl_payable",
+		)
+		return {
+			"schema": "za-local-payroll/emp201-working-paper/v1",
+			"emp201_submission": self.name,
+			"company": self.company,
+			"paye_reference_number": frappe.db.get_value("Company", self.company, "za_paye_reference_number"),
+			"period_start": str(self.submission_period_start_date),
+			"period_end": str(self.submission_period_end_date),
+			"prepared_by": self.prepared_by,
+			"reviewed_by": self.reviewed_by,
+			"reviewed_on": str(self.reviewed_on),
+			"declared": {field: flt(self.get(field), 2) for field in fields},
+			"statutory_components": self._statutory_components,
+			"ledger_paye_uif_sdl_credits": flt(gl_liability, 2),
+		}
 
 	def _set_authoritative_snapshot(self):
 		"""Replace user-visible totals with values recalculated from submitted payroll."""

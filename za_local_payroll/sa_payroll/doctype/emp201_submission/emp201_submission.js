@@ -119,3 +119,14 @@ function clear_calculated_fields(frm) {
     frm.set_value("uif_payable", 0);
     frm.set_value("sdl_payable", 0);
 }
+
+frappe.ui.form.on("EMP201 Submission", {
+    refresh(frm) {
+        // A submitted working paper is handed to the ZA Filing review, approval and receipt controls.
+        if (frm.doc.docstatus === 1 && !frm.doc.za_filing) {
+            frm.add_custom_button(__("Create ZA Filing"), () =>
+                frm.call({ doc: frm.doc, method: "create_za_filing", freeze: true }).then(() => frm.reload_doc())
+            );
+        }
+    },
+});

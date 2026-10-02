@@ -28,6 +28,11 @@
   "employee_name",
   "status",
   "emp501_reconciliation",
+  "review_section",
+  "prepared_by",
+  "reviewed_by",
+  "column_break_review",
+  "reviewed_on",
   "employer_details_tab",
   "employer_legal_name",
   "employer_trading_name",
@@ -249,6 +254,36 @@
    "label": "EMP501 Reconciliation",
    "options": "EMP501 Reconciliation",
    "read_only": 1
+  },
+  {
+   "fieldname": "review_section",
+   "fieldtype": "Section Break",
+   "label": "Preparation and Review"
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Prepared By",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Reviewed By",
+   "description": "A Payroll Manager other than the preparer. Only this user may submit."
+  },
+  {
+   "fieldname": "column_break_review",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reviewed_on",
+   "fieldtype": "Datetime",
+   "label": "Reviewed On",
+   "read_only": 1,
+   "no_copy": 1
   },
   {
    "fieldname": "employer_details_tab",
@@ -692,18 +727,50 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "cancel": 1,
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
    "create": 1,
    "delete": 1,
-   "email": 1,
-   "export": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
    "print": 1,
+   "export": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Payroll Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Payroll User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1
+  },
+  {
+   "role": "HR Manager",
    "read": 1,
    "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
+   "print": 1,
+   "export": 1
   }
  ],
  "sort_field": "modified",

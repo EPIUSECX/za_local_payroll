@@ -9,6 +9,7 @@ from frappe.utils import flt, get_last_day, getdate
 
 from za_local_payroll.reference_company import constants as C
 from za_local_payroll.reference_company import paths
+from za_local_payroll.reference_company.governance import acting_as, user
 from za_local_payroll.reference_company.guard import require_reference_site
 from za_local_payroll.reference_company.payroll_setup import EVIDENCE, a
 
@@ -295,8 +296,18 @@ def stage_emp201() -> dict:
 					),
 				}
 			)
-			doc.insert(ignore_permissions=True)
-			doc.submit()
+			with acting_as(user("payroll_manager")):
+				doc.insert(ignore_permissions=True)
+				if i == 0:
+					_try(
+						"preparer_submits_own_emp201",
+						lambda: _submit_copy("EMP201 Submission", doc.name),
+						controls,
+					)
+			doc = frappe.get_doc("EMP201 Submission", doc.name)
+			doc.reviewed_by = user("payroll_reviewer")
+			with acting_as(user("payroll_reviewer")):
+				doc.submit()
 			name = doc.name
 			if i == 0:
 				_try(
@@ -398,6 +409,8 @@ def stage_emp201() -> dict:
 		"all_months_ok": all(m["ok"] for m in months),
 		"controls": controls,
 	}
+	march = months[0]["emp201"]
+	out["march_filing"] = _payroll_filing_lifecycle("EMP201 Submission", march, "2026-04-07", controls)
 	(EVIDENCE / "emp201_year.json").write_text(json.dumps(out, indent=1, default=str))
 	return {k: v for k, v in out.items() if k != "months"} | {
 		"not_ok": [m["month"] for m in months if not m["ok"]]
@@ -442,9 +455,10 @@ def stage_certificates() -> dict:
 						"certificate_number": f"REF-{key[:3]}-2027",
 					}
 				)
-				doc.insert(ignore_permissions=True)
-				doc.generate_certificate_data()
-				doc.save(ignore_permissions=True)
+				with acting_as(user("payroll_manager")):
+					doc.insert(ignore_permissions=True)
+					doc.generate_certificate_data()
+					doc.save(ignore_permissions=True)
 				name = doc.name
 			doc = frappe.get_doc("IRP5 Certificate", name)
 			readiness = (
@@ -504,7 +518,7 @@ def stage_emp501() -> dict:
 	from za_local_payroll.reference_company.personas import PERSONAS
 
 	fiscal_year = frappe.db.get_value("Fiscal Year", {"year_start_date": "2026-03-01"}, "name")
-	certificates, errors = {}, {}
+	certificates, errors, controls = {}, {}, {}
 	for key in PERSONAS:
 		employee = employee_for(key)
 		if not frappe.db.exists("Salary Slip", {"employee": employee, "docstatus": 1, "company": C.COMPANY}):
@@ -534,19 +548,28 @@ def stage_emp501() -> dict:
 						"certificate_number": f"REF-{key[:3]}-2027",
 					}
 				)
-				doc.insert(ignore_permissions=True)
-				doc.generate_certificate_data()
-				doc.save(ignore_permissions=True)
+				with acting_as(user("payroll_manager")):
+					doc.insert(ignore_permissions=True)
+					doc.generate_certificate_data()
+					doc.save(ignore_permissions=True)
 				name = doc.name
 			doc = frappe.get_doc("IRP5 Certificate", name)
 			if doc.docstatus == 0:
-				doc.submit()
+				if not controls:
+					with acting_as(user("payroll_manager")):
+						_try(
+							"preparer_submits_own_irp5",
+							lambda: _submit_copy("IRP5 Certificate", name),
+							controls,
+						)
+				doc.reviewed_by = user("payroll_reviewer")
+				with acting_as(user("payroll_reviewer")):
+					doc.submit()
 			frappe.db.commit()
 			certificates[employee] = name
 		except Exception as exc:
 			frappe.db.rollback()
 			errors[key] = frappe.utils.strip_html(str(exc))[:400]
-	controls = {}
 	name = frappe.db.get_value(
 		"EMP501 Reconciliation",
 		{
@@ -579,8 +602,9 @@ def stage_emp501() -> dict:
 				"uif_reference_number": ref.za_uif_reference_number,
 			}
 		)
-		emp501.insert(ignore_permissions=True)
-		emp501.fetch_emp201_submissions()
+		with acting_as(user("payroll_manager")):
+			emp501.insert(ignore_permissions=True)
+			emp501.fetch_emp201_submissions()
 		emp501.reload()
 		for employee, cert in certificates.items():
 			emp501.append(
@@ -591,6 +615,7 @@ def stage_emp501() -> dict:
 					"employee_name": frappe.db.get_value("Employee", employee, "employee_name"),
 				},
 			)
+		emp501.reviewed_by = user("payroll_reviewer")
 		emp501.save(ignore_permissions=True)
 		frappe.db.commit()
 		name = emp501.name
@@ -629,9 +654,12 @@ def stage_emp501() -> dict:
 			doc.submit()
 
 		_try("missing_sdl_reference", missing_registration, controls)
+		with acting_as(user("payroll_manager")):
+			_try("preparer_submits_own_emp501", lambda: _submit_copy("EMP501 Reconciliation", name), controls)
 		emp501 = frappe.get_doc("EMP501 Reconciliation", name)
 		try:
-			emp501.submit()
+			with acting_as(user("payroll_reviewer")):
+				emp501.submit()
 			frappe.db.commit()
 		except Exception as exc:
 			frappe.db.rollback()
@@ -651,8 +679,84 @@ def stage_emp501() -> dict:
 		"certificate_errors": errors,
 		"controls": controls,
 	}
+	if emp501.docstatus == 1:
+		out["filing"] = _payroll_filing_lifecycle("EMP501 Reconciliation", name, "2027-05-31", controls)
 	(EVIDENCE / "emp501_final.json").write_text(json.dumps(out, indent=1, default=str))
 	return out
+
+
+def _submit_copy(doctype, name):
+	frappe.get_doc(doctype, name).submit()
+
+
+def _payroll_filing_lifecycle(doctype, name, due_date, controls) -> dict:
+	"""EMP201-1: hand a submitted payroll working paper to ZA Filing, review, approve, record SARS's response.
+
+	The due date is the synthetic company's; the EMP501 deadline is announced by SARS each year.
+	"""
+	import hashlib
+
+	from frappe.utils.file_manager import save_file
+
+	settings = frappe.get_single("Payroll Settings")
+	field = (
+		"za_emp201_compliance_obligation"
+		if doctype == "EMP201 Submission"
+		else "za_emp501_compliance_obligation"
+	)
+	code = "EMP201" if doctype == "EMP201 Submission" else "EMP501"
+	settings.set(
+		field, frappe.db.get_value("ZA Compliance Obligation", {"obligation_code": code, "docstatus": 1})
+	)
+	settings.save(ignore_permissions=True)
+	doc = frappe.get_doc(doctype, name)
+	if not doc.za_filing:
+		doc.db_set(
+			{
+				"filing_due_date": due_date,
+				"filing_reviewer": user("reviewer"),
+				"filing_approver": user("approver"),
+			}
+		)
+		with acting_as(user("payroll_manager")):
+			_try(
+				f"payroll_user_creates_{code.lower()}_filing",
+				lambda: frappe.get_doc(doctype, name).create_za_filing(),
+				controls,
+			)
+		with acting_as(user("preparer")):
+			frappe.get_doc(doctype, name).create_za_filing()
+		with acting_as(user("reviewer")):
+			frappe.get_doc("ZA Filing", frappe.db.get_value(doctype, name, "za_filing")).mark_reviewed()
+		with acting_as(user("approver")):
+			filing = frappe.get_doc("ZA Filing", frappe.db.get_value(doctype, name, "za_filing"))
+			if filing.unexplained_difference:
+				filing.notes = "Difference investigated by the reference harness."
+			filing.submit()
+		evidence = f"SYNTHETIC SARS acknowledgement - {name} - not a real SARS receipt".encode()
+		with acting_as(user("reviewer")):
+			file_url = save_file(
+				f"{code.lower()}-ack-synthetic.txt", evidence, doctype, name, is_private=1
+			).file_url
+			receipt = frappe.get_doc(doctype, name).record_submission_receipt(
+				authority_reference=f"SYNTH-{code}-{name}",
+				response_status="Accepted",
+				evidence_file=file_url,
+				sha256_checksum=hashlib.sha256(evidence).hexdigest(),
+				submitted_by=user("submitter"),
+			)
+		with acting_as(user("submitter")):
+			frappe.get_doc("ZA Submission Receipt", receipt).submit()
+		frappe.db.commit()
+	filing = frappe.get_doc("ZA Filing", frappe.db.get_value(doctype, name, "za_filing"))
+	return {
+		"filing": filing.name,
+		"status": filing.status,
+		"declared_amount": filing.declared_amount,
+		"ledger_amount": filing.ledger_amount,
+		"unexplained_difference": filing.unexplained_difference,
+		"receipt": frappe.db.get_value("ZA Submission Receipt", {"filing": filing.name, "docstatus": 1}),
+	}
 
 
 CERTIFICATE_PDF_PERSONAS = (

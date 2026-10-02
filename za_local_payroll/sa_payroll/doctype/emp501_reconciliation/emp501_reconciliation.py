@@ -6,9 +6,17 @@ from frappe import _  # Ensure _ is imported for translations
 from frappe.model.document import Document
 from frappe.utils import add_days, add_months, escape_html, flt, get_first_day, get_last_day, getdate
 
+from za_local_payroll.sa_payroll.doctype.emp201_submission.emp201_submission import _get_emp201_bucket
 from za_local_payroll.sa_payroll.doctype.irp5_certificate.irp5_certificate import (
 	get_active_certificate_names,
 	require_certificate_generation_permissions,
+)
+from za_local_payroll.sa_payroll.statutory_filing import (
+	create_filing,
+	payroll_liability_ledger_amount,
+	record_receipt,
+	require_independent_review,
+	set_preparer,
 )
 
 DIRECTIVE_INCOME_CODES = {
@@ -82,6 +90,9 @@ def get_period_dates(tax_year, reconciliation_period):
 
 
 class EMP501Reconciliation(Document):
+	def before_insert(self):
+		set_preparer(self)
+
 	def validate(self):
 		self.validate_dates()  # This should be called after tax_year and reconciliation_period are set
 		self.calculate_totals()
@@ -579,6 +590,96 @@ class EMP501Reconciliation(Document):
 		self.validate_irp5_coverage()
 		certificate_totals = self.validate_irp5_certificate_readiness()
 		self.validate_certificate_reconciliation(certificate_totals)
+		require_independent_review(self)
+
+	@frappe.whitelist(methods=["POST"])
+	def create_za_filing(self):
+		"""Hand the submitted reconciliation to the compliance filing, review and receipt controls.
+
+		This records the internal reconciliation only. The EMP501 itself is submitted on
+		e@syFile, and SARS's response is recorded as a ZA Submission Receipt on the filing.
+		"""
+		self.check_permission("submit")
+		gl_liability, unidentified = payroll_liability_ledger_amount(
+			self.company, self.from_date, self.to_date, self._statutory_components()
+		)
+		if unidentified:
+			frappe.throw(
+				_("Set a Liability Account on {0} so the EMP501 can be reconciled to the ledger.").format(
+					", ".join(unidentified)
+				)
+			)
+		return create_filing(
+			self,
+			obligation_setting="za_emp501_compliance_obligation",
+			period_start=self.from_date,
+			period_end=self.to_date,
+			declared_amount=self.total_tax_payable,
+			# ETI reduces the liability declared to SARS but never the amounts withheld in the ledger.
+			ledger_amount=flt(gl_liability) - flt(self.total_eti),
+			payload={
+				"schema": "za-local-payroll/emp501-working-paper/v1",
+				"emp501_reconciliation": self.name,
+				"company": self.company,
+				"tax_year": self.tax_year,
+				"reconciliation_period": self.reconciliation_period,
+				"period_start": str(self.from_date),
+				"period_end": str(self.to_date),
+				"paye_reference_number": self.paye_reference_number,
+				"prepared_by": self.prepared_by,
+				"reviewed_by": self.reviewed_by,
+				"reviewed_on": str(self.reviewed_on),
+				"declared": {
+					field: flt(self.get(field), 2)
+					for field in ("total_paye", "total_sdl", "total_uif", "total_eti", "total_tax_payable")
+				},
+				"emp201_submissions": [row.emp201_submission for row in self.emp201_submissions],
+				"irp5_certificates": [row.irp5_certificate for row in self.irp5_certificates],
+				"ledger_paye_uif_sdl_credits": flt(gl_liability, 2),
+			},
+		)
+
+	@frappe.whitelist(methods=["POST"])
+	def record_submission_receipt(
+		self,
+		authority_reference: str,
+		response_status: str,
+		evidence_file: str,
+		sha256_checksum: str,
+		submitted_by: str,
+		submitted_at: str | None = None,
+		notes: str | None = None,
+	):
+		"""Record the SARS acknowledgement from eFiling or e@syFile against the ZA Filing."""
+		return record_receipt(
+			self,
+			authority_reference=authority_reference,
+			response_status=response_status,
+			evidence_file=evidence_file,
+			sha256_checksum=sha256_checksum,
+			submitted_by=submitted_by,
+			submitted_at=submitted_at,
+			notes=notes,
+		)
+
+	def _statutory_components(self):
+		rows = frappe.db.sql(
+			"""
+			select distinct sd.salary_component, sd.parentfield
+			from `tabSalary Detail` sd
+			join `tabSalary Slip` ss on ss.name = sd.parent
+			where ss.docstatus = 1 and ss.company = %(company)s
+				and ss.end_date between %(from_date)s and %(to_date)s
+				and sd.parenttype = 'Salary Slip'
+			""",
+			{"company": self.company, "from_date": self.from_date, "to_date": self.to_date},
+			as_dict=True,
+		)
+		return {
+			row.salary_component: row.parentfield
+			for row in rows
+			if _get_emp201_bucket(row.salary_component)[0] in ("paye", "uif", "sdl")
+		}
 
 	def on_submit(self):
 		self.db_set("status", "Submitted", update_modified=False)
@@ -696,6 +797,32 @@ class EMP501Reconciliation(Document):
 			if count > 0
 			else _("No EMP201 submissions found."),
 		}
+
+	@frappe.whitelist(methods=["POST"])
+	def submit_reviewed_certificates(self):
+		"""Submit every linked draft certificate as its reviewer.
+
+		Each certificate still refuses a reviewer who generated its figures or created it.
+		"""
+		self.check_permission("read")
+		submitted, failed = [], {}
+		for row in self.irp5_certificates:
+			certificate = frappe.get_doc("IRP5 Certificate", row.irp5_certificate)
+			if certificate.docstatus != 0:
+				continue
+			frappe.db.savepoint("irp5_review")
+			try:
+				certificate.check_permission("submit")
+				certificate.reviewed_by = certificate.reviewed_by or frappe.session.user
+				certificate.submit()
+				submitted.append(certificate.name)
+			except (frappe.ValidationError, frappe.PermissionError) as exc:
+				frappe.db.rollback(save_point="irp5_review")
+				failed[certificate.name] = str(exc)
+			row.status = certificate.status
+		if self.docstatus == 0:
+			self.save()
+		return {"submitted": submitted, "failed": failed}
 
 	@frappe.whitelist(methods=["POST"])
 	def generate_irp5_certificates(self):

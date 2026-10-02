@@ -49,6 +49,10 @@ class TestWorkplaceWorkflows(UnitTestCase):
 		fiscal_year = frappe._dict(year_start_date="2026-03-01", year_end_date="2027-02-28")
 
 		with (
+			patch(
+				"za_local_payroll.sa_coida.doctype.coida_annual_return.coida_annual_return.is_south_african_company",
+				return_value=True,
+			),
 			patch("frappe.get_cached_doc", return_value=fiscal_year),
 			patch(
 				"za_local_payroll.sa_coida.doctype.coida_annual_return.coida_annual_return.resolve_coida_industry_rate",

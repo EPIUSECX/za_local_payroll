@@ -657,9 +657,25 @@ class TestSouthAfricanPayrollLifecycle(IntegrationTestCase):
 		doc.uif_payable = 1
 		doc.sdl_payable = 1
 		doc.eti_generated_current_month = 1
-		doc.submit()
+		# EMP201-1: submitted by a recorded Payroll Manager other than the preparer.
+		doc.reviewed_by = self._payroll_reviewer()
+		frappe.set_user(doc.reviewed_by)
+		try:
+			doc.submit()
+		finally:
+			frappe.set_user("Administrator")
 		doc.reload()
 		return doc
+
+	@staticmethod
+	def _payroll_reviewer():
+		email = "payroll.reviewer@lifecycle.test"
+		if not frappe.db.exists("User", email):
+			frappe.get_doc(
+				{"doctype": "User", "email": email, "first_name": "Payroll Reviewer", "send_welcome_email": 0}
+			).insert(ignore_permissions=True)
+		frappe.get_doc("User", email).add_roles("Payroll Manager")
+		return email
 
 	def _generate_company_scoped_irp5(self):
 		doc = frappe.get_doc(

@@ -650,3 +650,74 @@ class TestCOIDAReturnRegressions(IntegrationTestCase):
 			meta = json.loads((APP / f"sa_coida/doctype/{doctype}/{doctype}.json").read_text())
 			hr = [p for p in meta["permissions"] if p["role"] == "HR Manager"]
 			self.assertTrue(hr and hr[0].get("cancel") and hr[0].get("amend"), doctype)
+
+
+class TestPayrollFilingControls(IntegrationTestCase):
+	"""EMP201-1: EMP201, IRP5 and EMP501 had no maker-checker and no filing or SARS receipt record."""
+
+	def test_emp201_due_date_is_seven_days_after_month_end_moved_back_over_weekends(self):
+		from za_local_payroll.sa_payroll.statutory_filing import emp201_due_date
+
+		self.assertEqual("2026-04-07", str(emp201_due_date("2026-03-31")))
+		# 7 June 2026 is a Sunday: due on Friday 5 June.
+		self.assertEqual("2026-06-05", str(emp201_due_date("2026-05-31")))
+
+	def test_review_excludes_the_preparer_and_falls_back_to_the_creator(self):
+		from za_local_payroll.sa_payroll import statutory_filing
+
+		doc = frappe._dict(owner="maker@example.test", prepared_by=None, reviewed_by="checker@example.test")
+		with patch.object(statutory_filing, "validate_accountable_actor") as validate:
+			statutory_filing.require_independent_review(doc)
+		self.assertEqual("maker@example.test", doc.prepared_by)
+		self.assertEqual(
+			(doc, "reviewed_by", ("Payroll Manager", "System Manager"), "submit"), validate.call_args.args
+		)
+		self.assertEqual(("maker@example.test",), validate.call_args.kwargs["additional_excluded_users"])
+		self.assertTrue(doc.reviewed_on)
+
+	def test_each_working_paper_requires_independent_review_on_submit(self):
+		for module in (
+			"emp201_submission.emp201_submission",
+			"emp501_reconciliation.emp501_reconciliation",
+			"irp5_certificate.irp5_certificate",
+		):
+			source = (APP / f"sa_payroll/doctype/{module.replace('.', '/')}.py").read_text()
+			self.assertIn("require_independent_review(self)", source, module)
+			self.assertIn("set_preparer(self)", source, module)
+
+	def test_filing_requires_a_submitted_paper_an_obligation_and_named_controllers(self):
+		from za_local_payroll.sa_payroll import statutory_filing
+
+		doc = frappe._dict(doctype="EMP201 Submission", docstatus=0, za_filing=None)
+		kwargs = dict(
+			obligation_setting="za_emp201_compliance_obligation",
+			period_start="2026-03-01",
+			period_end="2026-03-31",
+			declared_amount=1,
+			ledger_amount=1,
+			payload={},
+		)
+		with self.assertRaisesRegex(frappe.ValidationError, "Submit"):
+			statutory_filing.create_filing(doc, **kwargs)
+		doc.docstatus = 1
+		with (
+			patch("frappe.has_permission", return_value=True),
+			patch("frappe.db.get_single_value", return_value=None),
+			self.assertRaisesRegex(frappe.ValidationError, "Payroll Settings"),
+		):
+			statutory_filing.create_filing(doc, **kwargs)
+		doc.meta = frappe.get_meta("EMP201 Submission")
+		with (
+			patch("frappe.has_permission", return_value=True),
+			patch("frappe.db.get_single_value", return_value="EMP201"),
+			self.assertRaisesRegex(frappe.ValidationError, "Filing Due Date"),
+		):
+			statutory_filing.create_filing(doc, **kwargs)
+
+	def test_payroll_manager_runs_certificates_and_emp501_hr_manager_reads(self):
+		for doctype in ("irp5_certificate", "emp501_reconciliation"):
+			meta = json.loads((APP / f"sa_payroll/doctype/{doctype}/{doctype}.json").read_text())
+			roles = {p["role"]: p for p in meta["permissions"]}
+			self.assertTrue(roles["Payroll Manager"].get("submit"), doctype)
+			self.assertFalse(roles["HR Manager"].get("submit"), doctype)
+			self.assertFalse(roles["Payroll User"].get("submit"), doctype)
