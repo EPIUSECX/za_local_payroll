@@ -83,9 +83,15 @@
       },
       {
         "effective_from": "2026-06-01",
-        "effective_to": "2027-02-28",
+        "effective_to": "2026-09-30",
         "rate": 8.0,
         "source_reference": "SARS PAYE-GEN-01-G02; SARB May 2026 and July 2026 MPC statements"
+      },
+      {
+        "effective_from": "2026-10-01",
+        "effective_to": "2027-02-28",
+        "rate": 8.25,
+        "source_reference": "SARS Interest Rates Table 3 (October 2026): 8.25% from 1 October 2026 until change in repo rate"
       }
     ]
   },

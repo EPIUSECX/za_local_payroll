@@ -4,7 +4,7 @@ from calendar import monthrange
 
 import frappe
 from frappe.tests.classes import IntegrationTestCase
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, today
 from hrms.payroll.doctype.salary_slip.salary_slip import make_salary_slip_from_timesheet
 from za_local_core.tests.utils import ensure_gender
 
@@ -683,7 +683,8 @@ class TestSouthAfricanPayrollLifecycle(IntegrationTestCase):
 			{
 				"doctype": "Payroll Payment Batch",
 				"payroll_entry": payroll_entry,
-				"payment_date": "2026-08-31",
+				# Payment Date must not be in the past; a fixed date made this test expire.
+				"payment_date": today(),
 				"bank_account": self.company_bank_account,
 				"bank_format": "FNB OBE CSV",
 			}

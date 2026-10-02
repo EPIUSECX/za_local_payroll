@@ -44,7 +44,7 @@ OFFICIAL_2026_REFERENCE_VALUES = {
 		"source": "COIDA-GAZETTE-54577-NOTICE-3910",
 	},
 	BCEA_THRESHOLD_RULE: {
-		"value": 269900.90,
+		"value": 269600.90,  # Gazette 54544 GN7384
 		"effective_from": "2026-05-01",
 		"source": "DEL-BCEA-EARNINGS-THRESHOLD-2026",
 	},

@@ -111,6 +111,9 @@ class TestFringeBenefitCalculations(UnitTestCase):
 	def test_official_rate_change_is_effective_from_first_day_of_next_month(self):
 		self.assertEqual(7.75, get_official_interest_rate("2026-05-31")["rate"])
 		self.assertEqual(8.0, get_official_interest_rate("2026-06-01")["rate"])
+		# SARS Interest Rates Table 3 (October 2026): 8.25% from 1 October 2026.
+		self.assertEqual(8.0, get_official_interest_rate("2026-09-30")["rate"])
+		self.assertEqual(8.25, get_official_interest_rate("2026-10-01")["rate"])
 
 	def test_missing_official_interest_rate_fails_loudly(self):
 		with (

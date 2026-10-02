@@ -6,6 +6,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, add_years, cint, date_diff, flt, getdate
 from hrms.hr.doctype.leave_application.leave_application import LeaveApplication
+from za_local_core.governance import validate_private_evidence
 
 ANNUAL_LEAVE_CATEGORY = "Annual Leave"
 FAMILY_RESPONSIBILITY_CATEGORY = "Family Responsibility Leave"
@@ -20,6 +21,9 @@ class ZALeaveApplication(LeaveApplication):
 	def validate(self):
 		super().validate()
 		leave_type = self._get_governed_leave_type()
+		if self.get("za_medical_certificate"):
+			# A medical certificate is health information (POPIA special personal information).
+			validate_private_evidence(self, "za_medical_certificate")
 		if leave_type:
 			self.validate_medical_certificate(leave_type)
 			self.validate_bcea_requirements(leave_type)

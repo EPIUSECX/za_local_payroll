@@ -1,5 +1,5 @@
 {
- "actions":[], "autoname":"format:WSP-.YYYY.-.#####", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Workplace Skills Plan",
+ "actions":[], "autoname":"format:WSP-{YYYY}-{#####}", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Workplace Skills Plan",
  "field_order":["company","fiscal_year","seta","skills_development_facilitator","source_reference","total_training_budget","training_details","control_section","prepared_by","reviewed_by","review_evidence","reviewed_on","status","submission_date","external_filing_status","external_filing_reference","external_filing_date","external_filing_evidence","amended_from"],
  "fields":[
   {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","reqd":1,"in_list_view":1},

@@ -4,6 +4,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate, today
+from za_local_core.governance import validate_populated_private_attachments
 
 ALLOWED_TRANSITIONS = {
 	"Submitted": {"Under Review", "Approved", "Rejected"},
@@ -44,6 +45,10 @@ class OIDClaim(Document):
 
 	def validate_medical_reports(self):
 		for report in self.get("medical_reports") or []:
+			# Medical reports are health information (POPIA special personal information).
+			if not isinstance(report, Document):
+				report = frappe.get_doc({"doctype": "OID Medical Report", **report})
+			validate_populated_private_attachments(report)
 			if getdate(report.report_date) > getdate():
 				frappe.throw(_("Row {0}: Medical Report Date cannot be in the future").format(report.idx))
 			if report.report_type == "Final Report" and self.claim_status not in {"Approved", "Paid"}:
@@ -72,6 +77,10 @@ class OIDClaim(Document):
 
 	def on_update_after_submit(self):
 		self._sync_workplace_injury_status()
+
+	def before_cancel(self):
+		# The source Workplace Injury links back to this claim; it stays valid when the claim is cancelled.
+		self.ignore_linked_doctypes = ("Workplace Injury",)
 
 	def on_cancel(self):
 		self.db_set("claim_status", "Cancelled", update_modified=False)

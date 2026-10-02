@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import hashlib
+import re
 
 import frappe
 from frappe import _
@@ -58,8 +59,10 @@ def _looks_like_legacy_statutory_component(component_name, metadata):
 		"employment tax incentive",
 	)
 
+	# Match whole words: a bare substring test flags "Retirement Annuity" as an
+	# unmapped ETI component because "eti" occurs inside "retirement".
 	return bool(metadata.get("is_income_tax_component")) or any(
-		token in component_name_lower for token in tokens
+		re.search(rf"\b{re.escape(token)}\b", component_name_lower) for token in tokens
 	)
 
 

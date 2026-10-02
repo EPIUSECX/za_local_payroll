@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "format:EE-PLAN-{company}-.YYYY.-.#####",
+ "autoname": "format:EE-PLAN-{company}-{YYYY}-{#####}",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": ["company", "plan_start_date", "plan_end_date", "sector", "ee_amendment_effective_date", "sector_targets_effective_date", "sector_target_period_end", "source_section", "source_basis", "statutory_source", "source_reference", "source_evidence", "privacy_section", "small_cell_threshold", "targets", "review_section", "prepared_by", "reviewed_by", "review_evidence", "reviewed_on", "status", "amended_from"],

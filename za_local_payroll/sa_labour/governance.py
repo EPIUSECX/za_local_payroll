@@ -6,6 +6,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate, now_datetime
 from za_local_core.governance import REVIEW_ROLES, validate_accountable_actor, validate_private_evidence
+from za_local_core.localisation import is_south_african_company
 
 
 def set_preparer(doc) -> None:
@@ -46,6 +47,10 @@ def validate_company_access(company: str, permission_type: str = "read") -> None
 	if not company:
 		frappe.throw(_("Company is required."))
 	frappe.has_permission("Company", permission_type, company, throw=True)
+	if not is_south_african_company(company):
+		frappe.throw(
+			_("South African labour records apply only to companies with Country set to South Africa.")
+		)
 
 
 def validate_governed_link(

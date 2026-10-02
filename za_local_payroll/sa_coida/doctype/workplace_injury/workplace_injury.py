@@ -99,6 +99,8 @@ class WorkplaceInjury(Document):
 		if not frappe.db.table_exists("Leave Application"):
 			frappe.throw(_("Leave Application is unavailable. Install and configure HRMS first."))
 		self._validate_injury_leave_type()
+		# HRMS may make Leave Approver mandatory; use its own employee/department resolution.
+		from hrms.hr.doctype.leave_application.leave_application import get_employee_leave_approver
 
 		leave_application = frappe.new_doc("Leave Application")
 		leave_application.update(
@@ -108,6 +110,7 @@ class WorkplaceInjury(Document):
 				"from_date": self.injury_date,
 				"to_date": add_days(self.injury_date, cint(self.leave_days) - 1),
 				"description": _("Workplace Injury: {0}").format(self.name),
+				"leave_approver": get_employee_leave_approver(self.employee),
 			}
 		)
 		leave_application.insert()
@@ -206,6 +209,8 @@ class WorkplaceInjury(Document):
 		if self.leave_application and frappe.db.exists("Leave Application", self.leave_application):
 			leave_application = frappe.get_doc("Leave Application", self.leave_application)
 			if leave_application.docstatus == 0:
+				# Unlink first: this injury's own link would otherwise block deleting the draft.
+				self.db_set("leave_application", None, update_modified=False)
 				leave_application.delete()
 			elif leave_application.docstatus == 1:
 				leave_application.cancel()
@@ -213,6 +218,7 @@ class WorkplaceInjury(Document):
 		if self.oid_claim and frappe.db.exists("OID Claim", self.oid_claim):
 			oid_claim = frappe.get_doc("OID Claim", self.oid_claim)
 			if oid_claim.docstatus == 0:
+				self.db_set("oid_claim", None, update_modified=False)
 				oid_claim.delete()
 			elif oid_claim.docstatus == 1:
 				oid_claim.cancel()

@@ -267,7 +267,9 @@ def _get_salary_components(names: set[str]) -> dict[str, frappe._dict]:
 		fields=[
 			"name",
 			"salary_component",
-			"abbr",
+			# Salary Component stores its abbreviation as salary_component_abbr;
+			# update_component_row reads it as abbr, as HRMS's own lookup aliases it.
+			"salary_component_abbr as abbr",
 			"type",
 			"disabled",
 			"depends_on_payment_days",

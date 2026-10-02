@@ -1,5 +1,5 @@
 {
- "actions":[], "autoname":"format:SKI-.YYYY.-.#####", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Skills Development Record",
+ "actions":[], "autoname":"format:SKI-{YYYY}-{#####}", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Skills Development Record",
  "field_order":["company","fiscal_year","seta","workplace_skills_plan","annual_training_report","employee","ofo_occupation","training_program","intervention_type","qualification_reference","training_provider","provider_accreditation_required","start_date","end_date","training_cost","bursary_amount","is_disabled_learner","completion_evidence","control_section","bbbee_scoring_status","bec_points","amended_from"],
  "fields":[
   {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","reqd":1,"in_list_view":1},

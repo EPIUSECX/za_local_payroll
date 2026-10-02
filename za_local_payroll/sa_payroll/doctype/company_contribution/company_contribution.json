@@ -50,7 +50,8 @@
    "fieldname": "condition",
    "fieldtype": "Code",
    "label": "Condition",
-   "options": "PythonExpression"
+   "options": "PythonExpression",
+   "fetch_if_empty": 1
   },
   {
    "fieldname": "column_break_6",
@@ -62,7 +63,8 @@
    "fetch_from": "salary_component.amount_based_on_formula",
    "fieldname": "amount_based_on_formula",
    "fieldtype": "Check",
-   "label": "Amount Based On Formula"
+   "label": "Amount Based On Formula",
+   "fetch_if_empty": 1
   },
   {
    "allow_on_submit": 1,
@@ -70,7 +72,8 @@
    "fieldname": "formula",
    "fieldtype": "Code",
    "label": "Formula",
-   "options": "PythonExpression"
+   "options": "PythonExpression",
+   "fetch_if_empty": 1
   }
  ],
  "istable": 1,

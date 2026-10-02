@@ -1,5 +1,5 @@
 {
- "actions":[], "autoname":"format:EE-MOVE-.YYYY.-.#####", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Employment Equity Movement",
+ "actions":[], "autoname":"format:EE-MOVE-{YYYY}-{#####}", "doctype":"DocType", "engine":"InnoDB", "is_submittable":1, "module":"SA Labour", "name":"Employment Equity Movement",
  "field_order":["company","employee","effective_date","movement_type","previous_occupational_level","new_occupational_level","demographic_section","race","gender","is_disabled","source_section","source_document_type","source_document_name","private_evidence","notes","amended_from"],
  "fields":[
   {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","reqd":1,"in_list_view":1},

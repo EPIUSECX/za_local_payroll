@@ -239,6 +239,10 @@ DEFAULT_SALARY_COMPONENT_SARS_CODES = {
 	"Business Reimbursement": "3704",
 	"Uniform Allowance": "3713",
 	"Company Car Benefit": "3802",
+	# The PAYE adjustment narrows the 3802 cash equivalent to its PAYE-inclusion
+	# portion. It is excluded from IRP5, but payroll still requires every earning to
+	# carry a code, so it shares the benefit's code.
+	"Company Car PAYE Adjustment": "3802",
 	"Use of Motor Vehicle": "3802",
 	"Housing Fringe Benefit": "3805",
 	"Low Interest Loan Fringe Benefit": "3801",

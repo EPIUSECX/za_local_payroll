@@ -76,7 +76,7 @@ class TestWorkplaceProductionControls(UnitTestCase):
 		self.assertEqual(668000, OFFICIAL_2026_REFERENCE_VALUES["coida.annual_earnings_cap"]["value"])
 		self.assertEqual(1621, OFFICIAL_2026_REFERENCE_VALUES["coida.minimum_assessment"]["value"])
 		self.assertEqual(560, OFFICIAL_2026_REFERENCE_VALUES["coida.domestic_minimum_assessment"]["value"])
-		self.assertEqual(269900.90, OFFICIAL_2026_REFERENCE_VALUES["bcea.earnings_threshold.annual"]["value"])
+		self.assertEqual(269600.90, OFFICIAL_2026_REFERENCE_VALUES["bcea.earnings_threshold.annual"]["value"])
 		self.assertEqual(30.23, OFFICIAL_2026_REFERENCE_VALUES["nmw.general.hourly"]["value"])
 		self.assertEqual(16.62, OFFICIAL_2026_REFERENCE_VALUES["nmw.epwp.hourly"]["value"])
 		self.assertEqual(
