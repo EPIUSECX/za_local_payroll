@@ -82,6 +82,9 @@ def _ensure_vat_settings() -> dict:
 			"vat_registration_number": C.VAT_NUMBER,
 			"output_vat_account": account("VAT Collected - Sales"),
 			"input_vat_account": account("VAT Paid - Purchases"),
+			# VAT-2: capital-goods and import VAT kept in their own ledgers.
+			"capital_input_vat_account": account("VAT Paid - Capital Goods"),
+			"import_input_vat_account": account("VAT Paid - Imports"),
 			"vat201_compliance_obligation": obligation,
 			"enable_zero_rated_items": 1,
 			"enable_exempt_items": 1,

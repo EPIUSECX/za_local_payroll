@@ -185,6 +185,8 @@ def _vat():
 		"vat_filing_frequency",
 		"output_vat_account",
 		"input_vat_account",
+		"capital_input_vat_account",
+		"import_input_vat_account",
 	]
 	setting_rows = [{"setting": k, "value": settings.get(k)} for k in keys]
 	templates = []

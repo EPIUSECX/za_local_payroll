@@ -63,6 +63,8 @@ def sales_invoice(
 	is_return=0,
 	return_against=None,
 	reason=None,
+	line_category=None,
+	line_category_reason=None,
 ):
 	if name := _existing("Sales Invoice", label):
 		return name
@@ -91,6 +93,8 @@ def sales_invoice(
 					)
 					or account("Sales"),
 					"cost_center": f"Sales - {C.ABBR}",
+					"custom_sa_vat_category": line_category,
+					"za_vat_category_reason": line_category_reason,
 				}
 			],
 		}
@@ -224,6 +228,35 @@ def stage_vat_transactions() -> dict:
 		)
 	docs["S5 capital sale"] = sales_invoice(
 		"S5", "2026-08-02", VAT_CUSTOMER, "REF-CAPEX", 12000, "SA Capital Goods Sales"
+	)
+	# VAT-3: the locally zero-rated food item exported directly. The line overrides the
+	# item's category; without a recorded reason the override is refused.
+	frappe.db.savepoint("s6_negative")
+	try:
+		sales_invoice(
+			"S6-NEG",
+			"2026-08-14",
+			EXPORT_CUSTOMER,
+			"REF-ZR-FOOD",
+			2000,
+			"SA Export Zero Rated Sales",
+			line_category="Export Zero Rated",
+		)
+		docs["S6 negative: line category changed without reason"] = "ALLOWED (unexpected)"
+	except frappe.ValidationError as exc:
+		frappe.db.rollback(save_point="s6_negative")
+		docs["S6 negative: line category changed without reason"] = (
+			f"blocked: {frappe.utils.strip_html(str(exc))[:120]}"
+		)
+	docs["S6 export of a local item"] = sales_invoice(
+		"S6",
+		"2026-08-14",
+		EXPORT_CUSTOMER,
+		"REF-ZR-FOOD",
+		2000,
+		"SA Export Zero Rated Sales",
+		line_category="Export Zero Rated",
+		line_category_reason="Direct export; SYNTHETIC bill of entry REF-EXP-0814",
 	)
 	docs["CN1 credit note"] = sales_invoice(
 		"CN1",
@@ -403,7 +436,10 @@ def readiness_report(docs) -> dict:
 
 def gl_reconciliation(from_date, to_date) -> dict:
 	"""Prove source tax rows = VAT control-account GL for the period."""
-	out_acc, in_acc = account("VAT Collected - Sales"), account("VAT Paid - Purchases")
+	out_acc = account("VAT Collected - Sales")
+	in_accounts = [
+		account(name) for name in ("VAT Paid - Purchases", "VAT Paid - Capital Goods", "VAT Paid - Imports")
+	]
 
 	def gl(acc):
 		row = frappe.db.sql(
@@ -425,8 +461,16 @@ def gl_reconciliation(from_date, to_date) -> dict:
 		)
 
 	output_src = source("Sales Invoice", "Sales Taxes and Charges", out_acc)
-	input_src = source("Purchase Invoice", "Purchase Taxes and Charges", in_acc)
-	output_gl, input_gl = gl(out_acc), -gl(in_acc)
+	by_account = {
+		acc: {
+			"source_rows": source("Purchase Invoice", "Purchase Taxes and Charges", acc),
+			"gl": -gl(acc),
+		}
+		for acc in in_accounts
+	}
+	input_src = flt(sum(v["source_rows"] for v in by_account.values()), 2)
+	input_gl = flt(sum(v["gl"] for v in by_account.values()), 2)
+	output_gl = gl(out_acc)
 	return {
 		"output_vat_source_rows": output_src,
 		"output_vat_gl": output_gl,
@@ -434,6 +478,7 @@ def gl_reconciliation(from_date, to_date) -> dict:
 		"input_vat_source_rows": input_src,
 		"input_vat_gl": input_gl,
 		"input_difference": flt(input_src - input_gl, 2),
+		"input_vat_by_account": by_account,
 	}
 
 
