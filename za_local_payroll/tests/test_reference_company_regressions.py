@@ -147,7 +147,10 @@ class TestReferenceCompanyRegressions(IntegrationTestCase):
 		doc.oid_claim = "OID-1"
 		order = []
 		draft = MagicMock(docstatus=0)
-		draft.delete.side_effect = lambda: order.append("delete")
+		# INJ-4: the cascade runs under the cancelling user's authority, not a separate delete grant.
+		draft.delete.side_effect = lambda **kwargs: order.append(
+			"delete" if kwargs.get("ignore_permissions") else "delete-as-user"
+		)
 		with (
 			patch("frappe.db.exists", return_value=True),
 			patch("frappe.get_doc", return_value=draft),
@@ -713,6 +716,26 @@ class TestPayrollFilingControls(IntegrationTestCase):
 			self.assertRaisesRegex(frappe.ValidationError, "Filing Due Date"),
 		):
 			statutory_filing.create_filing(doc, **kwargs)
+
+	def test_emp501_ledger_includes_employer_contributions(self):
+		"""The first rebuild showed R120,342.58 unexplained: employer UIF and SDL were never looked up."""
+		from za_local_payroll.sa_payroll.doctype.emp501_reconciliation import emp501_reconciliation as module
+
+		def sql(query, *args, **kwargs):
+			if "`tabCompany Contribution`" in query:
+				return [frappe._dict(salary_component="SDL", parentfield="company_contribution")]
+			return [frappe._dict(salary_component="PAYE", parentfield="deductions")]
+
+		doc = frappe.new_doc("EMP501 Reconciliation")
+		with (
+			patch.object(module.frappe.db, "sql", side_effect=sql),
+			patch.object(
+				module, "_get_emp201_bucket", side_effect=lambda c: ({"PAYE": "paye", "SDL": "sdl"}[c], {})
+			),
+		):
+			self.assertEqual(
+				{"PAYE": "deductions", "SDL": "company_contribution"}, doc._statutory_components()
+			)
 
 	def test_payroll_manager_runs_certificates_and_emp501_hr_manager_reads(self):
 		for doctype in ("irp5_certificate", "emp501_reconciliation"):

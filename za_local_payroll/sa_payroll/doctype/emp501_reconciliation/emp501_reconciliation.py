@@ -599,7 +599,8 @@ class EMP501Reconciliation(Document):
 		This records the internal reconciliation only. The EMP501 itself is submitted on
 		e@syFile, and SARS's response is recorded as a ZA Submission Receipt on the filing.
 		"""
-		self.check_permission("submit")
+		# Payroll prepares; the compliance team, holding ZA Filing create, files.
+		self.check_permission("read")
 		gl_liability, unidentified = payroll_liability_ledger_amount(
 			self.company, self.from_date, self.to_date, self._statutory_components()
 		)
@@ -663,23 +664,28 @@ class EMP501Reconciliation(Document):
 		)
 
 	def _statutory_components(self):
-		rows = frappe.db.sql(
-			"""
-			select distinct sd.salary_component, sd.parentfield
-			from `tabSalary Detail` sd
-			join `tabSalary Slip` ss on ss.name = sd.parent
-			where ss.docstatus = 1 and ss.company = %(company)s
-				and ss.end_date between %(from_date)s and %(to_date)s
-				and sd.parenttype = 'Salary Slip'
-			""",
-			{"company": self.company, "from_date": self.from_date, "to_date": self.to_date},
-			as_dict=True,
-		)
-		return {
-			row.salary_component: row.parentfield
-			for row in rows
-			if _get_emp201_bucket(row.salary_component)[0] in ("paye", "uif", "sdl")
-		}
+		"""PAYE, UIF and SDL components on the period's slips, by the slip table they sit in.
+
+		Employer UIF and SDL sit in the Company Contribution table, not Salary Detail.
+		"""
+		components = {}
+		for child_doctype in ("Salary Detail", "Company Contribution"):
+			rows = frappe.db.sql(
+				f"""
+				select distinct child.salary_component, child.parentfield
+				from `tab{child_doctype}` child
+				join `tabSalary Slip` ss on ss.name = child.parent
+				where ss.docstatus = 1 and ss.company = %(company)s
+					and ss.end_date between %(from_date)s and %(to_date)s
+					and child.parenttype = 'Salary Slip'
+				""",
+				{"company": self.company, "from_date": self.from_date, "to_date": self.to_date},
+				as_dict=True,
+			)
+			for row in rows:
+				if _get_emp201_bucket(row.salary_component)[0] in ("paye", "uif", "sdl"):
+					components[row.salary_component] = row.parentfield
+		return components
 
 	def on_submit(self):
 		self.db_set("status", "Submitted", update_modified=False)

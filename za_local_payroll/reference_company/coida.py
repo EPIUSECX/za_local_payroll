@@ -382,7 +382,8 @@ def stage_injury_claim() -> dict:
 			for status, kwargs in (
 				("Under Review", {}),
 				("Approved", {"compensation_amount": 4250}),
-				("Paid", {"payment_date": "2026-10-01"}),
+				# Paid on the day the harness runs: a claim cannot be paid before it is lodged.
+				("Paid", {"payment_date": frappe.utils.today()}),
 			):
 				outcome(
 					r,

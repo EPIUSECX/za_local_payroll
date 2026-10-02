@@ -325,7 +325,8 @@ class EMP201Submission(Document):
 	@frappe.whitelist(methods=["POST"])
 	def create_za_filing(self):
 		"""Hand the submitted EMP201 to the compliance filing, review and receipt controls."""
-		self.check_permission("submit")
+		# Payroll prepares; the compliance team, holding ZA Filing create, files.
+		self.check_permission("read")
 		self._calculate_emp201_data(require_salary_slips=True)
 		gl_liability, unidentified = payroll_liability_ledger_amount(
 			self.company,

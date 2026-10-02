@@ -301,7 +301,7 @@ def stage_emp201() -> dict:
 				if i == 0:
 					_try(
 						"preparer_submits_own_emp201",
-						lambda: _submit_copy("EMP201 Submission", doc.name),
+						lambda: _submit_copy("EMP201 Submission", doc.name, user("payroll_manager")),
 						controls,
 					)
 			doc = frappe.get_doc("EMP201 Submission", doc.name)
@@ -373,25 +373,14 @@ def stage_emp201() -> dict:
 				),
 			}
 		)
-	# Missing PAYE reference: EMP201 does not validate it (probe on a copy of the company field).
-	ref = frappe.db.get_value("Company", C.COMPANY, "za_paye_reference_number")
-	frappe.db.set_value("Company", C.COMPANY, "za_paye_reference_number", None)
-	frappe.db.commit()
-	_try(
-		"missing_paye_reference_on_new_emp201",
-		lambda: frappe.get_doc(
-			{
-				"doctype": "EMP201 Submission",
-				"company": C.COMPANY,
-				"fiscal_year": fiscal_year,
-				"month": "February",
-				"posting_date": "2027-02-28",
-			}
-		).insert(ignore_permissions=True),
-		controls,
-	)
-	frappe.db.set_value("Company", C.COMPANY, "za_paye_reference_number", ref)
-	frappe.db.commit()
+
+	# BRS-REF-1: a PAYE reference failing the SARS modulus-10 check is refused on the Company.
+	def bad_paye_reference():
+		company = frappe.get_doc("Company", C.COMPANY)
+		company.za_paye_reference_number = C.PAYE_REFERENCE[:-1] + str((int(C.PAYE_REFERENCE[-1]) + 1) % 10)
+		company.save(ignore_permissions=True)
+
+	_try("invalid_paye_reference_check_digit", bad_paye_reference, controls)
 	totals = {
 		k: round(sum(flt(m[k]) for m in months), 2)
 		for k in (
@@ -559,7 +548,7 @@ def stage_emp501() -> dict:
 					with acting_as(user("payroll_manager")):
 						_try(
 							"preparer_submits_own_irp5",
-							lambda: _submit_copy("IRP5 Certificate", name),
+							lambda: _submit_copy("IRP5 Certificate", name, user("payroll_manager")),
 							controls,
 						)
 				doc.reviewed_by = user("payroll_reviewer")
@@ -655,7 +644,11 @@ def stage_emp501() -> dict:
 
 		_try("missing_sdl_reference", missing_registration, controls)
 		with acting_as(user("payroll_manager")):
-			_try("preparer_submits_own_emp501", lambda: _submit_copy("EMP501 Reconciliation", name), controls)
+			_try(
+				"preparer_submits_own_emp501",
+				lambda: _submit_copy("EMP501 Reconciliation", name, user("payroll_manager")),
+				controls,
+			)
 		emp501 = frappe.get_doc("EMP501 Reconciliation", name)
 		try:
 			with acting_as(user("payroll_reviewer")):
@@ -685,8 +678,11 @@ def stage_emp501() -> dict:
 	return out
 
 
-def _submit_copy(doctype, name):
-	frappe.get_doc(doctype, name).submit()
+def _submit_copy(doctype, name, reviewed_by=None):
+	doc = frappe.get_doc(doctype, name)
+	if reviewed_by:
+		doc.reviewed_by = reviewed_by
+	doc.submit()
 
 
 def _payroll_filing_lifecycle(doctype, name, due_date, controls) -> dict:
@@ -704,7 +700,7 @@ def _payroll_filing_lifecycle(doctype, name, due_date, controls) -> dict:
 		if doctype == "EMP201 Submission"
 		else "za_emp501_compliance_obligation"
 	)
-	code = "EMP201" if doctype == "EMP201 Submission" else "EMP501"
+	code = "ZA-EMP201" if doctype == "EMP201 Submission" else "ZA-EMP501"
 	settings.set(
 		field, frappe.db.get_value("ZA Compliance Obligation", {"obligation_code": code, "docstatus": 1})
 	)

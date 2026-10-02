@@ -238,8 +238,10 @@ def stage_vat_transactions() -> dict:
 			"2026-08-14",
 			EXPORT_CUSTOMER,
 			"REF-ZR-FOOD",
-			2000,
+			110,
 			"SA Export Zero Rated Sales",
+			currency="USD",
+			conversion_rate=18.20,
 			line_category="Export Zero Rated",
 		)
 		docs["S6 negative: line category changed without reason"] = "ALLOWED (unexpected)"
@@ -253,8 +255,10 @@ def stage_vat_transactions() -> dict:
 		"2026-08-14",
 		EXPORT_CUSTOMER,
 		"REF-ZR-FOOD",
-		2000,
+		110,
 		"SA Export Zero Rated Sales",
+		currency="USD",
+		conversion_rate=18.20,
 		line_category="Export Zero Rated",
 		line_category_reason="Direct export; SYNTHETIC bill of entry REF-EXP-0814",
 	)

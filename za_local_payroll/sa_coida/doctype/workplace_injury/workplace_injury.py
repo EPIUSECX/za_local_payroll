@@ -206,12 +206,14 @@ class WorkplaceInjury(Document):
 			frappe.throw(_("This action is available only for a submitted Workplace Injury."))
 
 	def on_cancel(self):
+		# The draft leave application and OID claim were created by this injury; removing
+		# them is part of the cancel the user is authorised for (INJ-4), not a separate delete.
 		if self.leave_application and frappe.db.exists("Leave Application", self.leave_application):
 			leave_application = frappe.get_doc("Leave Application", self.leave_application)
 			if leave_application.docstatus == 0:
 				# Unlink first: this injury's own link would otherwise block deleting the draft.
 				self.db_set("leave_application", None, update_modified=False)
-				leave_application.delete()
+				leave_application.delete(ignore_permissions=True)
 			elif leave_application.docstatus == 1:
 				leave_application.cancel()
 
@@ -219,6 +221,6 @@ class WorkplaceInjury(Document):
 			oid_claim = frappe.get_doc("OID Claim", self.oid_claim)
 			if oid_claim.docstatus == 0:
 				self.db_set("oid_claim", None, update_modified=False)
-				oid_claim.delete()
+				oid_claim.delete(ignore_permissions=True)
 			elif oid_claim.docstatus == 1:
 				oid_claim.cancel()

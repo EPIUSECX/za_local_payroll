@@ -134,9 +134,11 @@ def stage_employment_equity() -> dict:
 	with acting_as(user("reviewer")):
 		outcome(
 			r,
-			"EE-PERM-1_reviewer_only_reveal_small_cells",
+			# Revealing small cells shows identifiable employees: it also needs Employee read,
+			# which the reviewer role deliberately does not carry (documented requirement).
+			"reviewer_without_employee_read_reveal_small_cells",
 			lambda: len(prof.execute({**base, "show_small_cells": 1})[1]),
-			False,
+			True,
 		)
 	with acting_as(user("ee_reviewer")):
 		outcome(
