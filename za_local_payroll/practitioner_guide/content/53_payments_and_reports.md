@@ -10,6 +10,14 @@ Create a **Payroll Payment Batch** from a submitted Payroll Entry, review the em
 
 Export requires Payroll Payment Batch write access and an authorised HR Manager, Accounts Manager or System Manager role. Do not distribute the private file through email or public attachments.
 
+## Recording the bank settlement
+
+When the bank confirms payment, open the submitted batch and select **Record Bank Settlement** with the bank posting
+date. This posts one Bank Entry from the batch snapshot: a debit to Payroll Payable for each employee's net pay and a
+credit to the company bank account. Payroll Payable for the period then clears to zero, apart from any third-party
+deductions (for example union dues) that you pay separately. A batch can be settled once; the entry links back to it.
+Requires submit permission on the batch.
+
 > Employees must have valid banking details (and *Not Paid Electronically* unticked). Reconcile the file total to Payroll Payable and perform an FNB low-value acceptance upload before first production use and after any bank specification change.
 
 ## Distributing payslips

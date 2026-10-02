@@ -13,6 +13,19 @@ From these packs the app also seeds **Desk-reviewable records** so practitioners
 - **ETI Slab** — Employment Tax Incentive bands (first 12 months / second 12 months).
 - **Travel Allowance Rate** — reimbursive rate per km and fixed-allowance inclusion.
 
+## Packaged rates need a recorded decision
+
+When no approved **Payroll** rate pack in `za_local_core` covers a payroll date, the UIF, SDL, retirement, travel and
+COIDA scalars fall back to the values packaged with this app only if **Allow Packaged Statutory Rates** is ticked in
+Payroll Settings. It is off on a new site, so payroll stops with an error until you either approve a source-backed
+Payroll rate pack or record the decision to use the packaged values. Treat ticking it as a practitioner sign-off: the
+packaged figures are transcriptions, not reviewed evidence. A site that had already run payroll without an approved
+Payroll pack has the setting switched on during migration, so its next pay run continues; review that setting and
+turn it off once a Payroll pack is approved.
+
+The official interest rate, company-car and lump-sum tables remain packaged data in this version; verify them each
+year as described below.
+
 ## What to verify per tax year
 
 1. **Income Tax Slab** — open the slab for the active year (e.g. `South Africa 2026-2027`). Confirm the bracket thresholds and rates and the effective-from date (1 March of the tax year).

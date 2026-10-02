@@ -35,7 +35,10 @@ correct employer category/class.
 4. Review hashed source-slip rows, employee/slip counts, uncapped gross, excluded
    amount, capped assessable earnings, explicit director subtotal, rule/source
    references, assessment before minimum, minimum, and final fee.
-5. Reconcile to payroll and obtain COIDA/business approval before Frappe Submit.
+5. Review the **Monthly Earnings** table: employees, directors and capped earnings per month for the CF-2A. Add any
+   provisional monthly estimates (they survive a refresh of actuals) and the value of **Free Food and Quarters**.
+6. Reconcile to payroll and set **Reviewed By** to a second HR Manager. Only that reviewer can submit; the preparer
+   cannot.
 
 The return caps accumulated assessable earnings per employee, applies the approved
 percentage and minimum, and blocks submit if payroll, director classification,
@@ -77,9 +80,8 @@ Medical attachments must be private. The app does not calculate medical cost,
 disablement, pension, rehabilitation, prescribed-form completeness, or claim
 acceptance.
 
-The current role matrix does not expose cancel/amend for injuries, claims, or the
-annual return to ordinary HR/System Manager users. Corrections remain an
-administrator-controlled residual process; never edit submitted rows directly.
+HR Managers may cancel and amend injuries, claims and annual returns. Cancelling an injury
+also removes its own draft OID claim and injury leave. Never edit submitted rows directly.
 
 ## Privacy and approval gate
 

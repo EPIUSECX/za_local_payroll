@@ -15,6 +15,17 @@ frappe.ui.form.on("Payroll Payment Batch", {
 	},
 
 	refresh(frm) {
+		// Once the bank confirms payment, post it from the same snapshot the file was built from.
+		if (frm.doc.docstatus === 1 && !frm.doc.settlement_journal_entry && frm.has_perm("submit")) {
+			frm.add_custom_button(__("Record Bank Settlement"), () => {
+				frappe.prompt(
+					{fieldname: "posting_date", fieldtype: "Date", label: __("Bank Posting Date"), reqd: 1, default: frm.doc.payment_date},
+					(values) => frm.call({doc: frm.doc, method: "record_bank_settlement", args: values, freeze: true}).then(() => frm.reload_doc()),
+					__("Record Bank Settlement"),
+					__("Post"),
+				);
+			});
+		}
 		if (frm.doc.docstatus !== 1 || !can_generate_eft(frm)) {
 			return;
 		}

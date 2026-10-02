@@ -2,6 +2,10 @@
 
 South African rates change annually and sometimes during a year. This is the controlled procedure to roll `za_local_payroll` forward. Do not assume a change is data-only until release notes, schema and calculation impacts have been assessed. (The authoritative version ships in `docs/annual_statutory_rate_update.md`.)
 
+> Never edit an approved historical rate pack to reach a new year. Approve a new source and pack for the new window.
+> If the site relies on packaged scalars (**Allow Packaged Statutory Rates** in Payroll Settings), confirm the new
+> year's packaged values before the first March payroll, or approve a Payroll rate pack instead.
+
 Remember: the tax year runs **1 March to end February**, and files are suffixed with the **year of assessment** (the calendar year the tax year ends).
 
 ## When to run

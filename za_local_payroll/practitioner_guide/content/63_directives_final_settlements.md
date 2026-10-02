@@ -21,7 +21,10 @@ When an employee leaves:
 
 1. Use **Employee Separation** to drive the final-settlement salary slip where available.
 2. The final pay is processed on a salary slip with the components **separated**: Notice Pay, Leave Payout, Severance Benefit, and Tax on Lump Sum.
-3. Lump-sum tax is calculated using the **lump-sum benefit tax table** from the statutory rate pack (with the cumulative exemption applied). The severance component is treated per its SA payroll treatment (e.g. excluded from UIF/SDL).
+3. A slip carrying a severance or lump-sum component is refused unless an **Active** directive of type **Severance /
+   Lump Sum** covers the slip date. The tax deducted is the directive amount, under SARS code 4115, and the lump sum
+   is excluded from the normal PAYE average. A nil directive amount is allowed when the SARS directive is attached.
+   The severance component is treated per its SA payroll treatment (e.g. excluded from UIF/SDL).
 4. The **Tax Directive number** is referenced so it carries through to the IRP5.
 
 The settlement record is a controlled calculation and approval record. It does not fabricate a Salary Slip. Capture the approved final components through the normal Payroll Entry/Salary Slip flow so HRMS account, loan, exchange-rate, rounding and submission controls remain active.
