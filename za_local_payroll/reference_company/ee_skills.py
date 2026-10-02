@@ -21,19 +21,6 @@ def _fy():
 	return frappe.db.get_value("Fiscal Year", {"year_start_date": "2026-03-01"}, "name")
 
 
-def grant_reviewer_company_read():
-	"""EE-PERM-1 workaround: ZA Compliance Reviewer ships without Company read, which the
-	labour governance checks require. Configured through Role Permission Manager semantics."""
-	from frappe.permissions import add_permission
-
-	if not frappe.db.exists(
-		"Custom DocPerm", {"parent": "Company", "role": "ZA Compliance Reviewer", "permlevel": 0}
-	):
-		add_permission("Company", "ZA Compliance Reviewer", 0)
-	frappe.clear_cache(doctype="Company")
-	frappe.db.commit()
-
-
 def stage_employment_equity() -> dict:
 	require_reference_site()
 	from za_local_payroll.sa_labour.report.ee_workforce_movement import ee_workforce_movement as mov
@@ -102,14 +89,11 @@ def stage_employment_equity() -> dict:
 		with acting_as(user("reviewer")):
 			outcome(
 				r,
-				"EE-PERM-1_reviewer_without_company_read",
+				# EE-PERM-1: the reviewer role now ships with Company read.
+				"reviewer_submits_plan",
 				lambda: frappe.get_doc("Employment Equity Target Plan", doc.name).submit(),
 				False,
 			)
-		if not frappe.db.get_value("Employment Equity Target Plan", doc.name, "docstatus"):
-			grant_reviewer_company_read()
-			with acting_as(user("reviewer")):
-				frappe.get_doc("Employment Equity Target Plan", doc.name).submit()
 		frappe.db.commit()
 		plan = doc.name
 	employee = employee_for("P20_it3a_no_paye")

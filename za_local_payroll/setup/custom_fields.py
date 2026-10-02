@@ -147,6 +147,17 @@ PAYROLL_CUSTOM_FIELDS = {
 			"insert_after": "za_emp201_compliance_obligation",
 			"description": "Approved obligation used when a submitted EMP501 creates its ZA Filing.",
 		},
+		{
+			"module": "SA Payroll",
+			"label": "Allow Packaged Statutory Rates",
+			"fieldname": "za_allow_packaged_statutory_rates",
+			"fieldtype": "Check",
+			"default": "0",
+			"insert_after": "za_emp501_compliance_obligation",
+			"description": "When no approved Payroll statutory rate pack covers a date, use the UIF, SDL, "
+			"retirement, travel and COIDA scalars packaged with the app. Leave off to require an approved, "
+			"source-backed pack.",
+		},
 	],
 	"Employee": [
 		{

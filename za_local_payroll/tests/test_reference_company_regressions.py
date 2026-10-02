@@ -721,3 +721,74 @@ class TestPayrollFilingControls(IntegrationTestCase):
 			self.assertTrue(roles["Payroll Manager"].get("submit"), doctype)
 			self.assertFalse(roles["HR Manager"].get("submit"), doctype)
 			self.assertFalse(roles["Payroll User"].get("submit"), doctype)
+
+
+class TestLeastPrivilegeRoles(IntegrationTestCase):
+	"""PERM-1 and EE-PERM-1: a payroll year needed System Manager plus HR Manager plus Payroll Manager."""
+
+	def test_payroll_manager_can_run_payroll_and_tax_directives(self):
+		from za_local_payroll.setup.role_grants import grant_payroll_permissions
+
+		grant_payroll_permissions()
+		for doctype in ("Payroll Entry", "Salary Slip", "Additional Salary"):
+			rule = frappe.db.get_value(
+				"Custom DocPerm",
+				{"parent": doctype, "role": "Payroll Manager", "permlevel": 0},
+				["read", "submit", "cancel"],
+				as_dict=True,
+			)
+			self.assertEqual((1, 1, 1), (rule.read, rule.submit, rule.cancel), doctype)
+		directive = json.loads((APP / "sa_payroll/doctype/tax_directive/tax_directive.json").read_text())
+		manager = next(p for p in directive["permissions"] if p["role"] == "Payroll Manager")
+		self.assertTrue(manager["submit"] and manager["cancel"] and manager["amend"])
+
+	def test_compliance_reviewer_can_read_company(self):
+		from za_local_core.role_grants import grant_core_permissions
+
+		grant_core_permissions()
+		self.assertTrue(
+			frappe.db.get_value(
+				"Custom DocPerm",
+				{"parent": "Company", "role": "ZA Compliance Reviewer", "permlevel": 0},
+				"read",
+			)
+		)
+
+	def test_existing_rules_are_never_overridden(self):
+		from za_local_core import role_grants
+
+		with (
+			patch.object(role_grants.frappe.db, "exists", return_value=True),
+			patch.object(role_grants, "add_permission") as add,
+		):
+			self.assertEqual([], role_grants.grant_permissions((("Company", "Payroll Manager", ("read",)),)))
+		add.assert_not_called()
+
+
+class TestGovernedPayrollRates(IntegrationTestCase):
+	"""GOV-4: payroll scalars silently fell back to packaged JSON with no approved pack."""
+
+	def _resolve(self, allowed):
+		from za_local_payroll.utils import statutory_rates
+
+		with (
+			patch.object(statutory_rates, "_get_core_rate", return_value=None),
+			patch.dict(frappe.flags, {"in_test": False}),
+			patch("frappe.db.get_single_value", return_value=allowed),
+		):
+			return statutory_rates.get_uif_monthly_cap("2026-06-30")
+
+	def test_packaged_rate_needs_a_recorded_decision(self):
+		with self.assertRaisesRegex(frappe.ValidationError, "Allow Packaged Statutory Rates"):
+			self._resolve(0)
+		self.assertGreater(self._resolve(1), 0)
+
+	def test_approved_pack_is_used_without_any_decision(self):
+		from za_local_payroll.utils import statutory_rates
+
+		with (
+			patch.object(statutory_rates, "_get_core_rate", return_value=17712),
+			patch.dict(frappe.flags, {"in_test": False}),
+			patch("frappe.db.get_single_value", side_effect=AssertionError("not consulted")),
+		):
+			self.assertEqual(17712, statutory_rates.get_uif_monthly_cap("2026-06-30"))

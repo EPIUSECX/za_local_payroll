@@ -726,13 +726,20 @@ def _payroll_filing_lifecycle(doctype, name, due_date, controls) -> dict:
 			)
 		with acting_as(user("preparer")):
 			frappe.get_doc(doctype, name).create_za_filing()
+		filing_name = frappe.db.get_value(doctype, name, "za_filing")
+		if frappe.db.get_value("ZA Filing", filing_name, "unexplained_difference"):
+			# The declaration must tie to the ledger; a difference is a finding, not something to explain away.
+			frappe.db.commit()
+			return {
+				"filing": filing_name,
+				"unexpected_difference": frappe.db.get_value(
+					"ZA Filing", filing_name, "unexplained_difference"
+				),
+			}
 		with acting_as(user("reviewer")):
-			frappe.get_doc("ZA Filing", frappe.db.get_value(doctype, name, "za_filing")).mark_reviewed()
+			frappe.get_doc("ZA Filing", filing_name).mark_reviewed()
 		with acting_as(user("approver")):
-			filing = frappe.get_doc("ZA Filing", frappe.db.get_value(doctype, name, "za_filing"))
-			if filing.unexplained_difference:
-				filing.notes = "Difference investigated by the reference harness."
-			filing.submit()
+			frappe.get_doc("ZA Filing", filing_name).submit()
 		evidence = f"SYNTHETIC SARS acknowledgement - {name} - not a real SARS receipt".encode()
 		with acting_as(user("reviewer")):
 			file_url = save_file(

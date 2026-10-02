@@ -109,11 +109,28 @@ def find_rate_pack(date_value=None, tax_year: str | None = None) -> dict | None:
 	return None
 
 
+def _require_packaged_rate_decision(path: str, date_value) -> None:
+	"""GOV-4: packaged rates are used only by a recorded decision, never silently."""
+	if frappe.flags.in_test or frappe.flags.in_install or frappe.flags.in_migrate:
+		return
+	if frappe.db.get_single_value("Payroll Settings", "za_allow_packaged_statutory_rates"):
+		return
+	frappe.throw(
+		frappe._(
+			"No approved Payroll statutory rate pack covers {0}, so '{1}' cannot be resolved. Approve a "
+			"Payroll pack in ZA Statutory Rate Pack, or record the decision to use the rates packaged with "
+			"the app by enabling Allow Packaged Statutory Rates in Payroll Settings."
+		).format(getdate(date_value or frappe.utils.today()), path),
+		title=frappe._("Ungoverned Statutory Rate"),
+	)
+
+
 def get_nested_rate(path: str, date_value=None, default=None):
 	core_value = _get_core_rate(path, date_value)
 	if core_value is not None:
 		return core_value
 
+	_require_packaged_rate_decision(path, date_value)
 	value = get_rate_pack(date_value)
 	for part in path.split("."):
 		if not isinstance(value, dict) or part not in value:

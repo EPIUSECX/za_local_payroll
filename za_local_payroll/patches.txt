@@ -11,3 +11,5 @@ za_local_payroll.patches.v1_3.repair_metric_currency
 za_local_payroll.patches.v1_4.repair_severance_and_retire_dead_setting
 za_local_payroll.patches.v1_4.exact_tax_slab_bounds
 za_local_payroll.patches.v1_4.align_sars_codes_with_brs
+za_local_payroll.patches.v1_4.grant_payroll_role_permissions
+za_local_payroll.patches.v1_4.record_packaged_rate_decision

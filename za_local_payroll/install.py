@@ -12,6 +12,7 @@ from za_local_payroll.setup.custom_fields import apply_payroll_custom_fields
 from za_local_payroll.setup.masters import seed_payroll_masters
 from za_local_payroll.setup.property_setters import apply_payroll_property_setters
 from za_local_payroll.setup.records import install_payroll_doctype_links
+from za_local_payroll.setup.role_grants import grant_payroll_permissions
 from za_local_payroll.setup.statutory import ensure_all_company_tax_configuration
 from za_local_payroll.setup.workplace import (
 	COIDA_CHARTS,
@@ -90,6 +91,7 @@ def before_install() -> None:
 def after_install() -> None:
 	"""Install schema support and conservative initial payroll masters."""
 	_sync_schema_support()
+	grant_payroll_permissions()
 	seed_payroll_masters()
 	ensure_all_company_tax_configuration()
 	seed_payroll_readiness()
