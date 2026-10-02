@@ -16,7 +16,7 @@ For each employee, the engine sums all submitted salary-slip components for the 
 - **Deduction details** (e.g. 4001/4003/4006 retirement, 4005 medical including the employer's contribution deemed paid by the employee, 4102 PAYE, 4115 directive tax, 4141 UIF).
 - **Employer contribution details** (e.g. 4472 employer pension, 4474 employer medical, equal to 3810).
 - **Tax credits**: 4116 medical scheme fees tax credit and 4118 ETI.
-- **Totals**: 3696/3697/3698 gross totals and 4149 total tax, SDL and UIF.
+- **Totals**: gross taxable income, non-taxable income, and 4149 (total tax, SDL and UIF, which must equal PAYE + UIF + SDL).
 
 The employer's tax ID on the certificate is the Company's **Income Tax Reference Number**, never its VAT number.
 

@@ -37,7 +37,6 @@ A default set of SARS codes is seeded on install. Open the **SARS Payroll Code**
 | 4141 | UIF (employee + employer). |
 | 4142 | SDL. |
 | 4472 / 4474 | Employer pension / medical scheme contributions. |
-| 3697 / 3698 | Gross retirement-funding / non-retirement-funding totals (calculated, not mapped). |
 
 The seeded master follows **SARS PAYE BRS v25.3.0**. Codes that BRS does not recognise as source codes
 (4007, 4008, 4010, 4476, 4477 and 4497) are inactive; do not map components to them.
