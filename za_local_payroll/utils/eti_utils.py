@@ -176,13 +176,25 @@ def check_eti_minimum_wage(employee, salary_slip, payroll_settings, remuneration
 			reason="No Salary Component is marked as an ETI wage component",
 		)
 
+	wage_source = None
 	if wage_basis == WAGE_BASIS_REGULATED:
 		hourly_rate = flt(employee.get("za_eti_minimum_wage_rate"))
+		wage_source = "Employee: applicable minimum hourly wage"
 		if hourly_rate <= 0:
-			return frappe._dict(
-				eligible=False,
-				reason="Applicable ETI minimum hourly wage is not configured",
-			)
+			# No sectoral or other regulated rate captured: the general national
+			# minimum wage applies, resolved from the approved Labour rate pack.
+			from za_local_payroll.services.statutory_rates import resolve_nmw_rate
+
+			try:
+				resolution = resolve_nmw_rate("General NMW", salary_slip.end_date)
+			except frappe.ValidationError:
+				return frappe._dict(
+					eligible=False,
+					reason="No applicable minimum hourly wage is captured and no approved NMW rate "
+					"applies on the slip date",
+				)
+			hourly_rate = flt(resolution.value)
+			wage_source = f"General NMW {hourly_rate:.2f}/h ({resolution.source_reference})"
 		minimum_wage = hourly_rate * hours
 	else:
 		monthly_floor = flt(payroll_settings.get("za_eti_unregulated_minimum_monthly_wage"))
@@ -199,6 +211,7 @@ def check_eti_minimum_wage(employee, salary_slip, payroll_settings, remuneration
 		minimum_wage=flt(minimum_wage, 2),
 		monthly_remuneration=flt(remuneration, 2),
 		wage_components=", ".join(wage_components),
+		minimum_wage_source=wage_source or "Payroll Settings: unregulated monthly floor",
 	)
 	result.reason = (
 		"Employee meets the configured minimum wage"

@@ -21,7 +21,7 @@ from za_local_payroll.reference_company.payroll_setup import EVIDENCE
 from za_local_payroll.reference_company.personas import PERSONAS
 from za_local_payroll.reference_company.schedule import ADDITIONAL_SALARY, MONTHS, TERMINATION
 
-PAYE_TOLERANCE = 0.20  # HRMS slab rows use .99 upper bounds: <= 0.99 x sum(full-bracket rates) / 12
+PAYE_TOLERANCE = 0.02  # rounding of the cumulative average method only
 TOLERANCE = 0.01
 
 ANNUAL_COMPONENTS = {"Performance Bonus", "13th Cheque", "Leave Payout", "Notice Pay"}

@@ -50,9 +50,9 @@ def _months(months):
 
 
 def _termination():
-	payroll_run.probe_termination_month()
-	payroll_run.configure_termination_workaround(non_taxable_severance=True)
-	return _months(FROM_TERMINATION)()
+	"""Leaver inputs and the SARS directive, then November to February as installed."""
+	inputs = payroll_run.stage_termination_inputs()
+	return {"inputs": inputs, **_months(FROM_TERMINATION)()}
 
 
 STAGES = (

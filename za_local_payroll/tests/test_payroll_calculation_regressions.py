@@ -61,7 +61,7 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 			def get(self, fieldname, default=None):
 				return contributions if fieldname == "company_contribution" else default
 
-			def get_statutory_earning_basis(self, _fieldname):
+			def get_statutory_earning_basis(self, _fieldname, apply_paye_inclusion=False):
 				return 10_000
 
 			def get_current_retirement_fund_contribution(self):
@@ -166,9 +166,14 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 				}
 			},
 		)
+		slip.start_date = "2026-08-01"
+		slip.end_date = "2026-08-31"
 		slip.calculate_variable_tax = Mock()
 		slip.get_tax_rebates = Mock(return_value=2_000)
-		slip.get_medical_aid_credits = Mock(return_value=1_000)
+		# R1 000 a year of medical credit, of which half is earned by the end of this period
+		slip.get_medical_aid_credits = lambda up_to_date=None: 500 if up_to_date else 1_000
+		slip.get_active_tax_directive = Mock(return_value=None)
+		slip.apply_paye_directive = lambda component: ZASalarySlip.apply_paye_directive(slip, component)
 		slip.get_total_sub_periods = Mock(return_value=12)
 		slip.get_periods_employed_to_date = Mock(return_value=6)
 
@@ -196,9 +201,14 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 				}
 			},
 		)
+		slip.start_date = "2026-08-01"
+		slip.end_date = "2026-08-31"
 		slip.calculate_variable_tax = Mock()
 		slip.get_tax_rebates = Mock(return_value=2_000)
-		slip.get_medical_aid_credits = Mock(return_value=1_000)
+		# R1 000 a year of medical credit, of which half is earned by the end of this period
+		slip.get_medical_aid_credits = lambda up_to_date=None: 500 if up_to_date else 1_000
+		slip.get_active_tax_directive = Mock(return_value=None)
+		slip.apply_paye_directive = lambda component: ZASalarySlip.apply_paye_directive(slip, component)
 		slip.get_total_sub_periods = Mock(return_value=0)
 		slip.get_periods_employed_to_date = Mock(return_value=1)
 
@@ -267,6 +277,8 @@ class TestSalarySlipTaxRegressions(UnitTestCase):
 		slip.get_total_sub_periods = Mock(return_value=12)
 		slip.get_periods_employed_to_date = Mock(return_value=4)
 		slip.get_previous_annual_payment_earnings = Mock(return_value=0)
+		slip.get_paye_exclusions_to_date = Mock(return_value=(0, 0))
+		slip.get_future_recurring_projection = Mock(return_value=0)
 
 		ZASalarySlip.apply_sars_annual_equivalent(slip)
 

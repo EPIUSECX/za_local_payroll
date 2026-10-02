@@ -121,12 +121,13 @@ PAYROLL_CUSTOM_FIELDS = {
 		},
 		{
 			"module": "SA Payroll",
-			"label": "Official Interest Rate",
-			"fieldname": "za_official_interest_rate",
-			"fieldtype": "Percent",
+			"label": "Tax on Lump Sum Salary Component",
+			"fieldname": "za_lump_sum_tax_salary_component",
+			"fieldtype": "Link",
+			"options": "Salary Component",
 			"insert_after": "za_coida_salary_component",
-			"description": "Date-sensitive SARS official interest rate used for low-interest loan "
-			"fringe benefits. Review whenever the repo rate changes.",
+			"description": "Deduction (SARS code 4115) that carries the tax on a lump sum set by a "
+			"Severance / Lump Sum Tax Directive.",
 		},
 	],
 	"Employee": [
@@ -466,6 +467,27 @@ PAYROLL_CUSTOM_FIELDS = {
 		},
 		{
 			"module": "SA Payroll",
+			"label": "Medical Scheme Fees Tax Credit",
+			"fieldname": "za_medical_tax_credit",
+			"fieldtype": "Currency",
+			"insert_after": "za_paye_inclusion_adjustment",
+			"read_only": 1,
+			"allow_on_submit": 1,
+			"description": "Section 6A credit applied in this period's PAYE; reported under IRP5 code 4116.",
+		},
+		{
+			"module": "SA Payroll",
+			"label": "Tax Directive Applied",
+			"fieldname": "za_tax_directive",
+			"fieldtype": "Link",
+			"options": "Tax Directive",
+			"insert_after": "za_medical_tax_credit",
+			"read_only": 1,
+			"allow_on_submit": 1,
+			"description": "SARS tax directive that set this slip's lump-sum tax (4115) or PAYE.",
+		},
+		{
+			"module": "SA Payroll",
 			"label": "ETI Ordinary Hours",
 			"fieldname": "za_eti_hours",
 			"fieldtype": "Float",
@@ -516,10 +538,19 @@ PAYROLL_CUSTOM_FIELDS = {
 		},
 		{
 			"module": "SA Payroll",
+			"label": "Income Tax Reference Number",
+			"fieldname": "za_income_tax_reference_number",
+			"fieldtype": "Data",
+			"insert_after": "za_paye_reference_number",
+			"description": "The company's own SARS income tax reference (not its VAT number). Shown on "
+			"practitioner certificate copies.",
+		},
+		{
+			"module": "SA Payroll",
 			"label": "Trading Name",
 			"fieldname": "za_trading_name",
 			"fieldtype": "Data",
-			"insert_after": "za_paye_reference_number",
+			"insert_after": "za_income_tax_reference_number",
 		},
 		{
 			"module": "SA Payroll",
@@ -611,6 +642,19 @@ PAYROLL_CUSTOM_FIELDS = {
 			"read_only": 1,
 			"hidden": 1,
 			"description": "Internal marker for employer-contribution accrual journal entries.",
+		},
+	],
+	"Salary Component Account": [
+		{
+			"module": "SA Payroll",
+			"label": "Contribution Liability Account",
+			"fieldname": "za_liability_account",
+			"fieldtype": "Link",
+			"options": "Account",
+			"insert_after": "account",
+			"in_list_view": 1,
+			"description": "For an employer contribution: the liability credited when it is accrued "
+			"(for example SDL Payable or a fund payable). Left blank, Payroll Payable is used.",
 		},
 	],
 	"Salary Component": [

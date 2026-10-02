@@ -274,7 +274,7 @@
   {
    "fieldname": "employer_tax_id",
    "fieldtype": "Data",
-   "label": "Employer Tax ID",
+   "label": "Employer Income Tax Reference",
    "read_only": 1
   },
   {

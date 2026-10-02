@@ -62,6 +62,7 @@ def sales_invoice(
 	conversion_rate=None,
 	is_return=0,
 	return_against=None,
+	reason=None,
 ):
 	if name := _existing("Sales Invoice", label):
 		return name
@@ -77,6 +78,7 @@ def sales_invoice(
 			"conversion_rate": conversion_rate or 1,
 			"is_return": is_return,
 			"return_against": return_against,
+			"za_adjustment_reason": reason,
 			"taxes_and_charges": template(ST, tax_template) if tax_template else None,
 			"remarks": _key(label),
 			"items": [
@@ -232,7 +234,25 @@ def stage_vat_transactions() -> dict:
 		"SA Standard Rated Sales",
 		is_return=1,
 		return_against=docs["S1 standard full"],
+		reason="SYNTHETIC: two of ten consulting days not delivered; fee reduced accordingly.",
 	)
+	# A credit note without the s21(3) explanation is refused on submit.
+	frappe.db.savepoint("cn_negative")
+	try:
+		sales_invoice(
+			"CN-NEG",
+			"2026-08-12",
+			VAT_CUSTOMER,
+			"REF-SVC-STD",
+			100,
+			"SA Standard Rated Sales",
+			is_return=1,
+			return_against=docs["S1 standard full"],
+		)
+		docs["CN negative: no reason"] = "ALLOWED (unexpected)"
+	except frappe.ValidationError as exc:
+		frappe.db.rollback(save_point="cn_negative")
+		docs["CN negative: no reason"] = f"blocked: {frappe.utils.strip_html(str(exc))[:120]}"
 	# Purchases
 	docs["P1 standard"] = purchase_invoice(
 		"P1", "2026-07-04", VAT_SUPPLIER, "REF-PUR-STD", 4000, "SA Standard Rated Purchases"
@@ -246,13 +266,33 @@ def stage_vat_transactions() -> dict:
 	docs["P4 exempt"] = purchase_invoice(
 		"P4", "2026-07-31", VAT_SUPPLIER, "REF-PUR-EX", 350, "SA Exempt Purchases"
 	)
+	# Blocked input VAT (s17(2)) stays in the cost: R2,000 + R300 VAT captured gross,
+	# with no input VAT template. Posting it to Input VAT is refused (VAT-8).
+	frappe.db.savepoint("p5_negative")
+	try:
+		purchase_invoice(
+			"P5-NEG",
+			"2026-08-05",
+			VAT_SUPPLIER,
+			"REF-ENT",
+			2000,
+			"SA Standard Rated Purchases",
+			treatment="Blocked",
+			evidence="VAT Act s17(2)(a) entertainment - memo REF-17-2A",
+		)
+		docs["P5 negative: blocked VAT to input account"] = "ALLOWED (unexpected)"
+	except frappe.ValidationError as exc:
+		frappe.db.rollback(save_point="p5_negative")
+		docs["P5 negative: blocked VAT to input account"] = (
+			f"blocked: {frappe.utils.strip_html(str(exc))[:120]}"
+		)
 	docs["P5 blocked entertainment"] = purchase_invoice(
 		"P5",
 		"2026-08-05",
 		VAT_SUPPLIER,
 		"REF-ENT",
-		2000,
-		"SA Standard Rated Purchases",
+		2300,
+		None,
 		treatment="Blocked",
 		evidence="VAT Act s17(2)(a) entertainment - memo REF-17-2A",
 	)

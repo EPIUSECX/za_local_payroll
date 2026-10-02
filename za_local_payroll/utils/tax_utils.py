@@ -179,6 +179,7 @@ def get_medical_aid_credit(
 	number_of_dependants,
 	membership_start_date=None,
 	membership_end_date=None,
+	up_to_date=None,
 ):
 	"""
 	Calculate medical aid tax credits.
@@ -194,9 +195,10 @@ def get_medical_aid_credit(
 	Args:
 		salary_slip: Salary Slip document
 		number_of_dependants (int): Number of dependants on medical aid (excluding main member)
+		up_to_date: count membership months only up to this date (the credit to date)
 
 	Returns:
-		float: Annual medical aid tax credit
+		float: Medical aid tax credit for the months of membership in the tax year
 	"""
 	if number_of_dependants < 0:
 		return 0
@@ -223,6 +225,8 @@ def get_medical_aid_credit(
 	tax_year_start, tax_year_end = get_tax_year_dates(getdate(salary_slip.end_date))
 	credit_start = max(tax_year_start, getdate(membership_start_date or tax_year_start))
 	credit_end = min(tax_year_end, getdate(membership_end_date or tax_year_end))
+	if up_to_date:
+		credit_end = min(credit_end, getdate(up_to_date))
 	if credit_end < credit_start:
 		return 0
 	qualifying_months = min(
@@ -265,7 +269,7 @@ def calculate_retirement_annuity_deduction(salary_slip, retirement_contribution)
 	return min(retirement_contribution, max_by_percentage, max_annual_limit)
 
 
-def calculate_uif_contribution(gross_pay, date_value=None):
+def calculate_uif_contribution(gross_pay, date_value=None, periods_per_year=12):
 	"""
 	Calculate UIF (Unemployment Insurance Fund) contribution.
 
@@ -275,12 +279,15 @@ def calculate_uif_contribution(gross_pay, date_value=None):
 	- Maximum monthly remuneration: R17,712 (2024/2025)
 
 	Args:
-		gross_pay (float): Monthly gross pay
+		gross_pay (float): Remuneration for the pay period
+		periods_per_year (int): Pay periods in the year (12 monthly, 26 fortnightly, 52 weekly)
 
 	Returns:
 		tuple: (employee_uif, employer_uif)
 	"""
-	UIF_MAX_MONTHLY = get_uif_monthly_cap(date_value)
+	# The ceiling is gazetted as a monthly amount; a shorter pay period carries the
+	# same annual ceiling spread over its periods (monthly x 12 / periods).
+	UIF_MAX_MONTHLY = get_uif_monthly_cap(date_value) * 12 / (flt(periods_per_year) or 12)
 	employee_rate = get_uif_employee_rate(date_value)
 	employer_rate = get_uif_employer_rate(date_value)
 

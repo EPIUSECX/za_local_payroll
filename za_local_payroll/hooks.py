@@ -56,6 +56,7 @@ if dedicated_payroll_hooks_active():
 	}
 	doc_events = {
 		"Company": {
+			"validate": "za_local_payroll.utils.sars_references.validate_company_references",
 			"after_insert": "za_local_payroll.setup.statutory.configure_new_south_african_company",
 			"on_update": "za_local_payroll.setup.statutory.classify_company_salary_components",
 		},

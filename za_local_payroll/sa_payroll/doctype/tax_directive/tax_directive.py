@@ -34,12 +34,20 @@ class TaxDirective(Document):
 	def validate_directive_details(self):
 		"""Validate directive-specific details"""
 		if self.directive_type == "Reduced Tax Rate":
-			if not self.tax_rate_override and self.tax_rate_override != 0:
+			if self.tax_rate_override is None:
 				frappe.throw(_("Tax Rate Override is required for Reduced Tax Rate directive"))
 
-		elif self.directive_type in {"Fixed Amount", "Severance / Lump Sum"}:
-			if not self.fixed_amount:
+		elif self.directive_type == "Fixed Amount":
+			if flt(self.fixed_amount) <= 0:
 				frappe.throw(_("Fixed Amount is required for this directive"))
+
+		elif self.directive_type == "Severance / Lump Sum":
+			# SARS issues nil-tax directives for lump sums within the tax-free portion;
+			# a nil amount is valid but must be backed by the directive itself.
+			if self.fixed_amount is None or flt(self.fixed_amount) < 0:
+				frappe.throw(_("Enter the tax amount on the directive (0 for a nil-tax directive)."))
+			if not flt(self.fixed_amount) and not self.attachment:
+				frappe.throw(_("Attach the SARS directive to record a nil-tax lump-sum directive."))
 
 		elif self.directive_type == "Garnishee Order":
 			if not self.garnishee_creditor:
@@ -90,45 +98,6 @@ class TaxDirective(Document):
 			self.status = "Expired"
 		elif self.docstatus == 1:
 			self.status = "Active"
-
-	def apply_to_salary_slip(self, salary_slip):
-		"""
-		Apply tax directive to salary slip calculation
-
-		Args:
-			salary_slip: SalarySlip document
-
-		Returns:
-			dict: Modified tax calculation details
-		"""
-		if self.status != "Active":
-			return None
-
-		# Check if salary slip is within directive period
-		slip_date = getdate(salary_slip.posting_date)
-		if slip_date < getdate(self.effective_from):
-			return None
-		if self.effective_to and slip_date > getdate(self.effective_to):
-			return None
-
-		result = {
-			"directive_applied": True,
-			"directive_number": self.directive_number,
-			"directive_type": self.directive_type,
-		}
-
-		if self.directive_type == "Reduced Tax Rate":
-			result["tax_rate_override"] = flt(self.tax_rate_override)
-
-		elif self.directive_type in {"Fixed Amount", "Severance / Lump Sum"}:
-			result["fixed_tax_amount"] = flt(self.fixed_amount)
-
-		elif self.directive_type == "Garnishee Order":
-			result["garnishee_creditor"] = self.garnishee_creditor
-			result["garnishee_amount"] = flt(self.garnishee_amount)
-			result["garnishee_percentage"] = flt(self.garnishee_percentage)
-
-		return result
 
 
 @frappe.whitelist(methods=["GET"])

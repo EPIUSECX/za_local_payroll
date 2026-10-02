@@ -58,6 +58,7 @@ POST_ENDPOINTS = {
 	"sa_payroll.doctype.irp5_certificate.irp5_certificate.IRP5Certificate.export_pdf",
 	"sa_payroll.doctype.irp5_certificate.irp5_certificate.IRP5Certificate.generate_certificate_data",
 	"sa_payroll.doctype.irp5_certificate.irp5_certificate.bulk_generate_certificates",
+	"sa_payroll.doctype.payroll_payment_batch.payroll_payment_batch.PayrollPaymentBatch.record_bank_settlement",
 	"sa_payroll.doctype.low_interest_loan_benefit.low_interest_loan_benefit.LowInterestLoanBenefit.calculate_interest_benefit",
 	"sa_payroll.doctype.low_interest_loan_benefit.low_interest_loan_benefit.LowInterestLoanBenefit.get_official_rate",
 	"sa_payroll.doctype.uif_u19_declaration.uif_u19_declaration.UifU19Declaration.export_pdf",

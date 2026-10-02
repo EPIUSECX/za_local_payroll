@@ -9,6 +9,8 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=16.0.0" # Installed and managed by bench.
+    # IRP5 / IT3(a) certificate PDFs.
+    "reportlab>=4.0,<6",
 ]
 
 [build-system]

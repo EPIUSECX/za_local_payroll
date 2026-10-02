@@ -21,7 +21,7 @@ try:
 	pdf_generation_available = True
 except ImportError:
 	frappe.log_error(
-		"PDF generation libraries not installed. Install PyPDF2 and reportlab for IRP5 functionality.",
+		"PDF generation library not installed. Install reportlab for IRP5 certificate PDFs.",
 	)
 
 try:
@@ -31,6 +31,15 @@ except Exception:  # pragma: no cover - defensive import
 
 
 MEDICAL_SCHEME_TAX_CREDIT_CODE = "4116"
+# BRS v25.3.0: an employer contribution to a retirement fund is a fringe benefit of the
+# employee and is deemed paid by the employee, so each 44-code requires its 38-code
+# benefit and the employee's 40-code deduction (4472 -> 3817 + 4001, 4473 -> 3825 +
+# 4003, 4475 -> 3828 + 4006).
+EMPLOYER_FUND_CONTRIBUTIONS = {"4472": ("3817", "4001"), "4473": ("3825", "4003"), "4475": ("3828", "4006")}
+# Employer medical contributions: 3810 must equal 4474 and is included in 4005.
+MEDICAL_FRINGE_BENEFIT_CODE = "3810"
+EMPLOYER_MEDICAL_CONTRIBUTION_CODE = "4474"
+MEDICAL_DEDUCTION_CODE = "4005"
 ADDITIONAL_MEDICAL_EXPENSES_TAX_CREDIT_CODE = "4120"
 VALID_IT3A_REASON_CODES = {"02", "03", "04", "05", "06", "07", "08", "09", "10"}
 PAY_PERIODS_PER_YEAR = {
@@ -541,7 +550,8 @@ class IRP5Certificate(Document):
 
 		self.employer_legal_name = company.company_name
 		self.employer_trading_name = company.get("za_trading_name") or company.company_name
-		self.employer_tax_id = company.tax_id
+		# The SARS employer record carries no tax ID; never substitute the VAT number.
+		self.employer_tax_id = company.get("za_income_tax_reference_number")
 		self.employer_paye_reference_number = company.get("za_paye_reference_number")
 		self.employer_sdl_reference_number = company.get("za_sdl_reference_number")
 		self.employer_uif_reference_number = company.get("za_uif_reference_number")
@@ -647,6 +657,15 @@ class IRP5Certificate(Document):
 				deduction_map[code_doc.code]["description"] = code_doc.description
 				deduction_map[code_doc.code]["amount"] += flt(deduction.amount)
 
+			if flt(salary_slip_doc.get("za_medical_tax_credit")):
+				medical_credits[MEDICAL_SCHEME_TAX_CREDIT_CODE] += flt(salary_slip_doc.za_medical_tax_credit)
+				deduction_map[MEDICAL_SCHEME_TAX_CREDIT_CODE]["description"] = _code_description(
+					MEDICAL_SCHEME_TAX_CREDIT_CODE
+				)
+				deduction_map[MEDICAL_SCHEME_TAX_CREDIT_CODE]["amount"] += flt(
+					salary_slip_doc.za_medical_tax_credit
+				)
+
 			for contribution in getattr(salary_slip_doc, "company_contribution", []) or []:
 				component_name = getattr(contribution, "salary_component", None)
 				if not component_name:
@@ -661,6 +680,10 @@ class IRP5Certificate(Document):
 					continue
 				contribution_map[code_doc.code]["description"] = code_doc.description
 				contribution_map[code_doc.code]["amount"] += flt(contribution.amount)
+
+		gross_taxable_income += apply_deemed_employee_contributions(
+			self, income_map, deduction_map, contribution_map
+		)
 
 		for code, details in sorted(
 			income_map.items(),
@@ -1101,7 +1124,7 @@ class IRP5Certificate(Document):
 			[
 				("Legal Name", self.employer_legal_name),
 				("Trading Name", self.employer_trading_name),
-				("Employer Tax ID", self.employer_tax_id),
+				("Employer Income Tax Ref.", self.employer_tax_id),
 			],
 			margin,
 			y,
@@ -1308,6 +1331,43 @@ class IRP5Certificate(Document):
 			frappe.throw(_("Cannot export a draft certificate. Generate certificate data first."))
 		self.validate_statutory_readiness(throw=True)
 		return base64.b64encode(self.generate_official_pdf()).decode("utf-8")
+
+
+def apply_deemed_employee_contributions(certificate, income_map, deduction_map, contribution_map):
+	"""Add the BRS-required fringe benefits and deemed contributions; return added income."""
+	added_income = 0.0
+
+	def add(target, code, amount):
+		target[code]["description"] = target[code]["description"] or _code_description(code)
+		target[code]["amount"] += amount
+
+	for contribution_code, (benefit_code, deduction_code) in EMPLOYER_FUND_CONTRIBUTIONS.items():
+		amount = flt(contribution_map.get(contribution_code, {}).get("amount"))
+		if not amount:
+			continue
+		add(income_map, benefit_code, amount)
+		add(deduction_map, deduction_code, amount)
+		added_income += amount
+
+	benefit = flt(income_map.get(MEDICAL_FRINGE_BENEFIT_CODE, {}).get("amount"))
+	contribution = flt(contribution_map.get(EMPLOYER_MEDICAL_CONTRIBUTION_CODE, {}).get("amount"))
+	if contribution and not benefit:
+		add(income_map, MEDICAL_FRINGE_BENEFIT_CODE, contribution)
+		added_income += contribution
+		benefit = contribution
+	elif benefit and not contribution:
+		add(contribution_map, EMPLOYER_MEDICAL_CONTRIBUTION_CODE, benefit)
+	elif benefit and contribution and flt(benefit, 2) != flt(contribution, 2):
+		getattr(certificate, "_mapping_errors", []).append(
+			f"Medical fringe benefit 3810 ({benefit:.2f}) must equal employer contribution 4474 ({contribution:.2f})"
+		)
+	if benefit:
+		add(deduction_map, MEDICAL_DEDUCTION_CODE, benefit)
+	return added_income
+
+
+def _code_description(code):
+	return frappe.db.get_value("SARS Payroll Code", code, "description") or code
 
 
 def _build_address_snapshot(source):

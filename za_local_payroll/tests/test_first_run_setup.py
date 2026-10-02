@@ -28,12 +28,14 @@ class TestMedicalAidComponentIsShipped(UnitTestCase):
 			),
 		)
 
-	def test_component_carries_the_employer_sars_code_not_the_deduction_one(self):
-		"""4474 is the employer's contribution; 4005 is the employee's deduction."""
+	def test_component_carries_the_fringe_benefit_code(self):
+		"""The earning is the employee's 3810 fringe benefit (BRS v25.3.0). 4474, the
+		employer's contribution, is derived on the certificate and must equal 3810;
+		coding the earning 4474 made certificate generation fail."""
 		code = frappe.db.get_value(
 			"Salary Component", "Medical Aid Company Contribution", "za_sars_payroll_code"
 		)
-		self.assertEqual("4474", frappe.db.get_value("SARS Payroll Code", code, "code"))
+		self.assertEqual("3810", frappe.db.get_value("SARS Payroll Code", code, "code"))
 
 	def test_benefit_stays_out_of_gross_and_off_the_ledger(self):
 		"""It is a taxable benefit value, not cash paid to the employee."""

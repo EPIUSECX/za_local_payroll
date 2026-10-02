@@ -121,13 +121,12 @@ def _ensure_company_identity() -> None:
 			"za_sdl_reference_number": C.SDL_REFERENCE,
 			"za_uif_reference_number": C.UIF_REFERENCE,
 			"za_coida_registration_number": C.COIDA_REFERENCE,
+			"za_income_tax_reference_number": C.INCOME_TAX_REFERENCE,
 			"za_business_address": address,
-			# ERPNext has no dedicated company-registration or income-tax-reference
-			# field and the suite adds none, so they are recorded in the standard
-			# free-text registration details (see gap register).
+			# ERPNext has no company-registration field; record it in the standard
+			# free-text registration details.
 			"registration_details": (
 				f"CIPC registration number: {C.REGISTRATION_NUMBER}\n"
-				f"Income tax reference: {C.INCOME_TAX_REFERENCE}\n"
 				"SYNTHETIC TEST DATA - not issued registrations"
 			),
 			"email": "finance@cohenix-ref.test",

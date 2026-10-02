@@ -362,22 +362,30 @@ class ZAPayrollEntry(PayrollEntry):
 
 		component_names = sorted({row.salary_component for row in rows if row.salary_component})
 		component_accounts = {
-			row.parent: row.account
+			row.parent: row
 			for row in frappe.get_all(
 				"Salary Component Account",
 				filters={"parent": ["in", component_names], "company": self.company},
-				fields=["parent", "account"],
+				fields=["parent", "account", "za_liability_account"],
 			)
 		}
+		# Each contribution is credited to its own liability (UIF, SDL, fund payable) so
+		# the liabilities reconcile to EMP201 and fund schedules; Payroll Payable only
+		# where no liability account is configured.
+		liability_totals = {}
 		for r in rows:
-			account = component_accounts.get(r.salary_component)
-			if not account:
+			mapping = component_accounts.get(r.salary_component)
+			if not mapping or not mapping.account:
 				frappe.throw(
 					frappe._("Please set account in Salary Component {0}").format(
 						frappe.get_desk_link("Salary Component", r.salary_component)
 					)
 				)
-			totals_by_account[account] = totals_by_account.get(account, 0) + float(r.amount or 0)
+			totals_by_account[mapping.account] = totals_by_account.get(mapping.account, 0) + float(
+				r.amount or 0
+			)
+			liability = mapping.za_liability_account or self.payroll_payable_account
+			liability_totals[liability] = liability_totals.get(liability, 0) + float(r.amount or 0)
 
 		if not totals_by_account:
 			return None
@@ -406,24 +414,26 @@ class ZAPayrollEntry(PayrollEntry):
 					)
 				)
 
-		# Single credit to payroll payable
-		total_credit = sum(a["debit_in_account_currency"] for a in accounts)
-		exchange_rate, amt = self.get_amount_and_exchange_rate_for_journal_entry(
-			self.payroll_payable_account, total_credit, company_currency, currencies
-		)
-		accounts.append(
-			self.update_accounting_dimensions(
-				{
-					"account": self.payroll_payable_account,
-					"credit_in_account_currency": round(amt, precision),
-					"exchange_rate": exchange_rate,
-					"reference_type": self.doctype,
-					"reference_name": self.name,
-					"cost_center": self.cost_center,
-				},
-				get_accounting_dimensions() if hasattr(self, "get_accounting_dimensions") else [],
+		# Credits per liability account
+		for liability, amount in liability_totals.items():
+			exchange_rate, amt = self.get_amount_and_exchange_rate_for_journal_entry(
+				liability, amount, company_currency, currencies
 			)
-		)
+			if not amt:
+				continue
+			accounts.append(
+				self.update_accounting_dimensions(
+					{
+						"account": liability,
+						"credit_in_account_currency": round(amt, precision),
+						"exchange_rate": exchange_rate,
+						"reference_type": self.doctype,
+						"reference_name": self.name,
+						"cost_center": self.cost_center,
+					},
+					get_accounting_dimensions() if hasattr(self, "get_accounting_dimensions") else [],
+				)
+			)
 
 		# Create and submit JE
 		je = self.make_journal_entry(

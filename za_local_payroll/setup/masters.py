@@ -26,6 +26,13 @@ DEFAULT_SALARY_COMPONENT_ACCOUNT_NAMES = {
 	"COIDA": "COIDA Expense",
 	"COIDA Contribution": "COIDA Expense",
 }
+# Employer contributions accrue to their own liability, not to Payroll Payable, so the
+# statutory and fund liabilities reconcile to EMP201 and fund schedules.
+DEFAULT_CONTRIBUTION_LIABILITY_ACCOUNT_NAMES = {
+	"UIF Employer Contribution": "UIF Employer Contribution",
+	"SDL Contribution": "SDL Payable - SARS",
+	"COIDA Contribution": "COIDA Payable",
+}
 GOVERNED_COMPONENT_CLASSIFICATIONS = {
 	"PAYE",
 	"UIF Employee Contribution",
@@ -153,6 +160,30 @@ def repair_salary_component_accounts(company: str | None = None) -> int:
 			doc.append("accounts", {"company": company_name, "account": account})
 			doc.save(ignore_permissions=True)
 			repaired += 1
+		repaired += _repair_contribution_liability_accounts(company_name)
+	return repaired
+
+
+def _repair_contribution_liability_accounts(company_name: str) -> int:
+	"""Fill a blank contribution liability account; never overwrite a chosen one."""
+	if "za_liability_account" not in frappe.db.get_table_columns("Salary Component Account"):
+		return 0
+	repaired = 0
+	for component, account_name in DEFAULT_CONTRIBUTION_LIABILITY_ACCOUNT_NAMES.items():
+		account = frappe.db.get_value(
+			"Account", {"company": company_name, "account_name": account_name, "is_group": 0}, "name"
+		)
+		row = frappe.db.get_value(
+			"Salary Component Account",
+			{"parent": component, "company": company_name},
+			["name", "za_liability_account"],
+			as_dict=True,
+		)
+		if account and row and not row.za_liability_account:
+			frappe.db.set_value(
+				"Salary Component Account", row.name, "za_liability_account", account, update_modified=False
+			)
+			repaired += 1
 	return repaired
 
 
@@ -181,7 +212,19 @@ def _seed_salary_components() -> None:
 				if updates:
 					frappe.db.set_value("Salary Component", name, updates, update_modified=False)
 			continue
-		frappe.get_doc(doctype="Salary Component", **component).insert(ignore_permissions=True)
+		# Seed the intended South African treatment on creation. Filling it afterwards
+		# only where a field is blank never happens for the applicability checks:
+		# their custom-field default of 1 is already set, so a severance benefit was
+		# installed as UIF, SDL and COIDA applicable.
+		columns = set(frappe.db.get_table_columns("Salary Component"))
+		treatment = {
+			field: value
+			for field, value in DEFAULT_SALARY_COMPONENT_TREATMENTS.get(name, {}).items()
+			if field in columns
+		}
+		frappe.get_doc(doctype="Salary Component", **{**component, **treatment}).insert(
+			ignore_permissions=True
+		)
 
 
 def _seed_sars_codes() -> None:
@@ -190,8 +233,13 @@ def _seed_sars_codes() -> None:
 	for values in DEFAULT_SARS_PAYROLL_CODES:
 		code = values["code"]
 		if frappe.db.exists("SARS Payroll Code", code):
+			# SARS source codes are statutory reference data: keep them on the BRS.
+			current = frappe.db.get_value("SARS Payroll Code", code, list(values), as_dict=True) or {}
+			updates = {field: value for field, value in values.items() if current.get(field) != value}
+			if updates:
+				frappe.db.set_value("SARS Payroll Code", code, updates, update_modified=False)
 			continue
-		frappe.get_doc(doctype="SARS Payroll Code", active=1, **values).insert(ignore_permissions=True)
+		frappe.get_doc(doctype="SARS Payroll Code", **values).insert(ignore_permissions=True)
 
 
 def _seed_component_links() -> None:
@@ -259,6 +307,7 @@ def _seed_single_defaults() -> None:
 		("za_uif_employer_salary_component", "UIF Employer Contribution"),
 		("za_sdl_salary_component", "SDL Contribution"),
 		("za_coida_salary_component", "COIDA Contribution"),
+		("za_lump_sum_tax_salary_component", "Tax on Lump Sum"),
 	):
 		if frappe.db.exists("Salary Component", component):
 			defaults.append((fieldname, component))

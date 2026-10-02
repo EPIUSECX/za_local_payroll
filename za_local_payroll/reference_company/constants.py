@@ -6,7 +6,7 @@ TRADING_NAME = "Cohenix ZA Reference"
 # Synthetic: CIPC format YYYY/NNNNNN/07, VAT 10 digits starting 4, PAYE 7xxxxxxxxx,
 # SDL Lxxxxxxxxx, UIF Uxxxxxxxxx (BRS 8.2 modulus-10 valid). None are issued registrations.
 REGISTRATION_NUMBER = "2026/900001/07"
-INCOME_TAX_REFERENCE = "9000000016"
+INCOME_TAX_REFERENCE = "9000000019"  # passes the SARS modulus-10 check (BRS 8.1)
 VAT_NUMBER = "4900000017"
 PAYE_REFERENCE = "7900000011"
 SDL_REFERENCE = "L900000011"

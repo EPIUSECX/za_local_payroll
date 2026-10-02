@@ -54,12 +54,13 @@ def reconcile_payroll_gl() -> dict:
 		slips = frappe.get_all(
 			"Salary Slip", filters={"payroll_entry": pe.name, "docstatus": 1}, pluck="name"
 		)
-		comp_accounts = {
-			r.parent: r.account
-			for r in frappe.get_all(
-				"Salary Component Account", filters={"company": C.COMPANY}, fields=["parent", "account"]
-			)
-		}
+		mappings = frappe.get_all(
+			"Salary Component Account",
+			filters={"company": C.COMPANY},
+			fields=["parent", "account", "za_liability_account"],
+		)
+		comp_accounts = {r.parent: r.account for r in mappings}
+		liability_accounts = {r.parent: r.za_liability_account for r in mappings if r.za_liability_account}
 		expected = {}
 		net = 0.0
 		for name in slips:
@@ -76,7 +77,12 @@ def reconcile_payroll_gl() -> dict:
 			for r in s.company_contribution:
 				acc = comp_accounts.get(r.salary_component)
 				expected[acc] = expected.get(acc, 0) + flt(r.amount)
-				expected["__contrib_payable__"] = expected.get("__contrib_payable__", 0) + flt(r.amount)
+				liability = liability_accounts.get(r.salary_component)
+				if liability:
+					# ACC-1 fix: each contribution accrues to its own liability.
+					expected[liability] = expected.get(liability, 0) - flt(r.amount)
+				else:
+					expected["__contrib_payable__"] = expected.get("__contrib_payable__", 0) + flt(r.amount)
 		journals = frappe.get_all(
 			"Journal Entry Account",
 			filters={"reference_type": "Payroll Entry", "reference_name": pe.name, "docstatus": 1},
@@ -258,51 +264,11 @@ def stage_payment_batch() -> dict:
 
 
 def _bank_entry(payroll_entry):
-	"""Manual settlement journal (gap PAY-PAY-1: the batch posts no GL entry and the HRMS
-	bank-entry route is blocked for SA companies). Dr Payroll Payable / Cr Bank for net pay,
-	referencing the Payroll Entry and the batch, after bank confirmation."""
+	"""Record the bank's payment through the batch's own settlement action (PAY-PAY-1 fix)."""
 	batch = frappe.db.get_value(
-		"Payroll Payment Batch",
-		{"payroll_entry": payroll_entry, "docstatus": 1},
-		["name", "total_amount"],
-		as_dict=True,
+		"Payroll Payment Batch", {"payroll_entry": payroll_entry, "docstatus": 1}, "name"
 	)
-	existing = frappe.db.get_value("Journal Entry", {"cheque_no": batch.name, "docstatus": 1}, "name")
-	if existing:
-		return existing
-	je = frappe.get_doc(
-		{
-			"doctype": "Journal Entry",
-			"company": C.COMPANY,
-			"posting_date": "2026-10-25",
-			"voucher_type": "Bank Entry",
-			"cheque_no": batch.name,
-			"cheque_date": "2026-10-25",
-			"user_remark": f"Net pay settlement for {payroll_entry} per {batch.name} (manual: no batch GL posting)",
-			"accounts": [
-				*[
-					{
-						"account": a("Payroll Payable"),
-						"party_type": "Employee",
-						"party": s.employee,
-						"debit_in_account_currency": s.net_pay,
-						"reference_type": "Payroll Entry",
-						"reference_name": payroll_entry,
-					}
-					for s in frappe.get_all(
-						"Salary Slip",
-						filters={"payroll_entry": payroll_entry, "docstatus": 1},
-						fields=["employee", "net_pay"],
-					)
-				],
-				{"account": a("FNB Business Cheque"), "credit_in_account_currency": batch.total_amount},
-			],
-		}
-	)
-	je.insert(ignore_permissions=True)
-	je.submit()
-	frappe.db.commit()
-	return je.name
+	return frappe.get_doc("Payroll Payment Batch", batch).record_bank_settlement("2026-10-25")
 
 
 # ---------------------------------------------------------------- EMP201 ---------------
@@ -537,11 +503,6 @@ def stage_emp501() -> dict:
 	from za_local_payroll.reference_company.payroll_run import employee_for
 	from za_local_payroll.reference_company.personas import PERSONAS
 
-	# Practitioner workaround for PAY-MED-1: employer medical contribution is a taxable benefit (3810).
-	frappe.db.set_value(
-		"Salary Component", "Medical Aid Company Contribution", "za_sars_payroll_code", "3810"
-	)
-	frappe.db.commit()
 	fiscal_year = frappe.db.get_value("Fiscal Year", {"year_start_date": "2026-03-01"}, "name")
 	certificates, errors = {}, {}
 	for key in PERSONAS:

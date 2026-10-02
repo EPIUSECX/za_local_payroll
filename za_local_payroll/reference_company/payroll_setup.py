@@ -20,19 +20,8 @@ SLAB_2025 = "South Africa 2025-2026"
 
 # BRS v25.3.0 codes the seeded master lacks. Adding a code is practitioner
 # configuration; the wrongly labelled seeded codes are a product defect (SARS-1..8).
-EXTRA_SARS_CODES = (
-	("3606", "Income - Commission", "Income", "Taxable"),
-	(
-		"3703",
-		"Income - Reimbursive travel allowance (non-taxable, at or below prescribed rate)",
-		"Income",
-		"Non-Taxable",
-	),
-	("3714", "Income - Other allowances (non-taxable)", "Income", "Non-Taxable"),
-	("3810", "Income - Medical aid contributions paid by employer (taxable benefit)", "Income", "Taxable"),
-	("4003", "Deduction - Provident fund contributions", "Deduction", "Reference"),
-	("4473", "Employer Contribution - Provident fund", "Employer Contribution", "Reference"),
-)
+# The app ships the BRS v25.3.0 code master; nothing extra is needed.
+EXTRA_SARS_CODES = ()
 
 
 def a(name: str) -> str:
@@ -230,6 +219,19 @@ COMPONENTS = {
 		"Salaries and Wages",
 	),
 	# Deductions
+	"Tax on Lump Sum": (
+		"Deduction",
+		"LSTAX",
+		"4115",
+		"PAYE",
+		0,
+		0,
+		0,
+		0,
+		"Recurring Annualised",
+		{},
+		"PAYE Payable - SARS",
+	),
 	"Pension Fund Employee": (
 		"Deduction",
 		"PFEE",
@@ -286,7 +288,7 @@ COMPONENTS = {
 	"Union Subscription": (
 		"Deduction",
 		"UNION",
-		"4497",
+		"",
 		"Working Paper Only",
 		0,
 		0,
@@ -320,6 +322,17 @@ def stage_payroll_setup() -> dict:
 	_ensure_payroll_settings()
 	_ensure_employee_type()
 	components = {name: _ensure_component(name, *spec) for name, spec in COMPONENTS.items()}
+	from za_local_payroll.setup.masters import repair_salary_component_accounts
+
+	repair_salary_component_accounts(C.COMPANY)
+	# Employer pension accrues to the fund liability (the shipped UIF/SDL defaults are
+	# seeded by the app); see ACC-1.
+	frappe.db.set_value(
+		"Salary Component Account",
+		{"parent": "Employer Pension Contribution", "company": C.COMPANY},
+		"za_liability_account",
+		a("Pension Fund Payable"),
+	)
 	_align_seeded_components()
 	from za_local_payroll.setup.masters import repair_salary_component_accounts
 

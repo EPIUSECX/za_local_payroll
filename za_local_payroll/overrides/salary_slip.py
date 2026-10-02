@@ -7,11 +7,12 @@ South African payroll requirements including PAYE, UIF, SDL, COIDA, and ETI.
 Note: This module only works when HRMS is installed.
 """
 
+from datetime import timedelta
 from math import ceil
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate
+from frappe.utils import add_days, flt, getdate
 
 from za_local_payroll.utils.hrms import get_hrms_doctype_class, require_hrms, safe_import_hrms
 
@@ -78,9 +79,22 @@ from za_local_payroll.utils.tax_utils import (
 )
 
 RETIREMENT_FUND_DEDUCTION_CODES = {"4001", "4003", "4006"}
+# Employer retirement fund contributions: a fringe benefit of the employee that is also
+# deemed paid by the employee and so counts toward the deduction cap (since 2016).
+EMPLOYER_FUND_CONTRIBUTION_CODES = {"4472", "4473", "4475"}
 UIF_CODES = {"4141"}
 SDL_CODES = {"4142"}
 PAYE_CODES = {"4102", "4115"}
+# SARS employees' tax tables use whole pay periods per tax year; HRMS derives
+# 52.14 weeks and 26.07 fortnights from the calendar.
+SARS_PERIODS_PER_YEAR = {"Monthly": 12, "Fortnightly": 26, "Weekly": 52}
+# Lump sums taxed by SARS directive, never through the annualised PAYE average.
+LUMP_SUM_TREATMENTS = {"Severance Benefit"}
+
+
+def sars_periods_per_year(salary_slip) -> int:
+	"""Pay periods per tax year for the slip's frequency, as the SARS tables use them."""
+	return SARS_PERIODS_PER_YEAR.get(getattr(salary_slip, "payroll_frequency", None) or "Monthly", 12)
 
 
 class ZASalarySlip(SalarySlip):
@@ -250,7 +264,6 @@ class ZASalarySlip(SalarySlip):
 		super().compute_taxable_earnings_for_year()
 
 		self.apply_sars_annual_equivalent()
-		self.apply_sa_paye_inclusion_adjustments()
 
 		# Add annual bonus to taxable earnings
 		self.annual_bonus = self.get_annual_bonus()
@@ -267,6 +280,8 @@ class ZASalarySlip(SalarySlip):
 		"""Pay periods in the tax year, independent of when the employee joined."""
 		if not self.payroll_period:
 			return 0
+		if self.payroll_frequency in SARS_PERIODS_PER_YEAR and self.payroll_period_is_full_tax_year():
+			return SARS_PERIODS_PER_YEAR[self.payroll_frequency]
 		return flt(
 			get_period_factor(
 				self.employee,
@@ -277,6 +292,16 @@ class ZASalarySlip(SalarySlip):
 				joining_date=self.joining_date,
 				relieving_date=self.relieving_date,
 			)[0]
+		)
+
+	def payroll_period_is_full_tax_year(self) -> bool:
+		start = getdate(self.payroll_period.start_date)
+		end = getdate(self.payroll_period.end_date)
+		return (
+			start.month == 3
+			and start.day == 1
+			and end.month == 2
+			and end == getdate(f"{start.year + 1}-03-01") - timedelta(days=1)
 		)
 
 	def get_periods_employed_to_date(self):
@@ -345,6 +370,11 @@ class ZASalarySlip(SalarySlip):
 
 		Annual payments are excluded from the average. They are not annualised: they
 		are added to the annualised balance and taxed in full when they accrue.
+
+		Two HRMS projections are removed before averaging: the future months of a
+		recurring Additional Salary (the average already grosses up what was paid),
+		and the non-PAYE portion of partially included earnings such as the 20% of a
+		travel allowance, which is excluded where it was paid, to date.
 		"""
 		periods = self.get_total_sub_periods()
 		elapsed = self.get_periods_employed_to_date()
@@ -354,46 +384,184 @@ class ZASalarySlip(SalarySlip):
 		annual_payments = flt(self.current_additional_earnings_with_full_tax) + flt(
 			self.get_previous_annual_payment_earnings()
 		)
+		regular_exclusion, annual_exclusion = self.get_paye_exclusions_to_date()
 		earnings_to_date = (
 			flt(self.previous_taxable_earnings)
 			+ flt(self.current_structured_taxable_earnings)
 			+ flt(self.current_additional_earnings)
+			- flt(self.get_future_recurring_projection())
 			+ flt(self.other_incomes)
 			+ flt(self.unclaimed_taxable_benefits)
 			- flt(self.total_exemption_amount)
 			- annual_payments
+			- regular_exclusion
 		)
+		taxable_annual_payments = max(0, annual_payments - annual_exclusion)
 
-		self.total_taxable_earnings = earnings_to_date / elapsed * periods + annual_payments
-		self.za_annual_payments_to_date = annual_payments
+		self.total_taxable_earnings = earnings_to_date / elapsed * periods + taxable_annual_payments
+		self.za_annual_payments_to_date = taxable_annual_payments
+		self.za_paye_inclusion_adjustment = flt(regular_exclusion / elapsed * periods + annual_exclusion, 2)
+
+	def get_future_recurring_projection(self):
+		"""Future months of recurring Additional Salary that HRMS adds to this period."""
+		total = 0
+		for row in self.get("earnings") or []:
+			if (
+				row.get("is_tax_applicable")
+				and row.get("additional_amount")
+				and row.get("is_recurring_additional_salary")
+			):
+				total += flt(
+					self.get_future_recurring_additional_amount(row.additional_salary, row.additional_amount)
+				)
+		if getattr(self, "tax_slab", None) and self.tax_slab.get("allow_tax_exemption"):
+			for row in self.get("deductions") or []:
+				if (
+					row.get("exempted_from_income_tax")
+					and row.get("additional_amount")
+					and row.get("is_recurring_additional_salary")
+				):
+					total -= flt(
+						self.get_future_recurring_additional_amount(
+							row.additional_salary, row.additional_amount
+						)
+					)
+		return total
+
+	def get_paye_exclusions_to_date(self):
+		"""Non-PAYE portion of taxable earnings paid so far this tax year.
+
+		Returns (regular, annual): the portion of averaged earnings and of annual
+		payments that the component's PAYE inclusion percentage leaves out.
+		"""
+		rows = [
+			(row.salary_component, flt(row.amount))
+			for row in self.get("earnings") or []
+			if row.get("is_tax_applicable") and flt(row.amount)
+		]
+		if self.payroll_period:
+			previous_slips = frappe.get_all(
+				"Salary Slip",
+				filters={
+					"employee": self.employee,
+					"company": self.company,
+					"docstatus": 1,
+					"start_date": [">=", self.payroll_period.start_date],
+					"end_date": ["<", self.start_date],
+				},
+				pluck="name",
+			)
+			if previous_slips:
+				rows += [
+					(row.salary_component, flt(row.amount))
+					for row in frappe.get_all(
+						"Salary Detail",
+						filters={
+							"parent": ["in", previous_slips],
+							"parentfield": "earnings",
+							"is_tax_applicable": 1,
+						},
+						fields=["salary_component", "amount"],
+					)
+				]
+		regular = annual = 0.0
+		for component, amount in rows:
+			inclusion = self.get_component_paye_inclusion_percentage(component)
+			if inclusion >= 100:
+				continue
+			excluded = amount * (100 - inclusion) / 100
+			if self.is_once_off_full_tax(self.get_sa_component_metadata(component)):
+				annual += excluded
+			else:
+				regular += excluded
+		return flt(regular, 2), flt(annual, 2)
 
 	def apply_retirement_fund_deduction_cap(self):
-		"""Add back retirement fund deductions above the SARS annual cap.
+		"""Add back retirement fund contributions above the SARS deduction limit.
 
 		HRMS reduces taxable earnings by deduction rows marked
-		``exempted_from_income_tax``. For South Africa, pension/provident/RA
-		deductions must still be capped to the lower of actual contributions,
-		27.5% of remuneration/taxable base, and the annual statutory cap.
+		``exempted_from_income_tax``. The deduction is the lower of the contributions,
+		27.5% of remuneration and the annual cap. Employer contributions count too: they
+		are a fringe benefit of the employee (codes 3817/3825/3828) and deemed paid by
+		the employee, so both the remuneration and the contributions include them. The
+		benefit and its deemed deduction cancel out until the limit binds.
 		"""
 		if not getattr(self, "tax_slab", None) or not self.tax_slab.allow_tax_exemption:
 			return
 
-		annual_contribution = self.get_annual_retirement_fund_contribution()
+		employee_annual = self.get_annual_retirement_fund_contribution()
+		employer_annual = self.get_annual_employer_fund_contribution()
+		annual_contribution = employee_annual + employer_annual
 		if annual_contribution <= 0:
 			return
 
-		base_before_retirement_deduction = flt(self.total_taxable_earnings) + annual_contribution
-		max_by_percentage = base_before_retirement_deduction * get_retirement_deduction_percentage(
-			self.end_date
-		)
+		remuneration = flt(self.total_taxable_earnings) + annual_contribution
+		max_by_percentage = remuneration * get_retirement_deduction_percentage(self.end_date)
 		allowed_deduction = min(
 			annual_contribution, max_by_percentage, get_retirement_annual_cap(self.end_date)
 		)
 		disallowed_deduction = max(0, annual_contribution - allowed_deduction)
+		self.za_retirement_allowed_ratio = allowed_deduction / annual_contribution
 
 		if disallowed_deduction:
 			self.total_taxable_earnings += disallowed_deduction
 			self.za_retirement_fund_taxable_excess = disallowed_deduction
+
+	def get_annual_employer_fund_contribution(self):
+		"""Employer retirement fund contributions for the tax year, projected as the employee's are."""
+		current = self.get_current_employer_fund_contribution()
+		self.za_employer_fund_contribution = current
+		previous = self.get_previous_employer_fund_contribution()
+		if not current:
+			return previous
+		future_periods = max(ceil(flt(getattr(self, "remaining_sub_periods", 1))) - 1, 0)
+		return previous + current + current * future_periods
+
+	def get_current_employer_fund_contribution(self):
+		"""This period's employer fund contributions, evaluated from the structure before the
+		company contribution rows are built (they are built after PAYE)."""
+		if not self.salary_structure:
+			return 0
+		structure = frappe.get_cached_doc("Salary Structure", self.salary_structure)
+		rows = [
+			row
+			for row in structure.get("company_contribution") or []
+			if self.get_required_sars_code(row.salary_component) in EMPLOYER_FUND_CONTRIBUTION_CODES
+		]
+		if not rows:
+			return 0
+		data = self.get_data_for_eval()
+		data = data[0] if isinstance(data, tuple) else data
+		return flt(sum(max(flt(self.eval_condition_and_formula(row, data)), 0) for row in rows), 2)
+
+	def get_previous_employer_fund_contribution(self):
+		if not self.payroll_period or not frappe.db.exists("DocType", "Company Contribution"):
+			return 0
+		previous_slips = frappe.get_all(
+			"Salary Slip",
+			filters={
+				"employee": self.employee,
+				"company": self.company,
+				"docstatus": 1,
+				"start_date": [">=", self.payroll_period.start_date],
+				"end_date": ["<", self.start_date],
+			},
+			pluck="name",
+		)
+		if not previous_slips:
+			return 0
+		return flt(
+			sum(
+				flt(row.amount)
+				for row in frappe.get_all(
+					"Company Contribution",
+					filters={"parent": ["in", previous_slips], "parenttype": "Salary Slip"},
+					fields=["salary_component", "amount"],
+				)
+				if self.get_required_sars_code(row.salary_component) in EMPLOYER_FUND_CONTRIBUTION_CODES
+			),
+			2,
+		)
 
 	def get_current_retirement_fund_contribution(self):
 		"""Total this period's retirement-fund deduction rows."""
@@ -452,74 +620,13 @@ class ZASalarySlip(SalarySlip):
 	def is_retirement_fund_component(self, salary_component):
 		return self.get_required_sars_code(salary_component) in RETIREMENT_FUND_DEDUCTION_CODES
 
-	def apply_sa_paye_inclusion_adjustments(self):
-		"""Remove the non-PAYE portion of classified earnings from annual taxable earnings."""
-		adjustment = self.get_annual_paye_exclusion_adjustment()
-		if adjustment:
-			self.total_taxable_earnings = max(0, flt(self.total_taxable_earnings) - adjustment)
-			self.za_paye_inclusion_adjustment = adjustment
-
-	def get_annual_paye_exclusion_adjustment(self):
-		total = 0
-		for row in self.get("earnings") or []:
-			if not flt(row.amount):
-				continue
-			if not row.get("is_tax_applicable"):
-				continue
-			inclusion_percentage = self.get_component_paye_inclusion_percentage(row.salary_component)
-			if inclusion_percentage >= 100:
-				continue
-			excluded_current = flt(row.amount) * (100 - inclusion_percentage) / 100
-			total += self.get_annualized_component_adjustment(row, excluded_current)
-		return flt(total, 2)
-
-	def get_annualized_component_adjustment(self, row, current_amount):
-		if row.get("additional_salary") and not row.get("is_recurring_additional_salary"):
-			return flt(current_amount)
-
-		previous_amount = self.get_previous_component_paye_exclusion(row.salary_component)
-		future_periods = max(ceil(flt(getattr(self, "remaining_sub_periods", 1))) - 1, 0)
-		return flt(previous_amount) + flt(current_amount) + (flt(current_amount) * future_periods)
-
-	def get_previous_component_paye_exclusion(self, salary_component):
-		if not self.payroll_period:
-			return 0
-
-		inclusion_percentage = self.get_component_paye_inclusion_percentage(salary_component)
-		if inclusion_percentage >= 100:
-			return 0
-
-		previous_slips = frappe.get_all(
-			"Salary Slip",
-			filters={
-				"employee": self.employee,
-				"company": self.company,
-				"docstatus": 1,
-				"start_date": [">=", self.payroll_period.start_date],
-				"end_date": ["<", self.start_date],
-			},
-			pluck="name",
-		)
-		if not previous_slips:
-			return 0
-
-		total = 0
-		for row in frappe.get_all(
-			"Salary Detail",
-			filters={
-				"parent": ["in", previous_slips],
-				"parentfield": "earnings",
-				"salary_component": salary_component,
-			},
-			fields=["amount"],
-		):
-			total += flt(row.amount) * (100 - inclusion_percentage) / 100
-		return total
-
 	def get_component_paye_inclusion_percentage(self, salary_component):
 		metadata = self.get_sa_component_metadata(salary_component)
 		treatment = metadata.get("za_payroll_treatment")
 		value = metadata.get("za_paye_inclusion_percentage")
+		if treatment in LUMP_SUM_TREATMENTS:
+			# Taxed by SARS directive (code 4115), never in the annualised average.
+			return 0
 		if treatment and value is not None:
 			return flt(value)
 		if treatment == "Fixed Travel Allowance":
@@ -541,6 +648,7 @@ class ZASalarySlip(SalarySlip):
 			"za_coida_applicable",
 			"za_is_reimbursement",
 			"za_variable_pay_treatment",
+			"za_exclude_from_irp5",
 		]
 		try:
 			meta = frappe.get_meta("Salary Component")
@@ -627,15 +735,19 @@ class ZASalarySlip(SalarySlip):
 		# Apply SA-specific rebates and medical credits as an adjustment
 		if tax_component in self._component_based_variable_tax:
 			tax_rebates = self.get_tax_rebates()
-			medical_credits = self.get_medical_aid_credits()
-
-			# Calculate annual tax after rebates/credits
 			annual_tax_after_rebates = max(
 				0,
 				self._component_based_variable_tax[tax_component]["total_structured_tax_amount"]
-				- tax_rebates
-				- medical_credits,
+				- tax_rebates,
 			)
+			# The medical scheme fees credit is a monthly credit for each month of
+			# membership (section 6A). Credit only the months of membership up to this
+			# period: annualising a part-year membership over the periods elapsed
+			# over-credits the first month of membership and under-credits the rest.
+			medical_credits_to_date = self.get_medical_aid_credits(up_to_date=self.end_date)
+			medical_credits_before = self.get_medical_aid_credits(up_to_date=add_days(self.start_date, -1))
+			# Persisted for certificate code 4116.
+			self.za_medical_tax_credit = flt(medical_credits_to_date - medical_credits_before, 2)
 
 			# The employee is liable for the share of the annual liability that the
 			# periods worked so far represent, less what has already been deducted.
@@ -650,13 +762,16 @@ class ZASalarySlip(SalarySlip):
 			if total_sub_periods > 0:
 				# May be negative once an annual payment has been taxed in full: the
 				# tax already deducted then runs ahead of the liability to date.
-				liability_to_date = annual_tax_after_rebates * elapsed / total_sub_periods
+				liability_to_date = max(
+					0, annual_tax_after_rebates * elapsed / total_sub_periods - medical_credits_to_date
+				)
 				current_structured_tax_amount = liability_to_date - previous_total_paid_taxes
 			full_tax_amount = flt(
 				self._component_based_variable_tax[tax_component].get("full_tax_on_additional_earnings")
 			)
 			current_tax_amount = max(0, current_structured_tax_amount + full_tax_amount)
 
+			annual_tax_after_rebates = max(0, annual_tax_after_rebates - self.get_medical_aid_credits())
 			self.total_structured_tax_amount = annual_tax_after_rebates
 			self.current_structured_tax_amount = current_structured_tax_amount
 			self.current_tax_amount = current_tax_amount
@@ -667,6 +782,40 @@ class ZASalarySlip(SalarySlip):
 					"current_tax_amount": current_tax_amount,
 				}
 			)
+			self.apply_paye_directive(tax_component)
+
+	def apply_paye_directive(self, tax_component):
+		"""A fixed-percentage or fixed-amount directive replaces the tables' PAYE."""
+		directive = self.get_active_tax_directive()
+		if not directive or directive.directive_type not in {"Reduced Tax Rate", "Fixed Amount"}:
+			return
+		if directive.directive_type == "Fixed Amount":
+			tax = flt(directive.fixed_amount, 2)
+		else:
+			tax = flt(self.get_period_remuneration() * flt(directive.tax_rate_override) / 100, 2)
+		self.current_tax_amount = tax
+		self.current_structured_tax_amount = tax
+		self.za_tax_directive = directive.name
+		self._component_based_variable_tax[tax_component].update(
+			{
+				"current_structured_tax_amount": tax,
+				"current_tax_amount": tax,
+				"full_tax_on_additional_earnings": 0,
+			}
+		)
+
+	def get_period_remuneration(self):
+		"""This period's remuneration for a directive rate: PAYE-included earnings less
+		the allowable retirement deduction; lump sums carry their own directive."""
+		earnings = sum(
+			flt(row.amount) * self.get_component_paye_inclusion_percentage(row.salary_component) / 100
+			for row in self.get("earnings") or []
+			if row.get("is_tax_applicable") and flt(row.amount)
+		)
+		allowed_retirement = self.get_current_retirement_fund_contribution() * flt(
+			getattr(self, "za_retirement_allowed_ratio", 1)
+		)
+		return max(0, flt(earnings - allowed_retirement, 2))
 
 	def calculate_variable_tax(self, tax_component, has_additional_salary_tax_component=False):
 		"""
@@ -759,12 +908,15 @@ class ZASalarySlip(SalarySlip):
 			return get_tax_rebate(self, dob)
 		return 0
 
-	def get_medical_aid_credits(self):
+	def get_medical_aid_credits(self, up_to_date=None):
 		"""
 		Calculate medical aid tax credits.
 
+		Args:
+		    up_to_date: count only membership months up to this date (credit to date)
+
 		Returns:
-		    float: Annual medical aid credit amount
+		    float: Medical aid credit for the tax year, or to date
 		"""
 		# Get active medical aid details from Employee Private Benefit. A main
 		# member with zero dependants still qualifies for the main-member credit.
@@ -795,12 +947,10 @@ class ZASalarySlip(SalarySlip):
 			# private amount denied it to them.
 			if flt(benefit.private_medical_aid) <= 0 and not employer_funded:
 				continue
-			return get_medical_aid_credit(
-				self,
-				benefit.medical_aid_dependant or 0,
-				membership_start_date=benefit.effective_from,
-				membership_end_date=benefit.to,
-			)
+			kwargs = {"membership_start_date": benefit.effective_from, "membership_end_date": benefit.to}
+			if up_to_date:
+				kwargs["up_to_date"] = up_to_date
+			return get_medical_aid_credit(self, benefit.medical_aid_dependant or 0, **kwargs)
 		return 0
 
 	def has_employer_medical_aid_contribution(self) -> bool:
@@ -823,6 +973,7 @@ class ZASalarySlip(SalarySlip):
 		super().calculate_net_pay(skip_tax_breakup_computation)
 
 		self.apply_statutory_deduction_amounts()
+		self.apply_lump_sum_directive()
 
 		# Calculate and apply ETI
 		self.apply_eti()
@@ -921,7 +1072,9 @@ class ZASalarySlip(SalarySlip):
 
 	def apply_statutory_deduction_amounts(self):
 		uif_basis = self.get_statutory_earning_basis("za_uif_applicable")
-		employee_uif, _employer_uif = calculate_uif_contribution(uif_basis, self.end_date)
+		employee_uif, _employer_uif = calculate_uif_contribution(
+			uif_basis, self.end_date, sars_periods_per_year(self)
+		)
 
 		uif_rows = [
 			row
@@ -968,6 +1121,72 @@ class ZASalarySlip(SalarySlip):
 		if uif_rows:
 			self.recalculate_totals_after_statutory_adjustment()
 
+	def get_active_tax_directive(self):
+		"""The submitted SARS directive covering this pay period, if any."""
+		if not frappe.db.exists("DocType", "Tax Directive"):
+			return None
+		rows = frappe.get_all(
+			"Tax Directive",
+			filters={
+				"employee": self.employee,
+				"docstatus": 1,
+				"status": ["!=", "Cancelled"],
+				"effective_from": ["<=", self.end_date],
+			},
+			or_filters=[["effective_to", ">=", self.start_date], ["effective_to", "is", "not set"]],
+			fields=["name", "directive_type", "directive_number", "fixed_amount", "tax_rate_override"],
+			order_by="effective_from desc",
+			limit=1,
+		)
+		return rows[0] if rows else None
+
+	def get_lump_sum_earnings(self):
+		return flt(
+			sum(
+				flt(row.amount)
+				for row in self.get("earnings") or []
+				if self.get_sa_component_metadata(row.salary_component).get("za_payroll_treatment")
+				in LUMP_SUM_TREATMENTS
+			),
+			2,
+		)
+
+	def apply_lump_sum_directive(self):
+		"""Deduct the directive tax on a lump sum (code 4115); refuse a lump sum without one.
+
+		A severance benefit is taxed on the lump-sum table by SARS, which issues the
+		tax as a directive. It never enters the annualised PAYE average (its PAYE
+		inclusion is nil); the employer deducts exactly the directive amount.
+		"""
+		lump_sum = self.get_lump_sum_earnings()
+		if not lump_sum:
+			return
+		directive = self.get_active_tax_directive()
+		if not directive or directive.directive_type != "Severance / Lump Sum":
+			frappe.throw(
+				_(
+					"Employee {0} receives a lump sum of {1} on this slip but has no submitted "
+					"Severance / Lump Sum Tax Directive covering {2} to {3}. Apply to SARS for the "
+					"directive and capture it before processing the lump sum."
+				).format(frappe.bold(self.employee), lump_sum, self.start_date, self.end_date),
+				title=_("Tax Directive Required"),
+			)
+		component = self.get_configured_statutory_component(
+			"za_lump_sum_tax_salary_component", {"4115"}, _("Tax on Lump Sum")
+		)
+		amount = flt(directive.fixed_amount, 2)
+		rows = [row for row in self.get("deductions") or [] if row.salary_component == component]
+		if not rows and amount:
+			component_data = get_salary_component_data(component)
+			self.update_component_row(component_data, amount, "deductions", remove_if_zero_valued=False)
+			rows = [row for row in self.get("deductions") or [] if row.salary_component == component]
+		for row in rows:
+			row.amount = amount
+			row.default_amount = amount
+			row.depends_on_payment_days = 0
+		self.za_tax_directive = directive.name
+		self.recalculate_totals_after_statutory_adjustment()
+
 	def get_configured_statutory_component(self, settings_field, codes, label):
 		component = frappe.db.get_single_value("Payroll Settings", settings_field)
 		if component:
@@ -996,7 +1215,9 @@ class ZASalarySlip(SalarySlip):
 	def apply_statutory_company_contribution_amounts(self):
 		uif_basis = self.get_statutory_earning_basis("za_uif_applicable")
 		sdl_basis = self.get_sdl_leviable_amount()
-		_employee_uif, employer_uif = calculate_uif_contribution(uif_basis, self.end_date)
+		_employee_uif, employer_uif = calculate_uif_contribution(
+			uif_basis, self.end_date, sars_periods_per_year(self)
+		)
 		sdl = sdl_basis * get_sdl_rate(self.end_date)
 
 		configured = (
@@ -1035,20 +1256,27 @@ class ZASalarySlip(SalarySlip):
 				row.depends_on_payment_days = 0
 
 	def get_sdl_leviable_amount(self):
-		"""SDL leviable amount: leviable earnings less the retirement fund deduction.
+		"""SDL leviable amount: the balance of remuneration for employees' tax.
 
 		Section 3(4) of the Skills Development Levies Act sets the leviable amount by
-		reference to the Fourth Schedule as applied in determining employees' tax, and
-		employees' tax is determined on the balance of remuneration. Paragraph 2(4)
-		allows the retirement fund contribution to be deducted in arriving at that
-		balance, so it reduces the levy as well. UIF is deliberately left on
-		remuneration: the Unemployment Insurance Contributions Act defines its own
-		base and does not carry the paragraph 2(4) deduction across.
+		reference to the Fourth Schedule as applied in determining employees' tax.
+		SARS's employer guide: "SDL is therefore determined on the balance of
+		remuneration after the deduction of all allowable deductions". So earnings
+		count at their PAYE inclusion (80% of a travel allowance or company car), and
+		only the allowable retirement fund deduction (after the 27.5% / annual cap)
+		reduces the levy. UIF is deliberately left on remuneration: the Unemployment
+		Insurance Contributions Act defines its own base.
 		"""
-		leviable = self.get_statutory_earning_basis("za_sdl_applicable")
-		return flt(max(leviable - self.get_current_retirement_fund_contribution(), 0), 2)
+		leviable = self.get_statutory_earning_basis("za_sdl_applicable", apply_paye_inclusion=True)
+		allowed_ratio = flt(getattr(self, "za_retirement_allowed_ratio", 1))
+		employer_fund = flt(getattr(self, "za_employer_fund_contribution", 0))
+		# The employer contribution is remuneration (a fringe benefit) and, being deemed
+		# paid by the employee, part of the allowable deduction: net, only its
+		# disallowed share is levied.
+		allowed_retirement = (self.get_current_retirement_fund_contribution() + employer_fund) * allowed_ratio
+		return flt(max(leviable + employer_fund - allowed_retirement, 0), 2)
 
-	def get_statutory_earning_basis(self, applicability_field):
+	def get_statutory_earning_basis(self, applicability_field, apply_paye_inclusion=False):
 		"""Total the earnings the given statutory levy applies to.
 
 		``do_not_include_in_total`` is deliberately not a reason to skip a row. It
@@ -1080,7 +1308,12 @@ class ZASalarySlip(SalarySlip):
 				continue
 			if metadata.get(applicability_field) in (0, "0", False, None, ""):
 				continue
-			total += flt(row.amount)
+			if apply_paye_inclusion:
+				total += (
+					flt(row.amount) * self.get_component_paye_inclusion_percentage(row.salary_component) / 100
+				)
+			else:
+				total += flt(row.amount)
 		return flt(total, 2)
 
 	def is_component_in_codes(self, salary_component, codes):
@@ -1092,6 +1325,13 @@ class ZASalarySlip(SalarySlip):
 		code = metadata.get("za_sars_payroll_code")
 		if code:
 			return code
+		# A component kept off the IRP5 (for example a union subscription the employer
+		# only collects) has no SARS source code to carry.
+		if (
+			metadata.get("za_exclude_from_irp5")
+			or metadata.get("za_payroll_treatment") == "Working Paper Only"
+		):
+			return ""
 
 		frappe.throw(
 			_("Salary Component {0} must have a SARS Payroll Code before payroll can be calculated.").format(
