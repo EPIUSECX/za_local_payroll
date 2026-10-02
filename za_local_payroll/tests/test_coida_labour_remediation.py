@@ -17,7 +17,7 @@ from za_local_payroll.sa_labour.doctype.business_trip.business_trip import (
 	get_business_trip_mileage_rate,
 )
 from za_local_payroll.sa_labour.doctype.business_trip_region.business_trip_region import get_active_regions
-from za_local_payroll.sa_labour.report.eea2_income_differentials.eea2_income_differentials import (
+from za_local_payroll.sa_labour.report.eea4_income_differential_statement.eea4_income_differential_statement import (
 	get_data as get_eea2_data,
 )
 from za_local_payroll.sa_labour.report_utils import get_permitted_company
@@ -219,15 +219,15 @@ class TestSALabourRemediation(UnitTestCase):
 	def test_eea2_query_joins_only_latest_salary_assignment(self):
 		with (
 			patch(
-				"za_local_payroll.sa_labour.report.eea2_income_differentials.eea2_income_differentials.get_permitted_company",
+				"za_local_payroll.sa_labour.report.eea4_income_differential_statement.eea4_income_differential_statement.get_permitted_company",
 				return_value="Test Company",
 			),
 			patch(
-				"za_local_payroll.sa_labour.report.eea2_income_differentials.eea2_income_differentials.get_small_cell_control",
+				"za_local_payroll.sa_labour.report.eea4_income_differential_statement.eea4_income_differential_statement.get_small_cell_control",
 				return_value=(5, False),
 			),
 			patch(
-				"za_local_payroll.sa_labour.report.eea2_income_differentials.eea2_income_differentials.validate_employee_fields"
+				"za_local_payroll.sa_labour.report.eea4_income_differential_statement.eea4_income_differential_statement.validate_employee_fields"
 			),
 			patch("frappe.db.sql", return_value=[]) as sql,
 		):

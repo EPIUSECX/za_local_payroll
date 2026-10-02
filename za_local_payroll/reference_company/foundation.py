@@ -53,23 +53,27 @@ def _ensure_setup_wizard() -> None:
 	if not frappe.db.exists("Company", C.COMPANY):
 		from erpnext.setup.setup_wizard.setup_wizard import setup_complete
 
-		setup_complete(
-			frappe._dict(
-				{
-					"fy_start_date": C.FY_2026[0],
-					"fy_end_date": C.FY_2026[1],
-					"company_name": C.COMPANY,
-					"company_abbr": C.ABBR,
-					"currency": "ZAR",
-					"country": "South Africa",
-					"timezone": "Africa/Johannesburg",
-					"language": "en",
-					"chart_of_accounts": "Standard",
-					"domain": "Services",
-					"bank_account": "FNB Business Cheque",
-				}
-			)
+		args = frappe._dict(
+			{
+				"fy_start_date": C.FY_2026[0],
+				"fy_end_date": C.FY_2026[1],
+				"company_name": C.COMPANY,
+				"company_abbr": C.ABBR,
+				"currency": "ZAR",
+				"country": "South Africa",
+				"timezone": "Africa/Johannesburg",
+				"language": "en",
+				"chart_of_accounts": "Standard",
+				"domain": "Services",
+				"bank_account": "FNB Business Cheque",
+			}
 		)
+		setup_complete(args)
+		# The Desk wizard (rebuild.sh drives it in a browser) runs every app's
+		# setup_wizard_complete hook. This fallback must too, or the suite's
+		# workspace metrics keep the installer's currency.
+		for method in frappe.get_hooks("setup_wizard_complete"):
+			frappe.get_attr(method)(args)
 	frappe.db.set_value(
 		"Installed Application",
 		{"app_name": ["in", ["frappe", "erpnext"]]},

@@ -213,8 +213,10 @@ COIDA_CHARTS = (
 		"chart_name": "SA COIDA Assessable Earnings by Year",
 		"chart_type": "Sum",
 		"document_type": "COIDA Annual Return",
-		"based_on": "to_date",
-		"aggregate_function_based_on": "total_annual_earnings",
+		# The year of assessment ends in the future for the current return, so date
+		# it by its start or the chart's "last year" window never shows it.
+		"based_on": "from_date",
+		"value_based_on": "total_annual_earnings",
 		"time_interval": "Yearly",
 		"timespan": "Last Year",
 		"type": "Bar",
@@ -264,7 +266,7 @@ LABOUR_CHARTS = (
 		"chart_type": "Sum",
 		"document_type": "Business Trip",
 		"based_on": "to_date",
-		"aggregate_function_based_on": "grand_total",
+		"value_based_on": "grand_total",
 		"time_interval": "Monthly",
 		"timespan": "Last Year",
 		"type": "Bar",

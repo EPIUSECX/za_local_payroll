@@ -6,7 +6,7 @@
  "doctype": "Report",
  "idx": 0,
  "is_standard": "Yes",
- "modified": "2025-01-28 16:00:00",
+ "modified": "2026-10-02 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "SA Payroll",
  "name": "Statutory Submissions Summary",
@@ -20,6 +20,9 @@
   },
   {
    "role": "Accounts Manager"
+  },
+  {
+   "role": "Payroll Manager"
   }
  ]
 }

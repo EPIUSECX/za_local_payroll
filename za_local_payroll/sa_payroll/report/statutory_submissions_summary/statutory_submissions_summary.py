@@ -34,7 +34,7 @@ def get_data(filters):
 		FROM (
 			SELECT
 				CASE
-					WHEN sd.salary_component = 'PAYE' OR sc.za_sars_payroll_code = '4102' THEN 'PAYE'
+					WHEN sd.salary_component = 'PAYE' OR sc.za_sars_payroll_code IN ('4102', '4115') THEN 'PAYE'
 					WHEN sd.salary_component IN ('UIF', 'UIF Employee Contribution') OR sc.za_sars_payroll_code = '4141' THEN 'UIF Employee Contribution'
 					WHEN (sd.salary_component = 'ETI' OR sc.za_sars_payroll_code = '4118')
 						AND IFNULL(ss.za_monthly_eti, 0) = 0 THEN 'ETI'
@@ -80,7 +80,24 @@ def get_data(filters):
 		ORDER BY FIELD(component, 'PAYE', 'UIF Employee Contribution', 'UIF Employer Contribution', 'SDL Contribution', 'ETI'), component
 	"""
 
-	return frappe.db.sql(query, filters, as_dict=1)
+	return reduce_by_eti(frappe.db.sql(query, filters, as_dict=1))
+
+
+ETI_LABEL = "ETI generated (reduces PAYE)"
+
+
+def reduce_by_eti(rows):
+	"""Show ETI as the deduction it is, so the report's total is what is owed.
+
+	ETI reduces the PAYE paid over; listed as a positive amount it was added to the
+	report total, overstating October 2026 by R6,000 against the EMP201. PAYE
+	includes lump-sum tax under a directive (4115), as the EMP201 does.
+	"""
+	for row in rows:
+		if row.component == "ETI":
+			row.component = _(ETI_LABEL)
+			row.amount = -abs(row.amount or 0)
+	return rows
 
 
 def get_chart_data(data):

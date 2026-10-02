@@ -370,6 +370,24 @@ class TestSARSReportingRegressions(UnitTestCase):
 		self.assertIn("IFNULL(ss.za_monthly_eti, 0) = 0", query)
 		self.assertIn("cc.parenttype = 'Salary Slip'", query)
 
+	def test_statutory_summary_total_is_what_is_owed(self):
+		"""ETI was added to the total, and directive lump-sum tax (4115) was left out of PAYE."""
+		filters = {"company": "_Test Company", "from_date": "2026-10-01", "to_date": "2026-10-31"}
+		rows = [
+			frappe._dict(component="PAYE", amount=157_908.28),
+			frappe._dict(component="UIF Employee Contribution", amount=2_909.68),
+			frappe._dict(component="UIF Employer Contribution", amount=2_909.68),
+			frappe._dict(component="SDL Contribution", amount=7_136.98),
+			frappe._dict(component="ETI", amount=3_000),
+		]
+		with patch("frappe.db.sql", return_value=rows) as sql:
+			data = get_statutory_summary(filters)
+		self.assertIn("IN ('4102', '4115')", sql.call_args.args[0])
+		eti = next(row for row in data if "ETI" in row.component)
+		self.assertEqual(-3_000, eti.amount)
+		# October 2026 EMP201: net PAYE 154,908.28 + UIF 5,819.36 + SDL 7,136.98.
+		self.assertAlmostEqual(167_864.62, sum(row.amount for row in data), places=2)
+
 	def test_retirement_report_uses_only_retirement_sars_codes(self):
 		self.assertEqual({"4001", "4003", "4006"}, RETIREMENT_FUND_CODES)
 		rows = [

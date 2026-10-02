@@ -23,11 +23,13 @@ def _fy():
 
 def stage_employment_equity() -> dict:
 	require_reference_site()
+	from za_local_payroll.sa_labour.report.ee_plan_progress import (
+		ee_plan_progress as eea4,
+	)
 	from za_local_payroll.sa_labour.report.ee_workforce_movement import ee_workforce_movement as mov
 	from za_local_payroll.sa_labour.report.ee_workforce_profile import ee_workforce_profile as prof
-	from za_local_payroll.sa_labour.report.eea2_income_differentials import eea2_income_differentials as eea2
-	from za_local_payroll.sa_labour.report.eea4_employment_equity_plan import (
-		eea4_employment_equity_plan as eea4,
+	from za_local_payroll.sa_labour.report.eea4_income_differential_statement import (
+		eea4_income_differential_statement as eea2,
 	)
 
 	frappe.db.set_value(
@@ -149,7 +151,7 @@ def stage_employment_equity() -> dict:
 		)
 	with acting_as(user("foreign_accounts")):
 		outcome(r, "user_without_company_permission", lambda: prof.execute(base), True)
-	outcome(r, "eea2_income_differentials", lambda: len(eea2.execute(base)[1]), False)
+	outcome(r, "eea4_income_differential_statement", lambda: len(eea2.execute(base)[1]), False)
 	outcome(
 		r, "eea4_plan_with_submitted_plan", lambda: len(eea4.execute({**base, "target_plan": plan})[1]), False
 	)

@@ -73,15 +73,17 @@ def get_data():
 				},
 				{
 					"type": "report",
-					"name": "Eea2 Income Differentials",
+					"name": "EEA4 Income Differential Statement",
 					"is_query_report": True,
-					"description": _("EEA2 income differentials report"),
+					"description": _(
+						"Income differentials by occupational level, race and gender (EEA4 working paper)"
+					),
 				},
 				{
 					"type": "report",
-					"name": "Eea4 Employment Equity Plan",
+					"name": "EE Plan Progress",
 					"is_query_report": True,
-					"description": _("EEA4 employment equity plan report"),
+					"description": _("Headcount against the submitted Employment Equity plan targets"),
 				},
 			],
 		},

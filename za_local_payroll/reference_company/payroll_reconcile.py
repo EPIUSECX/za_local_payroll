@@ -398,8 +398,22 @@ def stage_emp201() -> dict:
 		"all_months_ok": all(m["ok"] for m in months),
 		"controls": controls,
 	}
-	march = months[0]["emp201"]
-	out["march_filing"] = _payroll_filing_lifecycle("EMP201 Submission", march, "2026-04-07", controls)
+	from za_local_payroll.sa_payroll.statutory_filing import emp201_due_date
+
+	# Every month is declared and filed, so each period shows on the compliance
+	# calendar as accepted. March carries the permission probes.
+	out["filings"] = {}
+	for index, month in enumerate(months):
+		period_end = frappe.db.get_value("EMP201 Submission", month["emp201"], "submission_period_end_date")
+		out["filings"][month["month"]] = _payroll_filing_lifecycle(
+			"EMP201 Submission",
+			month["emp201"],
+			emp201_due_date(period_end, C.COMPANY),
+			controls,
+			probe=index == 0,
+		)
+	out["march_filing"] = out["filings"][months[0]["month"]]
+	out["all_months_filed"] = all(f.get("status") == "Accepted" for f in out["filings"].values())
 	(EVIDENCE / "emp201_year.json").write_text(json.dumps(out, indent=1, default=str))
 	return {k: v for k, v in out.items() if k != "months"} | {
 		"not_ok": [m["month"] for m in months if not m["ok"]]
@@ -685,7 +699,7 @@ def _submit_copy(doctype, name, reviewed_by=None):
 	doc.submit()
 
 
-def _payroll_filing_lifecycle(doctype, name, due_date, controls) -> dict:
+def _payroll_filing_lifecycle(doctype, name, due_date, controls, probe=True) -> dict:
 	"""EMP201-1: hand a submitted payroll working paper to ZA Filing, review, approve, record SARS's response.
 
 	The due date is the synthetic company's; the EMP501 deadline is announced by SARS each year.
@@ -714,12 +728,13 @@ def _payroll_filing_lifecycle(doctype, name, due_date, controls) -> dict:
 				"filing_approver": user("approver"),
 			}
 		)
-		with acting_as(user("payroll_manager")):
-			_try(
-				f"payroll_user_creates_{code.lower()}_filing",
-				lambda: frappe.get_doc(doctype, name).create_za_filing(),
-				controls,
-			)
+		if probe:
+			with acting_as(user("payroll_manager")):
+				_try(
+					f"payroll_user_creates_{code.lower()}_filing",
+					lambda: frappe.get_doc(doctype, name).create_za_filing(),
+					controls,
+				)
 		with acting_as(user("preparer")):
 			frappe.get_doc(doctype, name).create_za_filing()
 		filing_name = frappe.db.get_value(doctype, name, "za_filing")

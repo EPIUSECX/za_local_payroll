@@ -8,8 +8,8 @@ and Company before running these reports.
 | Report | What it actually shows |
 |---|---|
 | **EE Workforce Profile** | Active-at-reporting-date composition |
-| **EEA2 Income Differentials** | Latest effective submitted Salary Structure Assignment base by demographic cell; monthly proxy |
-| **EEA4 Employment Equity Plan** | Headcount compared with latest effective rows of one submitted target plan |
+| **EEA4 Income Differential Statement** | Latest effective submitted Salary Structure Assignment base by demographic cell; monthly proxy. Working paper for the EEA4 form |
+| **EE Plan Progress** | Headcount compared with latest effective rows of one submitted target plan; supports the EEA2 report's progress section |
 | **EE Workforce Movement** | Submitted explicit movement records between From/To dates |
 
 The names are retained for compatibility; the outputs are not certified EEA forms.

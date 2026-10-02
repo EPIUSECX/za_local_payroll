@@ -157,7 +157,7 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Ee Workforce Profile",
+   "label": "EE Workforce Profile",
    "link_count": 0,
    "link_to": "Ee Workforce Profile",
    "link_type": "Report",
@@ -197,9 +197,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "EEA4 Employment Equity Plan",
+   "label": "EE Plan Progress",
    "link_count": 0,
-   "link_to": "Eea4 Employment Equity Plan",
+   "link_to": "EE Plan Progress",
    "link_type": "Report",
    "onboard": 1,
    "type": "Link"
@@ -207,9 +207,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "EEA2 Income Differentials",
+   "label": "EEA4 Income Differential Statement",
    "link_count": 0,
-   "link_to": "Eea2 Income Differentials",
+   "link_to": "EEA4 Income Differential Statement",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -265,7 +265,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-03 07:36:13.134938",
+ "modified": "2026-10-02 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "SA Labour",
  "name": "SA Labour",

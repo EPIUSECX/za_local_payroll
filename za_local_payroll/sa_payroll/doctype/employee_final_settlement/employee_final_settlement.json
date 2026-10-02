@@ -110,7 +110,7 @@
   {
    "fieldname": "uif",
    "fieldtype": "Currency",
-   "label": "Uif",
+   "label": "UIF",
    "read_only": 1
   },
   {
@@ -130,7 +130,7 @@
   }
  ],
  "index_web_pages_for_search": 1,
- "modified": "2025-01-28 14:00:00",
+ "modified": "2026-10-02 12:00:00",
  "modified_by": "Administrator",
  "module": "SA Payroll",
  "name": "Employee Final Settlement",

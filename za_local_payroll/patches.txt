@@ -1,5 +1,7 @@
 [pre_model_sync]
 
+za_local_payroll.patches.v1_5.rename_employment_equity_reports
+
 [post_model_sync]
 za_local_payroll.patches.v1_0.transfer_payroll_ownership
 za_local_payroll.patches.v1_0.seed_payroll_masters
@@ -13,3 +15,4 @@ za_local_payroll.patches.v1_4.exact_tax_slab_bounds
 za_local_payroll.patches.v1_4.align_sars_codes_with_brs
 za_local_payroll.patches.v1_4.grant_payroll_role_permissions
 za_local_payroll.patches.v1_4.record_packaged_rate_decision
+za_local_payroll.patches.v1_5.grant_checklist_access

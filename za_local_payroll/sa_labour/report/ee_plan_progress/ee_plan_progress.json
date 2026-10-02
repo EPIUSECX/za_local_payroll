@@ -6,13 +6,13 @@
  "doctype": "Report",
  "idx": 0,
  "is_standard": "Yes",
- "modified": "2025-01-28 12:00:00",
+ "modified": "2026-10-02 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "SA Labour",
- "name": "Eea4 Employment Equity Plan",
+ "name": "EE Plan Progress",
  "owner": "Administrator",
  "ref_doctype": "Employee",
- "report_name": "Eea4 Employment Equity Plan",
+ "report_name": "EE Plan Progress",
  "report_type": "Script Report",
  "roles": [
   {

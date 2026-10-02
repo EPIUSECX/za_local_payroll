@@ -186,8 +186,8 @@ reasonable grounds.
 | Report | Implemented basis | Not an assertion of |
 |---|---|---|
 | EE Workforce Profile | Active-at-reporting-date employees grouped by occupational level, gender, disability, and race | Official EEA2/EEA4 population totals |
-| EEA2 Income Differentials | Latest effective submitted Salary Structure Assignment base per employee; monthly proxy | Total remuneration or official EEA4 income-differential output |
-| EEA4 Employment Equity Plan | Current headcount compared with the latest effective rows of one submitted target plan | A filed EEA13 plan or official EEA4 form |
+| EEA4 Income Differential Statement | Latest effective submitted Salary Structure Assignment base per employee; monthly proxy | Total remuneration or official EEA4 income-differential output |
+| EE Plan Progress | Current headcount compared with the latest effective rows of one submitted target plan | A filed EEA13 plan or official EEA2 form |
 | EE Workforce Movement | Submitted explicit movement records between From/To dates | Inferred HR movement history |
 
 All reports require Company and reporting dates (or From/To dates). The target

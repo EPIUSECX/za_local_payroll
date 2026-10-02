@@ -4,10 +4,7 @@
    "role": "System Manager"
   },
   {
-   "role": "Accounts Manager"
-  },
-  {
-   "role": "HR Manager"
+   "role": "Payroll Manager"
   }
  ],
  "creation": "2026-04-23 00:00:00.000000",
@@ -15,7 +12,7 @@
  "doctype": "Module Onboarding",
  "idx": 0,
  "is_complete": 0,
- "modified": "2026-08-10 12:00:00.000000",
+ "modified": "2026-10-02 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "SA Payroll",
  "name": "SA Payroll Onboarding",

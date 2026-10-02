@@ -292,11 +292,18 @@ def stage_vat201_amendment() -> dict:
 		with acting_as(user("approver")):
 			frappe.get_doc("ZA Filing", doc.za_filing).cancel()
 	with acting_as(user("preparer")):
-		amended = frappe.copy_doc(frappe.get_doc("VAT201 Return", original), ignore_no_copy=False)
-		amended.amended_from = original
-		amended.insert()
-		amended.get_vat_transactions()
-		amended.reload()
+		existing = frappe.db.get_value(
+			"VAT201 Return", {"amended_from": original, "docstatus": ("<", 2)}, "name"
+		)
+		if existing:
+			amended = frappe.get_doc("VAT201 Return", existing)
+		else:
+			amended = frappe.copy_doc(frappe.get_doc("VAT201 Return", original), ignore_no_copy=False)
+			amended.amended_from = original
+			amended.insert()
+		if amended.docstatus == 0:
+			amended.get_vat_transactions()
+			amended.reload()
 	out["amended"] = amended.name
 	out["original_snapshot_sha256"] = doc.source_snapshot_sha256
 	out["amended_snapshot_sha256"] = amended.source_snapshot_sha256
@@ -304,6 +311,33 @@ def stage_vat201_amendment() -> dict:
 	out["amended_filing_link_cleared"] = not amended.za_filing
 	out["amended_status"] = amended.status
 	out["amended_reconciliation"] = amended.reconciliation_status
+
+	# The amended paper runs the full cycle again, so the period ends filed rather
+	# than left as a draft: new snapshot, submit, a new ZA Filing, review, approval
+	# and the authority's response.
+	if amended.docstatus == 0:
+		with acting_as(user("preparer")):
+			amended = frappe.get_doc("VAT201 Return", amended.name)
+			amended.submit()
+			amended.reload()
+	controls = {}
+	if frappe.db.get_value("ZA Filing", amended.za_filing, "status") not in ("Filed", "Accepted"):
+		out["amended_filing_lifecycle"] = _filing_lifecycle(amended, controls)
+	out["amended_controls"] = controls
+	# The practitioner plans the next VAT period on the compliance calendar before
+	# there is a return for it. Due: last business day of the month after the
+	# period (Monday 30 November 2026), per the obligation's due rule.
+	from za_local_core.services.calendar import ensure_entry
+
+	with acting_as(user("preparer")):
+		out["next_period_calendar_entry"] = ensure_entry(
+			C.COMPANY, "ZA-VAT201", "2026-09-01", "2026-10-31", "2026-11-30"
+		)
+	out["amended_final"] = {
+		"vat201_status": frappe.db.get_value("VAT201 Return", amended.name, "status"),
+		"filing": amended.za_filing,
+		"filing_status": frappe.db.get_value("ZA Filing", amended.za_filing, "status"),
+	}
 	frappe.db.commit()
 	(EVIDENCE / "vat201_amendment.json").write_text(json.dumps(out, indent=1, default=str))
 	return out

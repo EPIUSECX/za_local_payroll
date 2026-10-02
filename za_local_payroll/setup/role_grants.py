@@ -16,6 +16,7 @@ PAYROLL_GRANTS = (
 	("Additional Salary", "Payroll Manager", RUN),
 	("Salary Structure Assignment", "Payroll Manager", READ),
 	("Salary Structure", "Payroll Manager", READ),
+	("Salary Component", "Payroll Manager", READ),
 	("Payroll Period", "Payroll Manager", ("read",)),
 	("Income Tax Slab", "Payroll Manager", ("read",)),
 	("Employee", "Payroll Manager", READ),
@@ -23,6 +24,14 @@ PAYROLL_GRANTS = (
 	("Payroll Entry", "Payroll User", ("read", "write", "create", "report")),
 	("Salary Slip", "Payroll User", ("read", "report", "print")),
 	("Additional Salary", "Payroll User", ("read", "write", "create", "report")),
+	# The payroll, labour and COIDA setup checklists send these roles to confirm
+	# the governing rate packs are approved and to review Payroll Settings.
+	# Approval and settings changes stay with the compliance and HR roles.
+	("ZA Statutory Source", "Payroll Manager", ("read",)),
+	("ZA Statutory Rate Pack", "Payroll Manager", ("read",)),
+	("ZA Statutory Source", "HR Manager", ("read",)),
+	("ZA Statutory Rate Pack", "HR Manager", ("read",)),
+	("Payroll Settings", "Payroll Manager", ("read",)),
 )
 
 

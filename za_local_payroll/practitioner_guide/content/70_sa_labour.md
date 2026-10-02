@@ -87,8 +87,8 @@ appointments, promotions, demotions, transfers, and terminations as submitted
 | Compatibility report name | Actual implemented basis |
 |---|---|
 | **EE Workforce Profile** | Active-at-date workforce composition |
-| **EEA2 Income Differentials** | Latest effective submitted Salary Structure Assignment base; monthly proxy |
-| **EEA4 Employment Equity Plan** | Active-at-date headcount compared with latest effective rows of one submitted target plan |
+| **EEA4 Income Differential Statement** | Latest effective submitted Salary Structure Assignment base; monthly proxy. Working paper for the EEA4 form |
+| **EE Plan Progress** | Active-at-date headcount compared with latest effective rows of one submitted target plan; supports the EEA2 report |
 | **EE Workforce Movement** | Aggregated submitted movement records for a date range |
 
 These are not certified EEA forms. Company/date filters and permissions are

@@ -139,7 +139,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Sars Vehicle Emissions Rate",
+   "label": "SARS Vehicle Emissions Rate",
    "link_count": 0,
    "link_to": "Sars Vehicle Emissions Rate",
    "link_type": "DocType",
@@ -519,7 +519,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Leave Encashment Sa",
+   "label": "Leave Encashment",
    "link_count": 0,
    "link_to": "Leave Encashment Sa",
    "link_type": "DocType",
@@ -609,7 +609,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Uif U19 Declaration",
+   "label": "UIF U19 Declaration",
    "link_count": 0,
    "link_to": "Uif U19 Declaration",
    "link_type": "DocType",
@@ -727,7 +727,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-03 07:36:13.134938",
+ "modified": "2026-10-02 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "SA Payroll",
  "name": "SA Payroll",
