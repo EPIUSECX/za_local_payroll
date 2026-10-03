@@ -568,6 +568,76 @@ class TestCertificateAndAccountingRegressions(IntegrationTestCase):
 			with self.assertRaisesRegex(frappe.ValidationError, "changed"):
 				batch.record_bank_settlement()
 
+	def test_split_recipients_settle_one_debit_per_slip(self):
+		"""Split pay sends one slip to two accounts; the journal must still balance."""
+		batch = frappe.new_doc("Payroll Payment Batch")
+		batch.update(
+			{
+				"docstatus": 1,
+				"eft_source_hash": "same",
+				"payroll_entry": "PE-1",
+				"bank_account": "BANK-1",
+				"company": "_Test Company",
+				"total_amount": 25000,
+			}
+		)
+		recipients = (
+			frappe._dict(salary_slip="SLIP-1", employee="EMP-1", amount="1000.00"),
+			frappe._dict(salary_slip="SLIP-1", employee="EMP-1", amount="14000.00"),
+			frappe._dict(salary_slip="SLIP-2", employee="EMP-2", amount="10000.00"),
+		)
+		journal = Mock(name="journal")
+		journal.name = "JV-1"
+		module = "za_local_payroll.sa_payroll.doctype.payroll_payment_batch.payroll_payment_batch"
+		with (
+			patch.object(type(batch), "check_permission"),
+			patch.object(type(batch), "db_set"),
+			patch(
+				f"{module}.build_payment_batch_snapshot",
+				return_value=frappe._dict(source_hash="same", recipients=recipients),
+			),
+			patch(f"{module}.frappe.db.get_value", side_effect=["Payroll Payable", "Bank Ledger"]),
+			patch(f"{module}.frappe.get_doc", return_value=journal) as get_doc,
+		):
+			batch.record_bank_settlement("2026-10-25")
+		accounts = get_doc.call_args.args[0]["accounts"]
+		debits = [(row["party"], row["debit_in_account_currency"]) for row in accounts if "party" in row]
+		self.assertEqual([("EMP-1", 15000.0), ("EMP-2", 10000.0)], debits)
+		self.assertEqual(25000, sum(amount for _party, amount in debits))
+
+	def test_payroll_entry_cancellation_cancels_eti_logs_with_engine_rights(self):
+		"""A Payroll Manager cancelling a Payroll Entry has no rights on the System Manager-only ETI log."""
+		from za_local_payroll.overrides.payroll_entry import ZAPayrollEntry
+
+		log = frappe._dict(docstatus=1, flags=frappe._dict())
+		log.cancel = Mock(side_effect=lambda: self.assertTrue(log.flags.ignore_permissions))
+		entry = frappe.new_doc("Payroll Entry")
+		self.assertIsInstance(entry, ZAPayrollEntry)
+		module = "za_local_payroll.overrides.payroll_entry"
+		with (
+			patch.object(type(entry), "get_linked_salary_slips", return_value=[frappe._dict(name="SLIP-1")]),
+			patch(f"{module}.frappe.get_all", return_value=["ETI-1"]),
+			patch(f"{module}.frappe.get_doc", return_value=log),
+			patch(f"{module}.frappe.delete_doc"),
+			patch("hrms.payroll.doctype.payroll_entry.payroll_entry.PayrollEntry.delete_linked_salary_slips"),
+		):
+			entry.delete_linked_salary_slips()
+		log.cancel.assert_called_once_with()
+
+	def test_registered_bank_formats_join_the_batch_selector(self):
+		from za_local_payroll.utils import extension_points
+
+		with (
+			patch.object(extension_points, "bank_formats", return_value={"Synthetic Bank CSV": "x.y"}),
+			patch.object(extension_points.frappe.db, "exists", return_value=True),
+			patch.object(extension_points.frappe.db, "get_value", return_value="FNB OBE CSV\nABSA"),
+			patch("frappe.custom.doctype.property_setter.property_setter.make_property_setter") as setter,
+			patch.object(extension_points.frappe, "clear_cache"),
+		):
+			options = extension_points.sync_bank_format_options()
+		self.assertEqual(["FNB OBE CSV", "ABSA", "Synthetic Bank CSV"], options)
+		self.assertEqual("FNB OBE CSV\nABSA\nSynthetic Bank CSV", setter.call_args.args[3])
+
 
 class TestCOIDAReturnRegressions(IntegrationTestCase):
 	"""COIDA-ROE-1, COIDA-SOD-1, COIDA-ISO-1, INJ-4."""

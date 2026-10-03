@@ -86,18 +86,22 @@ class PayrollPaymentBatch(Document):
 			frappe.throw(
 				_("The Payroll Entry's Payroll Payable Account and the Bank Account's ledger are required.")
 			)
+		# One debit per Salary Slip: an installed app may split a slip's net pay across several
+		# recipients (split pay), and the snapshot's amounts per slip always total its net pay.
+		paid_per_slip: dict[str, tuple[str, float]] = {}
+		for recipient in snapshot.recipients:
+			employee, paid = paid_per_slip.get(recipient.salary_slip, (recipient.employee, 0.0))
+			paid_per_slip[recipient.salary_slip] = (employee, flt(paid + flt(recipient.amount), 2))
 		accounts = [
 			{
 				"account": payroll_payable,
 				"party_type": "Employee",
-				"party": recipient.employee,
-				"debit_in_account_currency": flt(
-					frappe.db.get_value("Salary Slip", recipient.salary_slip, "net_pay"), 2
-				),
+				"party": employee,
+				"debit_in_account_currency": paid,
 				"reference_type": "Payroll Entry",
 				"reference_name": self.payroll_entry,
 			}
-			for recipient in snapshot.recipients
+			for employee, paid in paid_per_slip.values()
 		]
 		accounts.append({"account": bank_ledger, "credit_in_account_currency": flt(self.total_amount, 2)})
 		journal = frappe.get_doc(

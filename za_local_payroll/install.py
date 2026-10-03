@@ -112,6 +112,9 @@ def after_migrate() -> None:
 	repair_payroll_metrics()
 	_setup_workplace_modules()
 	sync_shared_navigation()
+	from za_local_payroll.utils.extension_points import sync_bank_format_options
+
+	sync_bank_format_options()
 
 
 def repair_payroll_metrics(user_input: dict | None = None) -> dict:

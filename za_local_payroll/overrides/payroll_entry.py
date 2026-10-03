@@ -123,6 +123,8 @@ class ZAPayrollEntry(PayrollEntry):
 			for log_name in log_names:
 				log = frappe.get_doc("Employee ETI Log", log_name)
 				if log.docstatus == 1:
+					# The engine's audit snapshot (System Manager only), cancelled with its slip.
+					log.flags.ignore_permissions = True
 					log.cancel()
 				frappe.delete_doc("Employee ETI Log", log_name, ignore_permissions=True)
 

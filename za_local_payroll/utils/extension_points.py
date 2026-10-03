@@ -19,7 +19,10 @@ behaves exactly as it does without the hook. Hooks are called in app install ord
 ``za_payroll_bank_formats``
 	``callable() -> dict[str, str]``. Maps a bank file format name to the dotted path of a
 	renderer object with ``validate_company_account(account)`` and
-	``render(snapshot) -> dict(content=str, control_total=str, filename=str)``.
+	``render(snapshot) -> dict(content=str, control_total=str, filename=str)``. Registered
+	names are added to the Payroll Payment Batch bank format list by
+	``sync_bank_format_options()``, which runs on migrate; an app whose formats change at
+	run time calls it after the change.
 
 ``za_payroll_payment_recipients``
 	``callable(recipients: list, batch) -> list``. May replace one recipient with several
@@ -62,6 +65,47 @@ def bank_formats() -> dict[str, str]:
 def bank_format_renderer(bank_format: str):
 	path = bank_formats().get(bank_format)
 	return frappe.get_attr(path) if path else None
+
+
+BANK_FORMAT_DOCTYPE = "Payroll Payment Batch"
+
+
+def sync_bank_format_options() -> list[str]:
+	"""Offer the standard bank formats plus every registered one on Payroll Payment Batch."""
+	if not frappe.db.exists("DocType", BANK_FORMAT_DOCTYPE):
+		return []
+	standard = (
+		frappe.db.get_value(
+			"DocField", {"parent": BANK_FORMAT_DOCTYPE, "fieldname": "bank_format"}, "options"
+		)
+		or ""
+	)
+	options = [line for line in standard.splitlines() if line]
+	options += [name for name in sorted(bank_formats()) if name not in options]
+	from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+	if options == [line for line in standard.splitlines() if line]:
+		frappe.db.delete(
+			"Property Setter",
+			{"doc_type": BANK_FORMAT_DOCTYPE, "field_name": "bank_format", "property": "options"},
+		)
+	else:
+		make_property_setter(
+			BANK_FORMAT_DOCTYPE,
+			"bank_format",
+			"options",
+			"\n".join(options),
+			"Text",
+			validate_fields_for_doctype=False,
+		)
+	frappe.clear_cache(doctype=BANK_FORMAT_DOCTYPE)
+	return options
+
+
+@frappe.whitelist(methods=["GET"])
+def registered_bank_format_names() -> list[str]:
+	"""Bank formats an installed app has registered (they are automated, not manual onboarding)."""
+	return sorted(bank_formats())
 
 
 def payment_recipients(recipients: list, batch) -> list:

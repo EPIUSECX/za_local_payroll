@@ -8,6 +8,7 @@ import frappe
 from frappe.tests.classes import UnitTestCase
 
 GET_ENDPOINTS = {
+	"utils.extension_points.registered_bank_format_names",
 	"sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation.get_company_tax_details",
 	"sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation.get_period_dates",
 	"sa_payroll.doctype.fringe_benefit.fringe_benefit.get_active_fringe_benefits",
