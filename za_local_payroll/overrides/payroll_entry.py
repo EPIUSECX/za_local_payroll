@@ -70,6 +70,14 @@ class ZAPayrollEntry(PayrollEntry):
 		if self.za_localisation_applies:
 			self.validate_employee_requirements()
 
+	def validate_existing_salary_slips(self):
+		"""A sanctioned supplementary run pays employees whose period already has a slip."""
+		from za_local_payroll.utils.extension_points import is_supplementary_entry
+
+		if is_supplementary_entry(self.name):
+			return
+		return super().validate_existing_salary_slips()
+
 	def before_save(self):
 		self.ensure_consistent_status()
 

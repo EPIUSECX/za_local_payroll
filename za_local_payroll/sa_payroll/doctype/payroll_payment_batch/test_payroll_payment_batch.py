@@ -197,7 +197,13 @@ class TestPaymentBatchSnapshot(UnitTestCase):
 			payment_date="2026-08-07",
 			bank_account="COMPANY-BANK",
 		)
-		snapshot = build_payment_batch_snapshot(batch)
+		# The engine's own snapshot: an installed app's recipient extension (split pay) reads the
+		# database this test mocks, and is covered by that app's tests.
+		with patch(
+			"za_local_payroll.utils.extension_points.payment_recipients",
+			side_effect=lambda recipients, _batch: recipients,
+		):
+			snapshot = build_payment_batch_snapshot(batch)
 
 		self.assertEqual(snapshot.recipients[0].salary_slip, "SAL-00001")
 		self.assertEqual(snapshot.recipients[0].bank_account, "EMPLOYEE-BANK")

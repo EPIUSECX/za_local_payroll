@@ -72,6 +72,15 @@ class TestExtensionPoints(UnitTestCase):
 			with self.assertRaises(frappe.ValidationError):
 				eft._apply_recipient_hooks([_recipient("SAL-1", "1000.00")], batch)
 
+	def test_supplementary_entry_skips_the_existing_slip_check(self):
+		from za_local_payroll.overrides.payroll_entry import ZAPayrollEntry
+
+		entry = ZAPayrollEntry.__new__(ZAPayrollEntry)
+		entry.name = "SUPP-1"
+		hooks = {"za_payroll_supplementary_entry": [f"{__name__}._is_supplementary"]}
+		with patch.object(frappe, "get_hooks", _hooks(hooks)):
+			self.assertIsNone(entry.validate_existing_salary_slips())
+
 	def test_supplementary_and_period_hooks_are_consulted(self):
 		hooks = {
 			"za_payroll_supplementary_entry": [f"{__name__}._is_supplementary"],
