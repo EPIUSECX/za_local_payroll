@@ -495,6 +495,9 @@ class ZAPayrollEntry(PayrollEntry):
 		frequency = get_current_block_period(self)
 		employee_frequency = get_employee_frequency_map()
 
+		from za_local_payroll.utils.extension_points import is_supplementary_entry
+
+		supplementary = is_supplementary_entry(self.name)
 		for employee in self.employees:
 			employee_frequency_name = employee_frequency.get(employee.employee)
 			if employee_frequency_name:
@@ -507,7 +510,9 @@ class ZAPayrollEntry(PayrollEntry):
 						),
 						title=_("Payroll Frequency Configuration Error"),
 					)
-				if is_payroll_processed(employee.employee, frequency_period, self.company):
+				if not supplementary and is_payroll_processed(
+					employee.employee, frequency_period, self.company
+				):
 					continue
 			employees.append(employee.employee)
 
