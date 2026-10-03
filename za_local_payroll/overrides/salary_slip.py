@@ -200,6 +200,10 @@ class ZASalarySlip(SalarySlip):
 				title=_("Payroll Frequency Configuration Error"),
 			)
 
+		from za_local_payroll.utils.extension_points import is_supplementary_entry
+
+		if is_supplementary_entry(getattr(self, "payroll_entry", None)):
+			return
 		if is_payroll_processed(self.employee, frequency_period, self.company):
 			frappe.throw(_("Salary Slip already created for current {0}").format(employee_frequency))
 
@@ -313,19 +317,26 @@ class ZASalarySlip(SalarySlip):
 		"""
 		if not self.payroll_period:
 			return 1
-		return (
-			frappe.db.count(
-				"Salary Slip",
-				{
-					"employee": self.employee,
-					"company": self.company,
-					"docstatus": 1,
-					"start_date": [">=", self.payroll_period.start_date],
-					"end_date": ["<", self.start_date],
-				},
+		# Distinct periods, not slips: a supplementary slip in a period already paid is
+		# part of that period, not another one.
+		periods = len(
+			set(
+				frappe.get_all(
+					"Salary Slip",
+					filters={
+						"employee": self.employee,
+						"company": self.company,
+						"docstatus": 1,
+						"start_date": [">=", self.payroll_period.start_date],
+						"end_date": ["<", self.start_date],
+					},
+					pluck="start_date",
+				)
 			)
-			+ 1
 		)
+		from za_local_payroll.utils.extension_points import prior_period_count
+
+		return prior_period_count(self, periods) + 1
 
 	def get_previous_annual_payment_earnings(self):
 		"""Annual payments already taxed in earlier periods of this tax year."""
@@ -980,6 +991,11 @@ class ZASalarySlip(SalarySlip):
 
 		# Calculate company contributions
 		self.calculate_company_contributions()
+
+		# Installed apps may adjust the calculated slip (see utils.extension_points).
+		from za_local_payroll.utils.extension_points import after_calculate_net_pay
+
+		after_calculate_net_pay(self)
 
 	def apply_eti(self):
 		"""

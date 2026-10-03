@@ -181,7 +181,7 @@ class TestEtiCalculationQueries(UnitTestCase):
 	@patch.object(eti_utils.frappe, "get_doc")
 	@patch.object(eti_utils.frappe.db, "exists", return_value="ETI-LOG-1")
 	def test_eti_log_submits_with_salary_slip(self, _exists, get_doc):
-		log = frappe._dict(docstatus=0, submit=Mock())
+		log = frappe._dict(docstatus=0, flags=frappe._dict(), submit=Mock())
 		get_doc.return_value = log
 
 		eti_utils.submit_eti_log("EMP-1", SimpleNamespace(name="SS-1"))
@@ -400,3 +400,27 @@ class TestEtiCalculationQueries(UnitTestCase):
 			get_all.call_args.kwargs["filters"]["start_date"],
 			["<=", frappe.utils.getdate("2024-03-31")],
 		)
+
+
+class TestEtiLogLifecycleRunsAsTheEngine(UnitTestCase):
+	"""A Payroll Manager submits slips without rights on the System Manager-only ETI log."""
+
+	def _log(self, docstatus):
+		log = SimpleNamespace(docstatus=docstatus, flags=frappe._dict(), submit=Mock(), cancel=Mock())
+		return log
+
+	@patch("za_local_payroll.utils.eti_utils.frappe.db.exists", return_value="ETI-LOG-1")
+	def test_submit_bypasses_permissions(self, _exists):
+		log = self._log(0)
+		log.submit.side_effect = lambda: self.assertTrue(log.flags.ignore_permissions)
+		with patch("za_local_payroll.utils.eti_utils.frappe.get_doc", return_value=log):
+			eti_utils.submit_eti_log("EMP-1", SimpleNamespace(name="SLIP-1"))
+		log.submit.assert_called_once()
+
+	@patch("za_local_payroll.utils.eti_utils.frappe.db.exists", return_value="ETI-LOG-1")
+	def test_cancel_bypasses_permissions(self, _exists):
+		log = self._log(1)
+		log.cancel.side_effect = lambda: self.assertTrue(log.flags.ignore_permissions)
+		with patch("za_local_payroll.utils.eti_utils.frappe.get_doc", return_value=log):
+			eti_utils.cancel_eti_log("EMP-1", SimpleNamespace(name="SLIP-1"))
+		log.cancel.assert_called_once()

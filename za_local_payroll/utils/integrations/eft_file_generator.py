@@ -109,6 +109,11 @@ def normalize_bank_format(bank_format: str | None) -> str:
 	value = (bank_format or "").strip()
 	if value.casefold() in {"fnb", FNB_FORMAT.casefold()}:
 		return FNB_FORMAT
+	from za_local_payroll.utils.extension_points import bank_formats
+
+	registered = {name.casefold(): name for name in bank_formats()}
+	if value.casefold() in registered:
+		return registered[value.casefold()]
 	if value.casefold() in DISABLED_FORMATS:
 		frappe.throw(
 			_(
@@ -154,8 +159,24 @@ def validate_payment_batch_header(batch) -> tuple[frappe._dict, frappe._dict]:
 				frappe.bold(account.name), frappe.bold(batch.company)
 			)
 		)
-	_normalize_digits(account.bank_account_no, _("Company bank account number"), exact_length=11)
+	renderer = _renderer(getattr(batch, "bank_format", None))
+	if renderer:
+		renderer.validate_company_account(account)
+	else:
+		_normalize_digits(account.bank_account_no, _("Company bank account number"), exact_length=11)
 	return payroll, account
+
+
+def _renderer(bank_format: str | None):
+	"""A registered (non-FNB) bank file renderer, or None for the built-in FNB format."""
+	if not bank_format:
+		return None
+	value = normalize_bank_format(bank_format)
+	if value == FNB_FORMAT:
+		return None
+	from za_local_payroll.utils.extension_points import bank_format_renderer
+
+	return bank_format_renderer(value)
 
 
 def build_payment_batch_snapshot(batch) -> PaymentBatchSnapshot:
@@ -210,8 +231,12 @@ def build_payment_batch_snapshot(batch) -> PaymentBatchSnapshot:
 		bank_account = accounts.get(employee.za_payroll_payable_bank_account)
 		recipients.append(_build_recipient(slip, employee, bank_account, payroll.end_date))
 
+	recipients = _apply_recipient_hooks(recipients, batch)
 	own_account = _normalize_digits(
-		company_account.bank_account_no, _("Company bank account number"), exact_length=11
+		company_account.bank_account_no,
+		_("Company bank account number"),
+		exact_length=None if _renderer(getattr(batch, "bank_format", None)) else 11,
+		max_length=20,
 	)
 	payload = {
 		"batch_name": batch.name,
@@ -235,6 +260,25 @@ def build_payment_batch_snapshot(batch) -> PaymentBatchSnapshot:
 		recipients=tuple(recipients),
 		source_hash=source_hash,
 	)
+
+
+def _apply_recipient_hooks(recipients: list, batch) -> list:
+	"""Let installed apps split a recipient (for example split pay); totals per slip must hold."""
+	from za_local_payroll.utils.extension_points import payment_recipients
+
+	before = {}
+	for row in recipients:
+		before[row.salary_slip] = before.get(row.salary_slip, Decimal("0")) + Decimal(row.amount)
+	changed = payment_recipients(list(recipients), batch)
+	after = {}
+	for row in changed:
+		after[row.salary_slip] = after.get(row.salary_slip, Decimal("0")) + Decimal(row.amount)
+	if before != after:
+		frappe.throw(
+			_("A payment-recipient extension changed the amount paid for a Salary Slip."),
+			title=_("Payment Total Changed"),
+		)
+	return changed
 
 
 def render_fnb_obe_csv(snapshot: PaymentBatchSnapshot) -> tuple[str, str]:
@@ -311,8 +355,14 @@ def generate_eft_file(
 		if existing := _get_existing_private_file(batch):
 			return {"file_url": existing.file_url, "filename": existing.file_name, "reused": True}
 
-	content, hash_total = render_fnb_obe_csv(snapshot)
-	filename = _safe_filename(f"FNB_OBE_{batch.name}_{snapshot.payment_date}.csv")
+	renderer = _renderer(getattr(batch, "bank_format", None))
+	if renderer:
+		rendered = renderer.render(snapshot)
+		content, hash_total = rendered["content"], rendered["control_total"]
+		filename = _safe_filename(rendered["filename"])
+	else:
+		content, hash_total = render_fnb_obe_csv(snapshot)
+		filename = _safe_filename(f"FNB_OBE_{batch.name}_{snapshot.payment_date}.csv")
 	file_doc = save_file(
 		filename, content.encode("utf-8"), batch.doctype, batch.name, is_private=1, df="eft_file_path"
 	)

@@ -54,13 +54,19 @@ frappe.ui.form.on("Payroll Payment Batch", {
 	},
 
 	bank_format(frm) {
-		if (frm.doc.bank_format && frm.doc.bank_format !== "FNB OBE CSV") {
-			frappe.msgprint({
-				title: __("Manual Bank Onboarding Required"),
-				message: __("Automated {0} payroll files are disabled until the bank's current official layout has been verified and onboarded.", [frm.doc.bank_format]),
-				indicator: "orange",
+		const format = frm.doc.bank_format;
+		if (!format || format === "FNB OBE CSV") return;
+		// A format an installed app has registered (an onboarded layout) is automated.
+		frappe
+			.call({ method: "za_local_payroll.utils.extension_points.registered_bank_format_names", type: "GET" })
+			.then((r) => {
+				if ((r.message || []).includes(format)) return;
+				frappe.msgprint({
+					title: __("Manual Bank Onboarding Required"),
+					message: __("Automated {0} payroll files are disabled until the bank's current official layout has been verified and onboarded.", [format]),
+					indicator: "orange",
+				});
 			});
-		}
 	},
 });
 

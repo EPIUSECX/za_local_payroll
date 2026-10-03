@@ -496,6 +496,9 @@ def submit_eti_log(employee, salary_slip):
 		)
 	log_doc = frappe.get_doc("Employee ETI Log", log_name)
 	if log_doc.docstatus == 0:
+		# The log is the engine's audit snapshot, written with ignore_permissions; the payroll
+		# user submitting the slip need not hold rights on it (System Manager only).
+		log_doc.flags.ignore_permissions = True
 		log_doc.submit()
 
 
@@ -508,6 +511,7 @@ def cancel_eti_log(employee, salary_slip):
 		return
 	log_doc = frappe.get_doc("Employee ETI Log", log_name)
 	if log_doc.docstatus == 1:
+		log_doc.flags.ignore_permissions = True
 		log_doc.cancel()
 
 

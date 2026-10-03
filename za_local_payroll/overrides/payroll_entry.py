@@ -70,6 +70,14 @@ class ZAPayrollEntry(PayrollEntry):
 		if self.za_localisation_applies:
 			self.validate_employee_requirements()
 
+	def validate_existing_salary_slips(self):
+		"""A sanctioned supplementary run pays employees whose period already has a slip."""
+		from za_local_payroll.utils.extension_points import is_supplementary_entry
+
+		if is_supplementary_entry(self.name):
+			return
+		return super().validate_existing_salary_slips()
+
 	def before_save(self):
 		self.ensure_consistent_status()
 
@@ -115,6 +123,8 @@ class ZAPayrollEntry(PayrollEntry):
 			for log_name in log_names:
 				log = frappe.get_doc("Employee ETI Log", log_name)
 				if log.docstatus == 1:
+					# The engine's audit snapshot (System Manager only), cancelled with its slip.
+					log.flags.ignore_permissions = True
 					log.cancel()
 				frappe.delete_doc("Employee ETI Log", log_name, ignore_permissions=True)
 
@@ -495,6 +505,9 @@ class ZAPayrollEntry(PayrollEntry):
 		frequency = get_current_block_period(self)
 		employee_frequency = get_employee_frequency_map()
 
+		from za_local_payroll.utils.extension_points import is_supplementary_entry
+
+		supplementary = is_supplementary_entry(self.name)
 		for employee in self.employees:
 			employee_frequency_name = employee_frequency.get(employee.employee)
 			if employee_frequency_name:
@@ -507,7 +520,9 @@ class ZAPayrollEntry(PayrollEntry):
 						),
 						title=_("Payroll Frequency Configuration Error"),
 					)
-				if is_payroll_processed(employee.employee, frequency_period, self.company):
+				if not supplementary and is_payroll_processed(
+					employee.employee, frequency_period, self.company
+				):
 					continue
 			employees.append(employee.employee)
 
