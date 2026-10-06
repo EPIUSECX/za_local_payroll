@@ -17,6 +17,10 @@ za_local_practitioner_guide_provider = "za_local_payroll.practitioner_guide.prov
 
 required_apps = ["erpnext", "hrms", "za_local_core"]
 
+# Dual-tone module icons for this app's entries on the za_local_core rail (the Dock in
+# za_local_payroll/dock/za_local_payroll/za_local_payroll.json mounts on za_local_core; this app has no Apps-screen tile).
+app_include_icons = ["/assets/za_local_payroll/icons/module-icons.svg"]
+
 before_install = "za_local_payroll.install.before_install"
 after_install = "za_local_payroll.install.after_install"
 after_migrate = "za_local_payroll.install.after_migrate"

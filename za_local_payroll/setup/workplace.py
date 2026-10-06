@@ -71,7 +71,8 @@ def claim_workplace_module_ownership() -> None:
 				"za_local_payroll",
 				update_modified=False,
 			)
-	for workspace_name in WORKPLACE_MODULES:
+	# Frappe 16.50 dropped Workspace.app (a workspace's app now follows its module, set above).
+	for workspace_name in WORKPLACE_MODULES if frappe.db.has_column("Workspace", "app") else ():
 		if frappe.db.exists("Workspace", workspace_name):
 			frappe.db.set_value(
 				"Workspace",
