@@ -1,0 +1,30 @@
+<!-- Dual-tone module icons for the desk dock and sidebar headers, in the Frappe v16 convention.
+     Each symbol fills from the duotone-light and duotone-dark custom properties (set by the dock
+     tile and the sidebar header; the fallbacks are the resting tones) and moves only while its dock
+     tile is hovered, through the icon-motion properties. Frappe's own sprite holds the tone rules.
+
+     Registered in hooks.py under app_include_icons. Names end in -duotone so the dock styles them. -->
+
+<svg id="za-local-payroll-module-symbols" aria-hidden="true" style="display: none;" class="icon" xmlns="http://www.w3.org/2000/svg">
+	<style>
+		@media (prefers-reduced-motion: no-preference) {
+			.za-cross-pulse {
+				transform-box: view-box;
+				transform-origin: 12px 12px;
+				animation: za-cross-pulse 1.4s ease-in-out infinite;
+				animation-play-state: var(--icon-motion, paused);
+			}
+		}
+		@keyframes za-cross-pulse {
+			0%, 100% { transform: scale(1); }
+			50% { transform: scale(0.86); }
+		}
+	</style>
+
+	<!-- SA COIDA: injury on duty, a first-aid kit -->
+	<symbol viewBox="0 0 24 24" id="icon-za-first-aid-duotone" stroke="none">
+		<path d="M8.5 3.5H15.5A1.5 1.5 0 0 1 17 5V6.5H15V5.5H9V6.5H7V5A1.5 1.5 0 0 1 8.5 3.5Z" style="fill: var(--duotone-light, var(--ink-gray-3))" />
+		<rect x="2.5" y="6.5" width="19" height="14" rx="3" style="fill: var(--duotone-dark, light-dark(var(--ink-gray-5), var(--ink-gray-6)))" />
+		<path class="za-cross-pulse" d="M10.6 9.5H13.4V12.1H16V14.9H13.4V17.5H10.6V14.9H8V12.1H10.6Z" style="fill: var(--duotone-light, var(--ink-gray-3))" />
+	</symbol>
+</svg>

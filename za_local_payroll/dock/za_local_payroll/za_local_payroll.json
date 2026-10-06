@@ -1,0 +1,40 @@
+{
+ "app": "za_local_payroll",
+ "creation": "2026-10-06 21:35:32.642133",
+ "docstatus": 0,
+ "doctype": "Dock",
+ "idx": 0,
+ "items": [
+  {
+   "added": 1,
+   "hidden": 0,
+   "icon": "calculator-duotone",
+   "link_to": "SA Payroll",
+   "link_type": "Sidebar",
+   "title": "Payroll"
+  },
+  {
+   "added": 1,
+   "hidden": 0,
+   "icon": "users-duotone",
+   "link_to": "SA Labour",
+   "link_type": "Sidebar",
+   "title": "Labour"
+  },
+  {
+   "added": 1,
+   "hidden": 0,
+   "icon": "za-first-aid-duotone",
+   "link_to": "SA COIDA",
+   "link_type": "Sidebar",
+   "title": "COIDA"
+  }
+ ],
+ "modified": "2026-10-06 21:35:32.642133",
+ "modified_by": "Administrator",
+ "mount_on": "za_local_core",
+ "name": "za_local_payroll",
+ "owner": "Administrator",
+ "standard": 1,
+ "user": ""
+}
