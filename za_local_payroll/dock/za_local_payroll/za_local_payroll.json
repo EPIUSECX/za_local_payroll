@@ -8,7 +8,7 @@
   {
    "added": 1,
    "hidden": 0,
-   "icon": "calculator-duotone",
+   "icon": "za-payslip-duotone",
    "link_to": "SA Payroll",
    "link_type": "Sidebar",
    "title": "Payroll"
@@ -16,7 +16,7 @@
   {
    "added": 1,
    "hidden": 0,
-   "icon": "users-duotone",
+   "icon": "za-hard-hat-duotone",
    "link_to": "SA Labour",
    "link_type": "Sidebar",
    "title": "Labour"
@@ -30,7 +30,7 @@
    "title": "COIDA"
   }
  ],
- "modified": "2026-10-06 21:35:32.642133",
+ "modified": "2026-10-07 08:58:28.445922",
  "modified_by": "Administrator",
  "mount_on": "za_local_core",
  "name": "za_local_payroll",

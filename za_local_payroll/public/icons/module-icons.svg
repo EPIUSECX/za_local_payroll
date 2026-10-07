@@ -27,4 +27,21 @@
 		<rect x="2.5" y="6.5" width="19" height="14" rx="3" style="fill: var(--duotone-dark, light-dark(var(--ink-gray-5), var(--ink-gray-6)))" />
 		<path class="za-cross-pulse" d="M10.6 9.5H13.4V12.1H16V14.9H13.4V17.5H10.6V14.9H8V12.1H10.6Z" style="fill: var(--duotone-light, var(--ink-gray-3))" />
 	</symbol>
+
+	<!-- SA Payroll: a payslip with a coin -->
+	<symbol viewBox="0 0 24 24" id="icon-za-payslip-duotone" stroke="none">
+		<path d="M6 2.5H15L19.5 7V20A1.5 1.5 0 0 1 18 21.5H6A1.5 1.5 0 0 1 4.5 20V4A1.5 1.5 0 0 1 6 2.5Z" style="fill: var(--duotone-dark, light-dark(var(--ink-gray-5), var(--ink-gray-6)))" />
+		<path d="M15 2.5V7H19.5Z" style="fill: var(--duotone-light, var(--ink-gray-3))" />
+		<rect x="7.5" y="9.6" width="9" height="1.8" rx="0.9" style="fill: var(--duotone-light, var(--ink-gray-3))" />
+		<rect x="7.5" y="13.2" width="4.5" height="1.8" rx="0.9" style="fill: var(--duotone-light, var(--ink-gray-3))" />
+		<circle cx="16.4" cy="17.2" r="3.6" style="fill: var(--duotone-light, var(--ink-gray-3))" />
+		<circle cx="16.4" cy="17.2" r="1.6" style="fill: var(--duotone-dark, light-dark(var(--ink-gray-5), var(--ink-gray-6)))" />
+	</symbol>
+
+	<!-- SA Labour: a safety helmet -->
+	<symbol viewBox="0 0 24 24" id="icon-za-hard-hat-duotone" stroke="none">
+		<path d="M4 15.5A8 8 0 0 1 20 15.5V17H4Z" style="fill: var(--duotone-dark, light-dark(var(--ink-gray-5), var(--ink-gray-6)))" />
+		<rect x="9.6" y="5.2" width="4.8" height="11" rx="1.4" style="fill: var(--duotone-light, var(--ink-gray-3))" />
+		<rect x="2" y="16.6" width="20" height="3.4" rx="1.7" style="fill: var(--duotone-light, var(--ink-gray-3))" />
+	</symbol>
 </svg>
