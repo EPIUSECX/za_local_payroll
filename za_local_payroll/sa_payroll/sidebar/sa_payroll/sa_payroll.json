@@ -3,7 +3,7 @@
  "creation": "2026-10-06 21:34:02.767019",
  "docstatus": 0,
  "doctype": "Sidebar",
- "header_icon": "calculator-duotone",
+ "header_icon": "za-payslip-duotone",
  "idx": 0,
  "items": [
   {
@@ -567,7 +567,7 @@
    "child": 0,
    "collapsible": 1,
    "hidden": 0,
-   "icon": "file-chart-column",
+   "icon": "chart-no-axes-combined",
    "indent": 1,
    "is_default_module": 0,
    "keep_closed": 1,
@@ -1058,7 +1058,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-06 21:35:11.010677",
+ "modified": "2026-10-07 08:58:28.393941",
  "modified_by": "Administrator",
  "module": "SA Payroll",
  "name": "SA Payroll",
