@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, add_years, cint, date_diff, flt, getdate
+from frappe.utils import add_days, add_months, add_years, cint, date_diff, flt, getdate
 from hrms.hr.doctype.leave_application.leave_application import LeaveApplication
 from za_local_core.governance import validate_private_evidence
+
+from za_local_payroll.utils.bcea_leave import family_leave_days, family_leave_min_service_months
 
 ANNUAL_LEAVE_CATEGORY = "Annual Leave"
 FAMILY_RESPONSIBILITY_CATEGORY = "Family Responsibility Leave"
@@ -118,8 +120,19 @@ class ZALeaveApplication(LeaveApplication):
 			)
 
 	def validate_family_leave_bcea(self):
-		"""Enforce the configured three-day cap in the employee's service cycle."""
+		"""Enforce the service qualification and the day cap in the employee's service cycle."""
 		employee = frappe.get_cached_doc("Employee", self.employee)
+		qualifying_months = family_leave_min_service_months()
+		if employee.date_of_joining and add_months(
+			getdate(employee.date_of_joining), qualifying_months
+		) > getdate(self.from_date):
+			frappe.throw(
+				_(
+					"Family responsibility leave needs more than {0} months of service. "
+					"This employee joined on {1}."
+				).format(qualifying_months, employee.date_of_joining),
+				title=_("Family Responsibility Leave Eligibility"),
+			)
 		cycle_start, cycle_end = get_service_anniversary_cycle(employee.date_of_joining, self.from_date)
 		family_leave_types = frappe.get_all(
 			"Leave Type",
@@ -142,12 +155,12 @@ class ZALeaveApplication(LeaveApplication):
 			fields=["total_leave_days"],
 		)
 		total_taken = sum(flt(row.total_leave_days) for row in applications)
-		if total_taken + flt(self.total_leave_days) > 3:
+		if total_taken + flt(self.total_leave_days) > family_leave_days():
 			frappe.throw(
 				_(
-					"Family responsibility leave exceeds the configured three-day cap for "
+					"Family responsibility leave exceeds the {1}-day cap for "
 					"the current service cycle. Already taken: {0} days."
-				).format(total_taken),
+				).format(total_taken, family_leave_days()),
 				title=_("Family Responsibility Leave Limit"),
 			)
 

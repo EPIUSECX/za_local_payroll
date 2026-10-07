@@ -19,10 +19,62 @@ Validation** enabled and an explicit **BCEA Leave Category**.
 - Workplace Injury leave requires category **Occupational Injury Leave**.
 - The annual-leave 21-day message is informational, not an entitlement decision.
 
-The app does not automate the full sick-leave cycle, family-responsibility
-eligibility/events, maternity/parental/adoption entitlements, hours-of-work rules,
-earnings-threshold effects, collective agreements, or annual-leave allocation.
-Those remain Preview/Controlled Manual.
+## BCEA leave standards
+
+The app ships the BCEA minimums as reference data (`setup/data/bcea_leave_standards.json`,
+each entitlement tied to a cited source) and builds from them on every migrate for a site
+that has a South African company:
+
+- **Leave Types** with the BCEA flag and category already set: Annual, Sick, Family
+  Responsibility, Maternity, Parental, Adoption, Commissioning Parental and Occupational
+  Injury, each named "... (BCEA)". They are inert until something allocates them. The
+  maternity, parental, adoption and commissioning types are leave without pay, because the
+  UIF Fund pays the benefit.
+- **Draft Leave Policies** "SA BCEA Annual and Family Leave" for a 5-day and a 6-day week.
+  A draft policy cannot be assigned. Submitting it is what enables it.
+
+Existing Leave Types and Policies are never edited, and nothing is submitted or allocated
+for you.
+
+### Setting up a client
+
+1. **Create the company policy:** `create_company_leave_policies(company, work_days_per_week,
+   annual_days, family_days)`. Days default to the minimum (annual 15 days for a 5-day
+   week and 18 for a 6-day week; family responsibility 3). A figure below the minimum is
+   refused. An employer may grant more.
+2. **Review and submit the policy.** A second person should submit it.
+3. **Assign it on each employee's own cycle:** `assign_leave_policy_by_cycle(policy, company)`.
+   The cycle runs 12 months from the date of joining, not the calendar or tax year. Use
+   `dry_run=1` first. Annual leave accrues monthly on the day of joining and unused days
+   expire 182 days after the cycle ends.
+4. **Grant sick leave:** `allocate_sick_leave_by_cycle(company, work_days_per_week)`. Sick
+   leave runs on a **36-month** cycle (30 days for a 5-day week, 36 for a 6-day week).
+   Pass `already_taken` for sick leave used earlier in the cycle outside this system.
+
+### Why sick leave is not in the policy
+
+HRMS allows one submitted Leave Policy Assignment per employee for any overlapping period.
+The 12-month annual cycle and the 36-month sick cycle overlap, so two policies cannot both
+be assigned. Sick leave is granted as a direct Leave Allocation per employee instead.
+
+### Decisions built in
+
+- Sick leave grants the full cycle entitlement from day one. The Act gives one day per 26
+  days worked in the first six months. Granting more is permitted, and modelling the ramp
+  would need a scheduled top-up job.
+- Family responsibility leave is refused until the employee has completed four months of
+  service, and is capped at three days in the service-anniversary cycle.
+- Not covered: part-time and variable-hours employees (the 1-in-17 rule), collective
+  agreements and sectoral determinations that give more, the shared maternity and parental
+  pool (below), and the earnings-threshold effects.
+
+### Maternity, parental, adoption and commissioning leave
+
+On 3 October 2025 the Constitutional Court (*Van Wyk v Minister of Employment and Labour*,
+CCT 308/23) declared the BCEA parental-leave provisions invalid and set an interim regime,
+suspended for 36 months, under which all parents share one pool of four months and ten
+days. The app provides the leave types but does not track the shared pool. Treat the
+entitlement as Controlled Manual and verify the current position before relying on it.
 
 ## Termination controls
 

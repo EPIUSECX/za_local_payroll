@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- BCEA leave standards: packaged, source-cited reference data, "(BCEA)" Leave Types with the
+  governance flags set, and draft "SA BCEA Annual and Family Leave" policies for a 5-day and
+  a 6-day week. Seeded on migrate for sites with a South African company; existing Leave
+  Types and Policies are never edited.
+- `create_company_leave_policies`, `assign_leave_policy_by_cycle` and
+  `allocate_sick_leave_by_cycle`: build company policies (refusing less than the statutory
+  minimum), assign them on each employee's own 12-month service cycle, and grant sick leave
+  on the 36-month cycle as a direct Leave Allocation.
+- Family responsibility leave is refused before four months of service.
+
 ## 2.1.0 - 2026-08-05
 
 Found by running a real 20-employee March 2023 payroll against a balanced parallel

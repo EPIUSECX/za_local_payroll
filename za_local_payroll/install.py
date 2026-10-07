@@ -9,6 +9,7 @@ from za_local_core.practitioner_guide.stage import unpublish_app_guide
 
 from za_local_payroll.patches.v1_0.transfer_payroll_ownership import execute as transfer_ownership
 from za_local_payroll.setup.custom_fields import apply_payroll_custom_fields
+from za_local_payroll.setup.leave_standards import ensure_bcea_leave_standards
 from za_local_payroll.setup.masters import seed_payroll_masters
 from za_local_payroll.setup.property_setters import apply_payroll_property_setters
 from za_local_payroll.setup.records import install_payroll_doctype_links
@@ -168,6 +169,7 @@ def _setup_workplace_modules() -> None:
 	seed_workplace_readiness()
 	ensure_workplace_print_formats()
 	seed_workplace_dashboards()
+	ensure_bcea_leave_standards()
 
 
 def seed_payroll_readiness(company: str | None = None) -> None:

@@ -1,0 +1,67 @@
+{
+	"version": "2026.1",
+	"status": "Packaged reference. A labour practitioner must verify it against the current Act and any bargaining-council or sectoral determination before a client policy is submitted.",
+	"reviewed_on": "2026-10-07",
+	"sources": {
+		"BCEA-ANNUAL-LEAVE": {
+			"title": "Department of Employment and Labour: Basic Guide to Annual Leave (BCEA section 20 and 21)",
+			"url": "https://www.labour.gov.za/DocumentCenter/Pages/Basic-Guide-to-Annual-Leave.aspx"
+		},
+		"BCEA-SICK-LEAVE": {
+			"title": "Basic Conditions of Employment Act 75 of 1997, section 22 and 23 (sick leave cycle and certificates)",
+			"url": "https://www.labour.gov.za/DocumentCenter/Acts/Basic%20Conditions%20of%20Employment/Act%20-%20Basic%20Conditions%20of%20Employment.pdf"
+		},
+		"BCEA-FAMILY-LEAVE": {
+			"title": "Department of Employment and Labour: Basic Guide to Family Responsibility Leave (BCEA section 27)",
+			"url": "https://www.labour.gov.za/documentcenter/pages/basic-guide-to-family-responsibility-leave.aspx"
+		},
+		"CCT-308-23": {
+			"title": "Van Wyk and Others v Minister of Employment and Labour (CCT 308/23) [2025] ZACC 20, 3 October 2025",
+			"url": "https://www.saflii.org/za/cases/ZACC/2025/20.html"
+		}
+	},
+	"annual_leave": {
+		"source": "BCEA-ANNUAL-LEAVE",
+		"cycle_months": 12,
+		"cycle_basis": "Twelve months from the date of employment (service anniversary), not the calendar or tax year.",
+		"statutory_minimum": "21 consecutive days, or by agreement 1 day for every 17 days worked or 1 hour for every 17 hours worked.",
+		"working_days_by_week": {"5": 15, "6": 18},
+		"working_days_note": "21 consecutive days expressed as working days for a 5-day and a 6-day week. A part-time or variable-hours employee needs the 1-in-17 rule and is not covered by this template.",
+		"accrual_frequency": "Monthly",
+		"take_within_days_after_cycle": 182,
+		"public_holidays_count_as_leave": false,
+		"cash_in_lieu": "Only on termination of employment."
+	},
+	"sick_leave": {
+		"source": "BCEA-SICK-LEAVE",
+		"cycle_months": 36,
+		"cycle_basis": "Thirty-six months from the date of employment, then each following 36 months.",
+		"statutory_minimum": "The days the employee normally works in six weeks, in each 36-month cycle.",
+		"working_days_by_week": {"5": 30, "6": 36},
+		"first_six_months": "1 day of paid sick leave for every 26 days worked. The template grants the full cycle entitlement from the first day, which is more generous than the Act and therefore permitted.",
+		"front_load_full_cycle": true,
+		"medical_certificate_after_consecutive_days": 2,
+		"repeat_absence_occasions": 2,
+		"repeat_absence_weeks": 8
+	},
+	"family_responsibility_leave": {
+		"source": "BCEA-FAMILY-LEAVE",
+		"cycle_months": 12,
+		"days": 3,
+		"min_service_months": 4,
+		"min_days_per_week": 4,
+		"min_hours_per_month": 24,
+		"qualifying_events": "Birth or illness of the employee's child, or death of a spouse or life partner, parent, adoptive parent, grandparent, child, adopted child, grandchild or sibling.",
+		"unused_leave_lapses_at_cycle_end": true
+	},
+	"maternity_and_parental_leave": {
+		"source": "CCT-308-23",
+		"status": "Interim order of the Constitutional Court, effective 3 October 2025 and suspended for 36 months while Parliament amends the Act. Verify before use.",
+		"effective_from": "2025-10-03",
+		"review_by": "2028-10-03",
+		"shared_pool": {"months": 4, "days": 10},
+		"sharing": "All parents, whether biological, adoptive or commissioning, share one pool of four months and ten days. Parents agree the split. Without agreement it is divided as equally as possible.",
+		"birthing_parent": "May start up to four weeks before the expected birth. Must not work for six weeks after the birth unless a medical practitioner certifies fitness.",
+		"pay": "Unpaid by the employer unless the contract or policy says otherwise. UIF benefits are claimed from the Fund."
+	}
+}
