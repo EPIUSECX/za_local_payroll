@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 from unittest.mock import patch
+from unittest.mock import patch as patch_object
 
 import frappe
 from frappe.tests.classes import UnitTestCase
@@ -128,3 +129,43 @@ class TestFamilyResponsibilityEligibility(UnitTestCase):
 			self.assertRaises(frappe.ValidationError),
 		):
 			ZALeaveApplication.validate_family_leave_bcea(self._application())
+
+
+class TestBCEASectionPlacement(UnitTestCase):
+	def test_section_is_anchored_inside_the_details_tab(self):
+		from za_local_payroll.setup.workplace_custom_fields import WORKPLACE_CUSTOM_FIELDS
+
+		section = next(
+			field
+			for field in WORKPLACE_CUSTOM_FIELDS["Leave Type"]
+			if field["fieldname"] == "za_bcea_section"
+		)
+		# "rounding" is the last Details field. A Section Break anchored there is carried past the
+		# Limits and Connections tab breaks and lands under Connections.
+		self.assertEqual("earning_component", section["insert_after"])
+
+	def test_patch_moves_only_the_original_anchor(self):
+		from za_local_payroll.patches.v1_5 import move_bcea_section_into_details_tab as patch
+
+		with (
+			patch_object("frappe.db.exists", return_value=True),
+			patch_object("frappe.db.get_value", return_value="rounding"),
+			patch_object("frappe.db.set_value") as set_value,
+			patch_object("frappe.clear_cache"),
+		):
+			patch.execute()
+		set_value.assert_called_once_with(
+			"Custom Field",
+			"Leave Type-za_bcea_section",
+			"insert_after",
+			"earning_component",
+			update_modified=False,
+		)
+		with (
+			patch_object("frappe.db.exists", return_value=True),
+			patch_object("frappe.db.get_value", return_value="my_own_anchor"),
+			patch_object("frappe.db.set_value") as set_value,
+			patch_object("frappe.clear_cache"),
+		):
+			patch.execute()
+		set_value.assert_not_called()

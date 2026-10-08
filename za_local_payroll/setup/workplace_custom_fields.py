@@ -175,7 +175,10 @@ WORKPLACE_CUSTOM_FIELDS = {
 			"fieldname": "za_bcea_section",
 			"label": "South African BCEA",
 			"fieldtype": "Section Break",
-			"insert_after": "rounding",
+			# A Section Break inserted after the last field of the Details tab is carried past
+			# the Limits and Connections tab breaks by Frappe, so anchor it in the middle of the
+			# Details tab instead: after the encashment section, before Earned Leave.
+			"insert_after": "earning_component",
 			"collapsible": 1,
 			"module": "SA Labour",
 		},
