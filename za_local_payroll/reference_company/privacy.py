@@ -11,11 +11,11 @@ import frappe
 from frappe.utils import add_days, now_datetime, today
 
 from za_local_payroll.reference_company import constants as C
+from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.ee_skills import _private
 from za_local_payroll.reference_company.governance import acting_as, user
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 from za_local_payroll.reference_company.labour import outcome
-from za_local_payroll.reference_company.payroll_setup import EVIDENCE
 
 
 def _public(name):
@@ -44,7 +44,7 @@ def _reviewed(doctype, key, values, results, label):
 			}
 		)
 		doc.insert()
-		frappe.db.commit()
+		commit_stage()
 		outcome(
 			results, f"{label}_preparer_approves", lambda: frappe.get_doc(doctype, doc.name).submit(), True
 		)
@@ -332,7 +332,7 @@ def stage_privacy_registers() -> dict:
 		},
 		"tests": r,
 	}
-	(EVIDENCE / "privacy_registers.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "privacy_registers.json").write_text(json.dumps(out, indent=1, default=str))
 	return out
 
 
@@ -342,7 +342,7 @@ def stage_privacy_cases() -> dict:
 	dsr = frappe.db.get_value("ZA Data Subject Request", {"company": C.COMPANY, "status": "Closed"}, "name")
 	if not dsr:
 		frappe.db.delete("ZA Data Subject Request", {"company": C.COMPANY})
-		frappe.db.commit()
+		commit_stage()
 		with acting_as(user("preparer")):
 			d = frappe.get_doc(
 				{
@@ -366,7 +366,7 @@ def stage_privacy_cases() -> dict:
 				True,
 			)
 			d.insert()
-			frappe.db.commit()
+			commit_stage()
 			dsr = d.name
 
 			def step(**values):
@@ -462,7 +462,7 @@ def stage_privacy_cases() -> dict:
 
 	outcome(r, "dsr_fulfilled_public_response_by_reviewer", public_response_by_reviewer, True)
 	frappe.db.delete("ZA Data Subject Request", {"data_subject_reference": "SYNTH-DS-0002"})
-	frappe.db.commit()
+	commit_stage()
 	with acting_as(user("reviewer")):
 		masked = frappe.get_list(
 			"ZA Data Subject Request", fields=["name", "data_subject_reference", "request_scope"]
@@ -482,7 +482,7 @@ def stage_privacy_cases() -> dict:
 	)
 	if not incident:
 		frappe.db.delete("ZA Personal Information Incident", {"company": C.COMPANY})
-		frappe.db.commit()
+		commit_stage()
 		with acting_as(user("preparer")):
 			i = frappe.get_doc(
 				{
@@ -502,7 +502,7 @@ def stage_privacy_cases() -> dict:
 				}
 			)
 			i.insert()
-			frappe.db.commit()
+			commit_stage()
 			incident = i.name
 
 			def istep(**values):
@@ -593,5 +593,5 @@ def stage_privacy_cases() -> dict:
 		"today": today(),
 		"dsr_due_rule": str(add_days("2026-09-01", 30)),
 	}
-	(EVIDENCE / "privacy_cases.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "privacy_cases.json").write_text(json.dumps(out, indent=1, default=str))
 	return out

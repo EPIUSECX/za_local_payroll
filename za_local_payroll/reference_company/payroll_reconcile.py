@@ -10,8 +10,8 @@ from frappe.utils import flt, get_last_day, getdate
 from za_local_payroll.reference_company import constants as C
 from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.governance import acting_as, user
-from za_local_payroll.reference_company.guard import require_reference_site
-from za_local_payroll.reference_company.payroll_setup import EVIDENCE, a
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
+from za_local_payroll.reference_company.payroll_setup import a
 
 MONTH_NAMES = [
 	"January",
@@ -30,7 +30,7 @@ MONTH_NAMES = [
 
 
 def _try(label, fn, out):
-	frappe.db.commit()
+	commit_stage()
 	try:
 		fn()
 	except Exception as exc:
@@ -154,7 +154,7 @@ def reconcile_payroll_gl() -> dict:
 		"entries_ok": sum(1 for r in results if r["all_ok"] and r["balanced"]),
 		"entries_total": len(results),
 	}
-	(EVIDENCE / "payroll_gl_reconciliation.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "payroll_gl_reconciliation.json").write_text(json.dumps(out, indent=1, default=str))
 	return {k: v for k, v in out.items() if k != "entries"} | {
 		"failing": [r["payroll_entry"] for r in results if not r["all_ok"]]
 	}
@@ -194,11 +194,11 @@ def stage_payment_batch() -> dict:
 		batch.insert(ignore_permissions=True)
 		batch.submit()
 		batch_name = batch.name
-		frappe.db.commit()
+		commit_stage()
 	_try("duplicate_active_batch", lambda: new().insert(ignore_permissions=True), controls)
 	first = generate_eft_file(payment_batch=batch_name)
 	second = generate_eft_file(payment_batch=batch_name)
-	frappe.db.commit()
+	commit_stage()
 	batch = frappe.get_doc("Payroll Payment Batch", batch_name)
 	content = frappe.get_doc("File", {"file_url": first["file_url"]}).get_content()
 	if isinstance(content, bytes):
@@ -215,7 +215,7 @@ def stage_payment_batch() -> dict:
 		),
 		2,
 	)
-	(EVIDENCE / "fnb_obe_october_2026.csv").write_text(content)
+	(paths.payroll() / "fnb_obe_october_2026.csv").write_text(content)
 
 	# Snapshot change: alter an employee bank account after submission -> regeneration must be refused.
 	employee_account = frappe.db.get_value(
@@ -229,11 +229,11 @@ def stage_payment_batch() -> dict:
 	original_no = frappe.db.get_value("Bank Account", employee_account, "bank_account_no")
 	frappe.db.set_value("Bank Account", employee_account, "bank_account_no", "62099999999")
 	frappe.db.set_value("Payroll Payment Batch", batch_name, "eft_file_path", None)
-	frappe.db.commit()
+	commit_stage()
 	_try("regenerate_after_bank_change", lambda: generate_eft_file(payment_batch=batch_name), controls)
 	frappe.db.set_value("Bank Account", employee_account, "bank_account_no", original_no)
 	frappe.db.set_value("Payroll Payment Batch", batch_name, "eft_file_path", first["file_url"])
-	frappe.db.commit()
+	commit_stage()
 
 	# Settle net pay from the bank (HRMS bank entry) and show what remains in Payroll Payable.
 	bank_je = _bank_entry(pe)
@@ -260,7 +260,7 @@ def stage_payment_batch() -> dict:
 		"payroll_payable_remaining_for_entry": round(flt(remaining), 2),
 		"controls": controls,
 	}
-	(EVIDENCE / "payment_batch.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "payment_batch.json").write_text(json.dumps(out, indent=1, default=str))
 	return out
 
 
@@ -414,7 +414,7 @@ def stage_emp201() -> dict:
 		)
 	out["march_filing"] = out["filings"][months[0]["month"]]
 	out["all_months_filed"] = all(f.get("status") == "Accepted" for f in out["filings"].values())
-	(EVIDENCE / "emp201_year.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "emp201_year.json").write_text(json.dumps(out, indent=1, default=str))
 	return {k: v for k, v in out.items() if k != "months"} | {
 		"not_ok": [m["month"] for m in months if not m["ok"]]
 	}
@@ -429,7 +429,7 @@ def stage_certificates() -> dict:
 	from za_local_payroll.reference_company.personas import PERSONAS
 
 	fiscal_year = frappe.db.get_value("Fiscal Year", {"year_start_date": "2026-03-01"}, "name")
-	golden = build_golden(GoldenEngine(paths.GOLDEN_FILE))
+	golden = build_golden(GoldenEngine(paths.golden_file()))
 	results, errors = [], []
 	for key in PERSONAS:
 		employee = employee_for(key)
@@ -508,9 +508,9 @@ def stage_certificates() -> dict:
 		except Exception as exc:
 			frappe.db.rollback()
 			errors.append({"persona": key, "error": frappe.utils.strip_html(str(exc))[:400]})
-	frappe.db.commit()
+	commit_stage()
 	out = {"certificates": results, "errors": errors}
-	(EVIDENCE / "irp5_certificates.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "irp5_certificates.json").write_text(json.dumps(out, indent=1, default=str))
 	return {"generated": len(results), "errors": errors}
 
 
@@ -568,7 +568,7 @@ def stage_emp501() -> dict:
 				doc.reviewed_by = user("payroll_reviewer")
 				with acting_as(user("payroll_reviewer")):
 					doc.submit()
-			frappe.db.commit()
+			commit_stage()
 			certificates[employee] = name
 		except Exception as exc:
 			frappe.db.rollback()
@@ -620,7 +620,7 @@ def stage_emp501() -> dict:
 			)
 		emp501.reviewed_by = user("payroll_reviewer")
 		emp501.save(ignore_permissions=True)
-		frappe.db.commit()
+		commit_stage()
 		name = emp501.name
 	emp501 = frappe.get_doc("EMP501 Reconciliation", name)
 	if emp501.docstatus == 0:
@@ -667,7 +667,7 @@ def stage_emp501() -> dict:
 		try:
 			with acting_as(user("payroll_reviewer")):
 				emp501.submit()
-			frappe.db.commit()
+			commit_stage()
 		except Exception as exc:
 			frappe.db.rollback()
 			controls["final_submit_error"] = frappe.utils.strip_html(str(exc))[:800]
@@ -688,7 +688,7 @@ def stage_emp501() -> dict:
 	}
 	if emp501.docstatus == 1:
 		out["filing"] = _payroll_filing_lifecycle("EMP501 Reconciliation", name, "2027-05-31", controls)
-	(EVIDENCE / "emp501_final.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "emp501_final.json").write_text(json.dumps(out, indent=1, default=str))
 	return out
 
 
@@ -740,7 +740,7 @@ def _payroll_filing_lifecycle(doctype, name, due_date, controls, probe=True) -> 
 		filing_name = frappe.db.get_value(doctype, name, "za_filing")
 		if frappe.db.get_value("ZA Filing", filing_name, "unexplained_difference"):
 			# The declaration must tie to the ledger; a difference is a finding, not something to explain away.
-			frappe.db.commit()
+			commit_stage()
 			return {
 				"filing": filing_name,
 				"unexpected_difference": frappe.db.get_value(
@@ -765,7 +765,7 @@ def _payroll_filing_lifecycle(doctype, name, due_date, controls, probe=True) -> 
 			)
 		with acting_as(user("submitter")):
 			frappe.get_doc("ZA Submission Receipt", receipt).submit()
-		frappe.db.commit()
+		commit_stage()
 	filing = frappe.get_doc("ZA Filing", frappe.db.get_value(doctype, name, "za_filing"))
 	return {
 		"filing": filing.name,
@@ -791,7 +791,7 @@ def render_certificate_pdfs() -> list[str]:
 	from za_local_payroll.reference_company.payroll_run import employee_for
 
 	require_reference_site()
-	out_dir = EVIDENCE / "pdf"
+	out_dir = paths.payroll() / "pdf"
 	out_dir.mkdir(parents=True, exist_ok=True)
 	written = []
 	for persona in CERTIFICATE_PDF_PERSONAS:

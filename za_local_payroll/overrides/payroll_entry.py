@@ -553,6 +553,7 @@ class ZAPayrollEntry(PayrollEntry):
 					# Enqueue for background processing
 					frappe.enqueue(
 						create_salary_slips_for_employees,
+						enqueue_after_commit=True,
 						timeout=600,
 						employees=employees,
 						args=args,

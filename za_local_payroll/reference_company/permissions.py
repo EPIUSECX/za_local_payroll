@@ -11,9 +11,9 @@ import json
 import frappe
 
 from za_local_payroll.reference_company import constants as C
+from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.governance import acting_as
 from za_local_payroll.reference_company.guard import require_reference_site
-from za_local_payroll.reference_company.payroll_setup import EVIDENCE
 
 DOCTYPES = (
 	"ZA Statutory Source",
@@ -100,5 +100,5 @@ def stage_permission_matrix() -> dict:
 		"sod_probe": sod,
 		"company": C.COMPANY,
 	}
-	(EVIDENCE / "permission_matrix.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "permission_matrix.json").write_text(json.dumps(out, indent=1, default=str))
 	return out

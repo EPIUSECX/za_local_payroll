@@ -232,7 +232,7 @@ def _readiness():
 
 def stage_config_evidence() -> dict:
 	require_reference_site()
-	out_dir = paths.ROOT / "config"
+	out_dir = paths.root() / "config"
 	out_dir.mkdir(parents=True, exist_ok=True)
 	data = {
 		"sources": _sources(),

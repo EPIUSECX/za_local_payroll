@@ -21,12 +21,16 @@ from za_local_payroll.reference_company import constants as C
 from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.ee_skills import _fy, _private
 from za_local_payroll.reference_company.governance import acting_as, user
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 from za_local_payroll.reference_company.labour import _allocate, outcome
 from za_local_payroll.reference_company.payroll_run import employee_for
-from za_local_payroll.reference_company.payroll_setup import EVIDENCE
 
-GOLDEN = json.loads(paths.GOLDEN_FILE.read_text())["coida"]
+
+def golden() -> dict:
+	"""The golden COIDA figures, read when needed so importing this module never needs the file."""
+	return json.loads(paths.golden_file().read_text())["coida"]
+
+
 RATE = 0.39  # synthetic reference-company assessment notice, class 9 (governance.SYNTHETIC_COIDA_NOTICE)
 DIRECTOR = "P09_retirement_cap"
 
@@ -66,7 +70,7 @@ def golden_roe() -> dict:
 		fields=["name", "employee", "end_date"],
 		order_by="employee, end_date, name",
 	)
-	cap = flt(GOLDEN["annual_earnings_cap"])
+	cap = flt(golden()["annual_earnings_cap"])
 	directors = {employee_for(DIRECTOR)}
 	out, unknown = {}, set()
 	for variant, index in (("configured", 0), ("notice_2025", 1)):
@@ -101,7 +105,7 @@ def golden_roe() -> dict:
 			"director_earnings": round(director_total, 2),
 			"employee_earnings_excl_directors": round(total - director_total, 2),
 			"assessment_before_minimum": before_min,
-			"assessment_fee": round(max(before_min, flt(GOLDEN["minimum_assessment"])), 2),
+			"assessment_fee": round(max(before_min, flt(golden()["minimum_assessment"])), 2),
 			"capped_employees": sorted(k for k, v in running.items() if v > cap),
 		}
 	out["unclassified_components"] = sorted(unknown)
@@ -126,13 +130,13 @@ def _new_return(industry_class="9", fiscal_year=None):
 def stage_coida_return() -> dict:
 	require_reference_site()
 	frappe.db.set_value("Employee", employee_for(DIRECTOR), "za_coida_director", 1)
-	frappe.db.commit()
+	commit_stage()
 	r = {}
 	golden = golden_roe()
 	name = frappe.db.get_value("COIDA Annual Return", {"company": C.COMPANY, "docstatus": 1}, "name")
 	if not name:
 		frappe.db.delete("COIDA Annual Return", {"company": C.COMPANY, "docstatus": 0})
-		frappe.db.commit()
+		commit_stage()
 		with acting_as(user("hr_manager")):
 
 			def unknown_class():
@@ -144,7 +148,7 @@ def stage_coida_return() -> dict:
 
 			def drop_drafts():
 				frappe.db.delete("COIDA Annual Return", {"company": C.COMPANY, "docstatus": 0})
-				frappe.db.commit()
+				commit_stage()
 
 			outcome(r, "unknown_industry_class_fetch", unknown_class, True)
 			drop_drafts()
@@ -154,7 +158,7 @@ def stage_coida_return() -> dict:
 			doc.insert()
 			doc.fetch_employee_data()
 			doc.save()
-			frappe.db.commit()
+			commit_stage()
 			name = doc.name
 
 			def stale():
@@ -171,9 +175,9 @@ def stage_coida_return() -> dict:
 
 			outcome(r, "source_changed_after_fetch_rejected", director_flip, True)
 			frappe.db.set_value("Employee", employee_for("P03_high_income"), "za_coida_director", 0)
-			frappe.db.commit()
+			commit_stage()
 		frappe.db.set_value("COIDA Annual Return", name, "reviewed_by", user("hr_reviewer"))
-		frappe.db.commit()
+		commit_stage()
 		with acting_as(user("payroll_user")):
 			outcome(
 				r,
@@ -195,7 +199,7 @@ def stage_coida_return() -> dict:
 				lambda: frappe.get_doc("COIDA Annual Return", name).submit(),
 				False,
 			)
-		frappe.db.commit()
+		commit_stage()
 	doc = frappe.get_doc("COIDA Annual Return", name)
 	actual = {
 		"slips": doc.source_slip_count,
@@ -234,14 +238,14 @@ def stage_coida_return() -> dict:
 		"pass": abs(monthly_total - flt(doc.total_annual_earnings)) <= 0.01,
 	}
 	checks["cap_value"] = {
-		"golden": GOLDEN["annual_earnings_cap"],
+		"golden": golden()["annual_earnings_cap"],
 		"actual": actual["cap"],
-		"pass": flt(actual["cap"]) == flt(GOLDEN["annual_earnings_cap"]),
+		"pass": flt(actual["cap"]) == flt(golden()["annual_earnings_cap"]),
 	}
 	checks["minimum"] = {
-		"golden": GOLDEN["minimum_assessment"],
+		"golden": golden()["minimum_assessment"],
 		"actual": actual["minimum_assessment"],
-		"pass": flt(actual["minimum_assessment"]) == flt(GOLDEN["minimum_assessment"]),
+		"pass": flt(actual["minimum_assessment"]) == flt(golden()["minimum_assessment"]),
 	}
 	notice_gap = round(golden["notice_2025"]["assessable_capped"] - cfg["assessable_capped"], 2)
 	# ROE CF-2A form: per-month employee/director split and free food & quarters are not on the return.
@@ -254,7 +258,7 @@ def stage_coida_return() -> dict:
 		"notice_2025_earnings_gap": notice_gap,
 		"notice_2025_fee_gap": round(golden["notice_2025"]["assessment_fee"] - cfg["assessment_fee"], 2),
 	}
-	(EVIDENCE / "coida_return.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "coida_return.json").write_text(json.dumps(out, indent=1, default=str))
 	return out
 
 
@@ -287,7 +291,7 @@ def stage_injury_claim() -> dict:
 	_allocate(employee, "ZA Occupational Injury Leave", 30)
 	frappe.db.set_value("Employee", employee, "leave_approver", user("hr_manager"))
 	frappe.db.delete("Workplace Injury", {"employee": employee, "docstatus": 0})
-	frappe.db.commit()
+	commit_stage()
 	with acting_as(user("payroll_user")):
 		outcome(r, "payroll_user_cannot_create_injury", lambda: frappe.get_doc(dict(base)).insert(), True)
 	with acting_as(user("employee")):
@@ -325,7 +329,7 @@ def stage_injury_claim() -> dict:
 				"status": doc.statutory_deadline_status,
 			}
 			doc.submit()
-			frappe.db.commit()
+			commit_stage()
 			injury = doc.name
 		inj = frappe.get_doc("Workplace Injury", injury)
 		r["injury"] = {
@@ -454,5 +458,5 @@ def stage_injury_claim() -> dict:
 		for f in frappe.get_meta("OID Claim").fields
 		if f.fieldname in ("id_number", "injury_description", "medical_reports")
 	}
-	(EVIDENCE / "coida_injury_claim.json").write_text(json.dumps(r, indent=1, default=str))
+	(paths.payroll() / "coida_injury_claim.json").write_text(json.dumps(r, indent=1, default=str))
 	return r

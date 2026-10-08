@@ -6,8 +6,9 @@ import frappe
 from frappe.utils import add_days, get_first_day, get_last_day, getdate
 
 from za_local_payroll.reference_company import constants as C
-from za_local_payroll.reference_company.guard import require_reference_site
-from za_local_payroll.reference_company.payroll_setup import EVIDENCE, a
+from za_local_payroll.reference_company import paths
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
+from za_local_payroll.reference_company.payroll_setup import a
 from za_local_payroll.reference_company.schedule import (
 	ADDITIONAL_SALARY,
 	CANCELLED_ADDITIONAL_SALARY,
@@ -88,7 +89,7 @@ def stage_additional_salaries() -> dict:
 		add.submit()
 		add.cancel()
 		created.append(f"{add.name} (cancelled)")
-	frappe.db.commit()
+	commit_stage()
 	return {"created": created}
 
 
@@ -141,7 +142,7 @@ def stage_termination_inputs() -> dict:
 		directive.insert(ignore_permissions=True)
 		directive.submit()
 		out["directive"] = directive.name
-	frappe.db.commit()
+	commit_stage()
 	return out
 
 
@@ -184,17 +185,17 @@ def run_month(
 	pe.insert(ignore_permissions=True)
 	pe.fill_employee_details()
 	pe.save(ignore_permissions=True)
-	frappe.db.commit()  # Desk saves before Submit; HRMS rolls back on slip errors
+	commit_stage()  # Desk saves before Submit; HRMS rolls back on slip errors
 	pe.submit()  # creates draft Salary Slips
 	pe.reload()
 	slips = frappe.get_all("Salary Slip", filters={"payroll_entry": pe.name}, pluck="name")
 	out = {"payroll_entry": pe.name, "slips": len(slips)}
 	if submit:
 		pe.submit_salary_slips()
-		frappe.db.commit()
+		commit_stage()
 		pe.reload()
 		out["contribution_je"] = pe.make_company_contribution_entry()
-	frappe.db.commit()
+	commit_stage()
 	return out
 
 
@@ -207,8 +208,8 @@ def run_year(through: str | None = None) -> dict:
 		results[month] = run_month(month)
 		if through and month == through:
 			break
-	EVIDENCE.mkdir(parents=True, exist_ok=True)
-	(EVIDENCE / "payroll_year_runs.json").write_text(json.dumps(results, indent=1, default=str))
+	paths.payroll().mkdir(parents=True, exist_ok=True)
+	(paths.payroll() / "payroll_year_runs.json").write_text(json.dumps(results, indent=1, default=str))
 	return results
 
 
@@ -224,7 +225,7 @@ def run_frequencies() -> dict:
 		s = add_days(week_start, 14 * i)
 		out[f"fortnight_{i + 1}"] = run_month(None, "Fortnightly", start=s, end=add_days(s, 13))
 	out["timesheet"] = _run_timesheet_month("2026-09")
-	frappe.db.commit()
+	commit_stage()
 	return out
 
 
@@ -283,8 +284,10 @@ def probe_termination_month() -> dict:
 	}
 	pe = frappe.get_doc("Payroll Entry", result["payroll_entry"])
 	pe.cancel()
-	frappe.db.commit()
-	(EVIDENCE / "termination_probe_as_installed.json").write_text(json.dumps(captured, indent=1, default=str))
+	commit_stage()
+	(paths.payroll() / "termination_probe_as_installed.json").write_text(
+		json.dumps(captured, indent=1, default=str)
+	)
 	return captured
 
 
@@ -327,11 +330,11 @@ def configure_termination_workaround(non_taxable_severance: bool = True) -> str:
 		)
 		add.insert(ignore_permissions=True)
 		add.submit()
-	frappe.db.commit()
+	commit_stage()
 	if non_taxable_severance:
 		# Final configuration: the directive tax is the only tax on the severance benefit.
 		frappe.db.set_value("Salary Component", "Severance Benefit", {"is_tax_applicable": 0})
-		frappe.db.commit()
+		commit_stage()
 	return employee
 
 
@@ -347,7 +350,9 @@ def apply_termination_workaround_and_run() -> dict:
 		"deductions": {r.salary_component: r.amount for r in slip.deductions},
 		"net": slip.net_pay,
 	}
-	(EVIDENCE / "termination_with_workaround.json").write_text(json.dumps(result, indent=1, default=str))
+	(paths.payroll() / "termination_with_workaround.json").write_text(
+		json.dumps(result, indent=1, default=str)
+	)
 	return result
 
 
@@ -370,7 +375,7 @@ def cancel_payroll_entry(payroll_entry: str) -> dict:
 		frappe.get_doc("Salary Slip", slip).cancel()
 	out["cancelled_slips"] = len(slips)
 	frappe.get_doc("Payroll Entry", payroll_entry).cancel()
-	frappe.db.commit()
+	commit_stage()
 	out["gl_rows_live"] = frappe.db.count(
 		"GL Entry", {"voucher_no": ["in", out.get("cancelled_journals", [])], "is_cancelled": 0}
 	)
@@ -391,7 +396,7 @@ def rerun_termination_month_non_taxable_severance() -> dict:
 	)
 	cancelled = cancel_payroll_entry(pe) if pe else None
 	frappe.db.set_value("Salary Component", "Severance Benefit", {"is_tax_applicable": 0})
-	frappe.db.commit()
+	commit_stage()
 	result = run_month("2026-11")
 	employee = employee_for(TERMINATION["persona"])
 	slip = frappe.get_doc("Salary Slip", {"payroll_entry": result["payroll_entry"], "employee": employee})
@@ -406,5 +411,5 @@ def rerun_termination_month_non_taxable_severance() -> dict:
 			},
 		}
 	)
-	(EVIDENCE / "termination_final.json").write_text(json.dumps(result, indent=1, default=str))
+	(paths.payroll() / "termination_final.json").write_text(json.dumps(result, indent=1, default=str))
 	return result

@@ -18,20 +18,19 @@ from frappe.utils.file_manager import save_file
 
 from za_local_payroll.reference_company import constants as C
 from za_local_payroll.reference_company import paths
-from za_local_payroll.reference_company.guard import require_reference_site
-
-EVIDENCE_DIR = paths.SOURCES
-GOLDEN = paths.GOLDEN_FILE
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 
 
 @contextmanager
 def acting_as(user: str):
+	# The harness impersonates each role to prove maker-checker and permissions. It only runs on
+	# an isolated developer-mode test site (require_reference_site), never on a live site.
 	previous = frappe.session.user
-	frappe.set_user(user)
+	frappe.set_user(user)  # nosemgrep
 	try:
 		yield
 	finally:
-		frappe.set_user(previous)
+		frappe.set_user(previous)  # nosemgrep
 
 
 def user(key: str) -> str:
@@ -39,7 +38,7 @@ def user(key: str) -> str:
 
 
 def golden() -> dict:
-	return json.loads(GOLDEN.read_text())
+	return json.loads(paths.golden_file().read_text())
 
 
 def _bundle(name: str, files: list[str]) -> bytes:
@@ -52,8 +51,8 @@ def _bundle(name: str, files: list[str]) -> bytes:
 	with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
 		for filename in sorted(files):
 			info = zipfile.ZipInfo(filename, date_time=(2026, 10, 1, 0, 0, 0))
-			archive.writestr(info, (EVIDENCE_DIR / filename).read_bytes())
-		manifest = {f: hashlib.sha256((EVIDENCE_DIR / f).read_bytes()).hexdigest() for f in sorted(files)}
+			archive.writestr(info, (paths.sources() / filename).read_bytes())
+		manifest = {f: hashlib.sha256((paths.sources() / f).read_bytes()).hexdigest() for f in sorted(files)}
 		archive.writestr(
 			zipfile.ZipInfo("MANIFEST.json", date_time=(2026, 10, 1, 0, 0, 0)),
 			json.dumps({"bundle": name, "files": manifest}, indent=1, sort_keys=True),
@@ -228,7 +227,7 @@ def stage_governance() -> dict:
 	}
 	profile = _approve_compliance_profile()
 	_link_vat_obligation(obligations["VAT201"])
-	frappe.db.commit()
+	commit_stage()
 	return {"sources": sources, "packs": packs, "obligations": obligations, "profile": profile}
 
 

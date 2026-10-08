@@ -35,7 +35,7 @@ from za_local_payroll.reference_company import (
 	vat201,
 	vat_cycle,
 )
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 from za_local_payroll.reference_company.schedule import MONTHS
 
 BEFORE_TERMINATION = [m for m in MONTHS if m < "2026-11"]
@@ -101,7 +101,7 @@ def _summary(value):
 
 def run_all(restart: bool = False) -> dict:
 	require_reference_site()
-	log_file = paths.ROOT / "run_all.json"
+	log_file = paths.root() / "run_all.json"
 	log = {} if restart or not log_file.exists() else json.loads(log_file.read_text())
 	log.setdefault("site", frappe.local.site)
 	stages = log.setdefault("stages", {})
@@ -111,7 +111,7 @@ def run_all(restart: bool = False) -> dict:
 		started = time.time()
 		try:
 			result = fn()
-			frappe.db.commit()
+			commit_stage()
 			stages[label] = {
 				"status": "complete",
 				"seconds": round(time.time() - started, 1),

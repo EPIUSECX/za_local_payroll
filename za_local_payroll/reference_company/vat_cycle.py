@@ -8,10 +8,9 @@ from frappe.utils import flt
 
 from za_local_payroll.reference_company import constants as C
 from za_local_payroll.reference_company import paths
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 from za_local_payroll.reference_company.vat import account, template
 
-EVIDENCE = paths.VAT
 VAT_CUSTOMER = "Ref Customer VAT Vendor (Pty) Ltd"
 INDIVIDUAL = "Ref Customer Individual"
 EXPORT_CUSTOMER = "Ref Export Customer Inc"
@@ -352,15 +351,15 @@ def stage_vat_transactions() -> dict:
 	docs["PE2 payment P1"] = _payment_entry(
 		"PE2", "Pay", "Supplier", VAT_SUPPLIER, docs["P1 standard"], "Purchase Invoice", "2026-08-21"
 	)
-	frappe.db.commit()
+	commit_stage()
 	result = {
 		"documents": docs,
 		"usd_receivable": ar_usd,
 		"readiness": readiness_report(docs),
 		"gl_reconciliation": gl_reconciliation("2026-07-01", "2026-08-31"),
 	}
-	EVIDENCE.mkdir(parents=True, exist_ok=True)
-	(EVIDENCE / "vat_transactions.json").write_text(json.dumps(result, indent=1, default=str))
+	paths.vat().mkdir(parents=True, exist_ok=True)
+	(paths.vat() / "vat_transactions.json").write_text(json.dumps(result, indent=1, default=str))
 	return result
 
 
@@ -453,14 +452,21 @@ def gl_reconciliation(from_date, to_date) -> dict:
 		)[0][0]
 		return flt(row, 2)
 
-	def source(doctype, child, acc):
-		return flt(
-			frappe.db.sql(
-				f"""select sum(t.base_tax_amount * if(p.is_return and p.base_net_total>0,-1,1)) from `tab{child}` t
-			join `tab{doctype}` p on p.name=t.parent where p.docstatus=1 and p.company=%s and t.account_head=%s
+	# One literal statement per document type, so no SQL text is ever built from a variable.
+	tax_source_sql = {
+		"Sales Invoice": """select sum(t.base_tax_amount * if(p.is_return and p.base_net_total>0,-1,1))
+			from `tabSales Taxes and Charges` t join `tabSales Invoice` p on p.name=t.parent
+			where p.docstatus=1 and p.company=%s and t.account_head=%s
 			and p.posting_date between %s and %s""",
-				(C.COMPANY, acc, from_date, to_date),
-			)[0][0],
+		"Purchase Invoice": """select sum(t.base_tax_amount * if(p.is_return and p.base_net_total>0,-1,1))
+			from `tabPurchase Taxes and Charges` t join `tabPurchase Invoice` p on p.name=t.parent
+			where p.docstatus=1 and p.company=%s and t.account_head=%s
+			and p.posting_date between %s and %s""",
+	}
+
+	def source(doctype, _child, acc):
+		return flt(
+			frappe.db.sql(tax_source_sql[doctype], (C.COMPANY, acc, from_date, to_date))[0][0],
 			2,
 		)
 
@@ -491,7 +497,7 @@ def render_invoice_pdfs(docs: dict | None = None) -> list[str]:
 	from frappe.utils.pdf import get_pdf
 	from za_local_core.sa_vat.tax_invoice import check_tax_invoice_readiness
 
-	EVIDENCE.mkdir(parents=True, exist_ok=True)
+	paths.vat().mkdir(parents=True, exist_ok=True)
 	written = []
 	names = frappe.get_all(
 		"Sales Invoice",
@@ -502,7 +508,7 @@ def render_invoice_pdfs(docs: dict | None = None) -> list[str]:
 	for row in names:
 		fmt = check_tax_invoice_readiness(row.name)["recommended_print_format"] or "Standard"
 		html = frappe.get_print("Sales Invoice", row.name, print_format=fmt)
-		path = EVIDENCE / f"{row.remarks.split(':')[1].replace(' ', '_')}_{fmt.replace(' ', '_')}.pdf"
+		path = paths.vat() / f"{row.remarks.split(':')[1].replace(' ', '_')}_{fmt.replace(' ', '_')}.pdf"
 		path.write_bytes(get_pdf(html))
 		written.append(str(path))
 	return written
@@ -533,5 +539,5 @@ def correct_zero_and_exempt_purchases() -> dict:
 	):
 		frappe.get_doc("Journal Entry", je).cancel()
 		out.setdefault("cancelled probes", []).append(je)
-	frappe.db.commit()
+	commit_stage()
 	return out

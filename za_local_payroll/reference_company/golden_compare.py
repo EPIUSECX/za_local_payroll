@@ -17,7 +17,6 @@ from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.golden_engine import GoldenEngine, Month, d
 from za_local_payroll.reference_company.guard import require_reference_site
 from za_local_payroll.reference_company.payroll_run import employee_for
-from za_local_payroll.reference_company.payroll_setup import EVIDENCE
 from za_local_payroll.reference_company.personas import PERSONAS
 from za_local_payroll.reference_company.schedule import ADDITIONAL_SALARY, MONTHS, TERMINATION
 
@@ -177,7 +176,7 @@ def actual_slip(slip_name: str) -> dict:
 
 def compare_year() -> dict:
 	require_reference_site()
-	engine = GoldenEngine(paths.GOLDEN_FILE)
+	engine = GoldenEngine(paths.golden_file())
 	golden = build_golden(engine)
 	rows, failures = [], []
 	for key, months in golden.items():
@@ -233,9 +232,9 @@ def compare_year() -> dict:
 	for f in failures:
 		by_field.setdefault(f["field"], []).append(f"{f['persona']} {f['period']} {f.get('diff')}")
 	summary["failures_by_field"] = {k: len(v) for k, v in by_field.items()}
-	EVIDENCE.mkdir(parents=True, exist_ok=True)
-	(EVIDENCE / "golden_payroll_expected.json").write_text(json.dumps(golden, indent=1, default=str))
-	(EVIDENCE / "golden_payroll_comparison.json").write_text(
+	paths.payroll().mkdir(parents=True, exist_ok=True)
+	(paths.payroll() / "golden_payroll_expected.json").write_text(json.dumps(golden, indent=1, default=str))
+	(paths.payroll() / "golden_payroll_comparison.json").write_text(
 		json.dumps({"summary": summary, "failures": failures, "rows": rows}, indent=1, default=str)
 	)
 	return {"summary": summary, "failures": failures[:80]}
@@ -244,7 +243,7 @@ def compare_year() -> dict:
 def compare_frequencies() -> dict:
 	"""Weekly, fortnightly and timesheet slips against the golden engine."""
 	require_reference_site()
-	engine = GoldenEngine(paths.GOLDEN_FILE)
+	engine = GoldenEngine(paths.golden_file())
 	cap = engine.g["uif"]["monthly_ceiling"]
 	out = {}
 	for key, _frequency, periods, amount in (
@@ -282,5 +281,5 @@ def compare_frequencies() -> dict:
 		_add(m, hours * 150, regular=True)
 		engine.run_employee(d(PERSONAS["H01_hourly"][3]), [m])
 		out["H01_hourly"] = {"hours": hours, "expected": m.out, "actual": actual_slip(slip)}
-	(EVIDENCE / "golden_frequency_comparison.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "golden_frequency_comparison.json").write_text(json.dumps(out, indent=1, default=str))
 	return out

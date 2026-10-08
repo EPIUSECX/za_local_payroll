@@ -10,10 +10,10 @@ import frappe
 from frappe.utils import flt
 
 from za_local_payroll.reference_company import constants as C
+from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.governance import acting_as, user
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 from za_local_payroll.reference_company.labour import outcome
-from za_local_payroll.reference_company.payroll_setup import EVIDENCE
 
 UK = "Cohenix UK Reference Ltd"
 UK_ABBR = "CUKREF"
@@ -34,7 +34,7 @@ def _company(name, abbr, country, currency):
 				"chart_of_accounts": "Standard",
 			}
 		).insert(ignore_permissions=True)
-		frappe.db.commit()
+		commit_stage()
 	return name
 
 
@@ -117,7 +117,7 @@ def _uk_vat_setup():
 				"tax_id": "GB123456789",
 			}
 		).insert(ignore_permissions=True)
-	frappe.db.commit()
+	commit_stage()
 	return vat, tmpl
 
 
@@ -306,7 +306,7 @@ def stage_multicompany() -> dict:
 				"apply_to_all_doctypes": 1,
 			}
 		).insert(ignore_permissions=True)
-		frappe.db.commit()
+		commit_stage()
 	with acting_as(foreign):
 		facts["foreign_visible_sales_invoices"] = frappe.get_list(
 			"Sales Invoice", filters={"company": C.COMPANY}, pluck="name"
@@ -353,5 +353,5 @@ def stage_multicompany() -> dict:
 		and not facts["foreign_visible_gl"]
 	}
 	out = {"tests": r, "facts": facts}
-	(EVIDENCE / "multicompany.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "multicompany.json").write_text(json.dumps(out, indent=1, default=str))
 	return out

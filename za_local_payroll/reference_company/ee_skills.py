@@ -6,11 +6,11 @@ import frappe
 from frappe.utils.file_manager import save_file
 
 from za_local_payroll.reference_company import constants as C
+from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.governance import acting_as, user
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 from za_local_payroll.reference_company.labour import outcome
 from za_local_payroll.reference_company.payroll_run import employee_for
-from za_local_payroll.reference_company.payroll_setup import EVIDENCE
 
 
 def _private(name, text="SYNTHETIC evidence - test data only"):
@@ -96,7 +96,7 @@ def stage_employment_equity() -> dict:
 				lambda: frappe.get_doc("Employment Equity Target Plan", doc.name).submit(),
 				False,
 			)
-		frappe.db.commit()
+		commit_stage()
 		plan = doc.name
 	employee = employee_for("P20_it3a_no_paye")
 	if not frappe.db.exists("Employment Equity Movement", {"employee": employee, "docstatus": 1}):
@@ -116,7 +116,7 @@ def stage_employment_equity() -> dict:
 			)
 			mv.insert()
 			mv.submit()
-		frappe.db.commit()
+		commit_stage()
 	base = {"company": C.COMPANY, "reporting_date": "2026-09-30"}
 	results = {}
 	outcome(r, "profile_without_company", lambda: prof.execute({"reporting_date": "2026-09-30"}), True)
@@ -165,7 +165,7 @@ def stage_employment_equity() -> dict:
 		False,
 	)
 	out = {"tests": r, "results": results, "plan": plan}
-	(EVIDENCE / "employment_equity.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "employment_equity.json").write_text(json.dumps(out, indent=1, default=str))
 	return out
 
 
@@ -230,7 +230,7 @@ def stage_skills() -> dict:
 			draft_sdf = draft.name
 		with acting_as(user("reviewer")):
 			frappe.get_doc("Skills Development Facilitator", d.name).submit()
-		frappe.db.commit()
+		commit_stage()
 		sdf = d.name
 	draft_sdf = draft_sdf or frappe.db.get_value(
 		"Skills Development Facilitator", {"company": C.COMPANY, "docstatus": 0}, "name"
@@ -324,7 +324,7 @@ def stage_skills() -> dict:
 	if not plan:
 		outcome(r, "wsp_submitted_by_preparer", lambda: wsp(sdf, submit_as=user("hr_manager")), True)
 		plan = wsp(sdf, submit_as=user("reviewer"))
-		frappe.db.commit()
+		commit_stage()
 	total = frappe.db.get_value("Workplace Skills Plan", plan, "total_training_budget")
 	atr = frappe.db.get_value("Annual Training Report", {"company": C.COMPANY, "docstatus": 1}, "name")
 	if not atr:
@@ -363,7 +363,7 @@ def stage_skills() -> dict:
 		doc = make_atr()
 		with acting_as(user("reviewer")):
 			frappe.get_doc("Annual Training Report", doc.name).submit()
-		frappe.db.commit()
+		commit_stage()
 		atr = doc.name
 	with acting_as(user("hr_manager")):
 
@@ -404,7 +404,7 @@ def stage_skills() -> dict:
 			)
 			doc.insert()
 			doc.submit()
-		frappe.db.commit()
+		commit_stage()
 		rec = doc.name
 	rec_doc = frappe.get_doc("Skills Development Record", rec)
 	out = {
@@ -419,5 +419,5 @@ def stage_skills() -> dict:
 		"bbbee_status": rec_doc.bbbee_scoring_status,
 		"bec_points": rec_doc.bec_points,
 	}
-	(EVIDENCE / "skills.json").write_text(json.dumps(out, indent=1, default=str))
+	(paths.payroll() / "skills.json").write_text(json.dumps(out, indent=1, default=str))
 	return out

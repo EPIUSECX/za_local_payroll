@@ -669,18 +669,22 @@ class EMP501Reconciliation(Document):
 		Employer UIF and SDL sit in the Company Contribution table, not Salary Detail.
 		"""
 		components = {}
+		slip = frappe.qb.DocType("Salary Slip")
 		for child_doctype in ("Salary Detail", "Company Contribution"):
-			rows = frappe.db.sql(
-				f"""
-				select distinct child.salary_component, child.parentfield
-				from `tab{child_doctype}` child
-				join `tabSalary Slip` ss on ss.name = child.parent
-				where ss.docstatus = 1 and ss.company = %(company)s
-					and ss.end_date between %(from_date)s and %(to_date)s
-					and child.parenttype = 'Salary Slip'
-				""",
-				{"company": self.company, "from_date": self.from_date, "to_date": self.to_date},
-				as_dict=True,
+			child = frappe.qb.DocType(child_doctype)
+			rows = (
+				frappe.qb.from_(child)
+				.join(slip)
+				.on(slip.name == child.parent)
+				.select(child.salary_component, child.parentfield)
+				.distinct()
+				.where(
+					(slip.docstatus == 1)
+					& (slip.company == self.company)
+					& (slip.end_date.between(self.from_date, self.to_date))
+					& (child.parenttype == "Salary Slip")
+				)
+				.run(as_dict=True)
 			)
 			for row in rows:
 				if _get_emp201_bucket(row.salary_component)[0] in ("paye", "uif", "sdl"):

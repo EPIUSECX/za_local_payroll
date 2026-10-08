@@ -8,16 +8,17 @@ from frappe.utils import flt
 from frappe.utils.file_manager import save_file
 
 from za_local_payroll.reference_company import constants as C
+from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.governance import acting_as, user
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 from za_local_payroll.reference_company.vat import account
-from za_local_payroll.reference_company.vat_cycle import EVIDENCE, gl_reconciliation
+from za_local_payroll.reference_company.vat_cycle import gl_reconciliation
 
 PERIOD = ("2026-07-01", "2026-08-31")
 
 
 def _expect_failure(label, fn, results):
-	frappe.db.commit()
+	commit_stage()
 	try:
 		fn()
 	except Exception as exc:
@@ -126,7 +127,7 @@ def stage_vat201() -> dict:
 	results["filing"] = doc.za_filing
 	results["working_paper"] = {"file": doc.working_paper_file, "sha256": doc.working_paper_sha256}
 	results["filing_lifecycle"] = _filing_lifecycle(doc, results["controls"])
-	frappe.db.commit()
+	commit_stage()
 	return _write(results)
 
 
@@ -155,7 +156,7 @@ def _vat_journal(posting_date, amount):
 def _cancel_as_admin(doctype, name):
 	with acting_as("Administrator"):
 		frappe.get_doc(doctype, name).cancel()
-	frappe.db.commit()
+	commit_stage()
 
 
 def _boxes(doc):
@@ -338,12 +339,12 @@ def stage_vat201_amendment() -> dict:
 		"filing": amended.za_filing,
 		"filing_status": frappe.db.get_value("ZA Filing", amended.za_filing, "status"),
 	}
-	frappe.db.commit()
-	(EVIDENCE / "vat201_amendment.json").write_text(json.dumps(out, indent=1, default=str))
+	commit_stage()
+	(paths.vat() / "vat201_amendment.json").write_text(json.dumps(out, indent=1, default=str))
 	return out
 
 
 def _write(results):
-	EVIDENCE.mkdir(parents=True, exist_ok=True)
-	(EVIDENCE / "vat201.json").write_text(json.dumps(results, indent=1, default=str))
+	paths.vat().mkdir(parents=True, exist_ok=True)
+	(paths.vat() / "vat201.json").write_text(json.dumps(results, indent=1, default=str))
 	return results

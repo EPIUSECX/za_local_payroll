@@ -10,9 +10,8 @@ from frappe.utils import getdate
 from za_local_payroll.reference_company import constants as C
 from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.foundation import ensure_address
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 
-EVIDENCE = paths.PAYROLL
 HOLIDAY_LIST = "ZA Reference Working Calendar 2025-2027"
 EMPLOYEE_TYPE = "ZA Reference Permanent"
 SLAB_2026 = "South Africa 2026-2027"
@@ -341,7 +340,7 @@ def stage_payroll_setup() -> dict:
 
 	repair_salary_component_accounts(C.COMPANY)
 	structures = _ensure_structures()
-	frappe.db.commit()
+	commit_stage()
 	return {"holiday_list": holiday_list, "components": list(components), "structures": structures}
 
 
@@ -573,7 +572,7 @@ def _ensure_structures() -> list[str]:
 
 
 def write_config_evidence():
-	EVIDENCE.mkdir(parents=True, exist_ok=True)
+	paths.payroll().mkdir(parents=True, exist_ok=True)
 	fields = [
 		"name",
 		"type",
@@ -602,5 +601,5 @@ def write_config_evidence():
 		c["account"] = frappe.db.get_value(
 			"Salary Component Account", {"parent": c["name"], "company": C.COMPANY}, "account"
 		)
-	(EVIDENCE / "salary_component_matrix.json").write_text(json.dumps(comps, indent=1, default=str))
+	(paths.payroll() / "salary_component_matrix.json").write_text(json.dumps(comps, indent=1, default=str))
 	return len(comps)

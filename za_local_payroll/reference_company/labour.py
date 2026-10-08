@@ -6,10 +6,10 @@ import frappe
 from frappe.utils.file_manager import save_file
 
 from za_local_payroll.reference_company import constants as C
+from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.governance import acting_as, user
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 from za_local_payroll.reference_company.payroll_run import employee_for
-from za_local_payroll.reference_company.payroll_setup import EVIDENCE
 
 LEAVE_TYPES = {
 	"ZA Annual Leave": {"za_bcea_leave_category": "Annual Leave", "max_leaves_allowed": 21},
@@ -35,10 +35,10 @@ LEAVE_TYPES = {
 
 
 def outcome(results, label, fn, expect_block):
-	frappe.db.commit()
+	commit_stage()
 	try:
 		value = fn()
-		frappe.db.commit()
+		commit_stage()
 		results[label] = {
 			"expected": "blocked" if expect_block else "allowed",
 			"actual": "allowed",
@@ -121,7 +121,7 @@ def stage_leave_tests() -> dict:
 			_allocate(emp, lt, days)
 	_allocate(female, "ZA Maternity Leave", 120)
 	_allocate(male, "ZA Maternity Leave", 120)
-	frappe.db.commit()
+	commit_stage()
 	cert = save_file(
 		"synthetic-medical-certificate.txt",
 		b"SYNTHETIC medical certificate - test data only",
@@ -193,7 +193,7 @@ def stage_leave_tests() -> dict:
 		lambda: _leave(female, "ZA Maternity Leave", "2027-01-04", "2027-01-08", submit=False),
 		False,
 	)
-	(EVIDENCE / "labour_leave_tests.json").write_text(json.dumps(r, indent=1, default=str))
+	(paths.payroll() / "labour_leave_tests.json").write_text(json.dumps(r, indent=1, default=str))
 	return r
 
 
@@ -249,7 +249,7 @@ def stage_rate_tests() -> dict:
 		True,
 	)
 	outcome(r, "coida_cap_before_pack_2026-02-01", lambda: resolve_coida_cap("2026-02-01"), True)
-	(EVIDENCE / "labour_rate_tests.json").write_text(json.dumps(r, indent=1, default=str))
+	(paths.payroll() / "labour_rate_tests.json").write_text(json.dumps(r, indent=1, default=str))
 	return r
 
 
@@ -327,7 +327,7 @@ def stage_termination_tests() -> dict:
 			lambda: separation(twelve_years, "Dismissal - Operational", "2026-10-31", 4153.85, True),
 			True,
 		)
-	(EVIDENCE / "labour_termination_tests.json").write_text(json.dumps(r, indent=1, default=str))
+	(paths.payroll() / "labour_termination_tests.json").write_text(json.dumps(r, indent=1, default=str))
 	return r
 
 
@@ -375,5 +375,5 @@ def stage_sick_occasion_retest() -> dict:
 		lambda: _leave(employee, "ZA Sick Leave", "2026-11-16", "2026-11-18", public, submit=False),
 		True,
 	)
-	(EVIDENCE / "labour_sick_retest.json").write_text(json.dumps(r, indent=1, default=str))
+	(paths.payroll() / "labour_sick_retest.json").write_text(json.dumps(r, indent=1, default=str))
 	return r

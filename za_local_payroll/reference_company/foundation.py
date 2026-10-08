@@ -4,7 +4,7 @@ import frappe
 from frappe.utils import getdate
 
 from za_local_payroll.reference_company import constants as C
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 
 EXTRA_ACCOUNTS = (
 	# (account_name, account_type, parent_account_name, root_type)
@@ -38,7 +38,7 @@ def stage_foundation() -> dict:
 	_ensure_cost_centres()
 	bank_account = _ensure_company_bank_account()
 	users = _ensure_users()
-	frappe.db.commit()
+	commit_stage()
 	return {
 		"company": C.COMPANY,
 		"accounts": accounts,

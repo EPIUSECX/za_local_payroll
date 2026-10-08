@@ -4,7 +4,7 @@ import frappe
 
 from za_local_payroll.reference_company import constants as C
 from za_local_payroll.reference_company.foundation import ensure_address
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 
 CONTROL_DATE = "2026-04-01"
 FILING_CATEGORY = "Category B"
@@ -56,7 +56,7 @@ def stage_vat_setup() -> dict:
 	templates = _ensure_extra_templates()
 	items = {code: _ensure_item(code, *rest) for code, *rest in ITEMS}
 	parties = _ensure_parties()
-	frappe.db.commit()
+	commit_stage()
 	return {"settings": settings, "templates": templates, "items": items, "parties": parties}
 
 
@@ -94,7 +94,7 @@ def _ensure_vat_settings() -> dict:
 	doc.save()
 	# System Manager-only bootstrap (run as Administrator).
 	feedback = bootstrap_company_vat_setup(C.COMPANY, CONTROL_DATE)
-	frappe.db.commit()
+	commit_stage()
 	saved = frappe.get_doc("South Africa VAT Settings", doc.name)
 	return {
 		"name": saved.name,

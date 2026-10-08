@@ -10,11 +10,11 @@ import frappe
 from frappe.utils import getdate
 
 from za_local_payroll.reference_company import constants as C
+from za_local_payroll.reference_company import paths
 from za_local_payroll.reference_company.foundation import ensure_address
-from za_local_payroll.reference_company.guard import require_reference_site
+from za_local_payroll.reference_company.guard import commit_stage, require_reference_site
 from za_local_payroll.reference_company.payroll_setup import (
 	EMPLOYEE_TYPE,
-	EVIDENCE,
 	HOLIDAY_LIST,
 	SLAB_2026,
 	a,
@@ -382,8 +382,8 @@ def stage_personas() -> dict:
 	employees = {}
 	for index, (key, spec) in enumerate(PERSONAS.items(), start=1):
 		employees[key] = _ensure_employee(index, key, *spec)
-	frappe.db.commit()
-	EVIDENCE.mkdir(parents=True, exist_ok=True)
+	commit_stage()
+	paths.payroll().mkdir(parents=True, exist_ok=True)
 	matrix = []
 	for key, name in employees.items():
 		emp = frappe.db.get_value(
@@ -413,7 +413,7 @@ def stage_personas() -> dict:
 			order_by="from_date",
 		)
 		matrix.append({"persona": key, **emp, "assignments": ssa})
-	(EVIDENCE / "employee_persona_matrix.json").write_text(json.dumps(matrix, indent=1, default=str))
+	(paths.payroll() / "employee_persona_matrix.json").write_text(json.dumps(matrix, indent=1, default=str))
 	return employees
 
 
