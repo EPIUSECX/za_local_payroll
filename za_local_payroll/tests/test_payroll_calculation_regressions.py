@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import frappe
 from frappe.tests.classes import UnitTestCase
 
-from za_local_payroll.overrides.salary_slip import SalarySlip, ZASalarySlip
+from za_local_payroll.overrides.salary_slip import SalarySlip, ZASalarySlip, record_tax_for_payment_days
 
 
 class TestSalarySlipTaxRegressions(UnitTestCase):
@@ -558,3 +558,72 @@ class TestMedicalTaxCreditEntitlement(UnitTestCase):
 			za_payroll_treatment="Regular Remuneration"
 		)
 		self.assertFalse(ZASalarySlip.has_employer_medical_aid_contribution(slip))
+
+
+class TestTaxBreakupForPaymentDays(UnitTestCase):
+	"""HRMS 16.54+ reads ``current_tax_amount_for_payment_days`` from the per-component tax dictionary.
+
+	The ZA override builds that dictionary itself, so a missing key made every salary slip fail with a
+	KeyError in ``get_income_tax_deducted_till_date``.
+	"""
+
+	def _slip(self, **values):
+		slip = SimpleNamespace(current_tax_amount=4_000, _component_based_variable_tax={"PAYE": {}})
+		slip.__dict__.update(values)
+		return slip
+
+	def test_a_full_period_records_the_whole_tax(self):
+		slip = self._slip(total_working_days=22, payment_days=22)
+		record_tax_for_payment_days(slip, "PAYE")
+		self.assertEqual(
+			4_000, slip._component_based_variable_tax["PAYE"]["current_tax_amount_for_payment_days"]
+		)
+		self.assertEqual(4_000, slip.current_tax_amount_for_payment_days)
+
+	def test_a_slip_with_no_day_counts_records_the_whole_tax(self):
+		slip = self._slip()
+		record_tax_for_payment_days(slip, "PAYE")
+		self.assertEqual(
+			4_000, slip._component_based_variable_tax["PAYE"]["current_tax_amount_for_payment_days"]
+		)
+
+	def test_a_component_that_depends_on_payment_days_is_prorated_as_hrms_does(self):
+		slip = self._slip(total_working_days=20, payment_days=15)
+		with patch("frappe.db.get_value", return_value=1):
+			record_tax_for_payment_days(slip, "PAYE")
+		self.assertEqual(
+			3_000, slip._component_based_variable_tax["PAYE"]["current_tax_amount_for_payment_days"]
+		)
+		self.assertEqual(4_000, slip.current_tax_amount, "The PAYE calculation itself is untouched")
+
+	def test_a_component_that_ignores_payment_days_is_not_prorated(self):
+		slip = self._slip(total_working_days=20, payment_days=15)
+		with patch("frappe.db.get_value", return_value=0):
+			record_tax_for_payment_days(slip, "PAYE")
+		self.assertEqual(
+			4_000, slip._component_based_variable_tax["PAYE"]["current_tax_amount_for_payment_days"]
+		)
+
+	def test_the_variable_tax_dictionary_always_carries_the_key(self):
+		slip = SimpleNamespace(
+			za_localisation_applies=True,
+			payroll_period=frappe._dict(start_date="2026-03-01"),
+			start_date="2026-08-01",
+			remaining_sub_periods=7,
+			total_taxable_earnings_without_full_tax_addl_components=100_000,
+			total_taxable_earnings=100_000,
+			tax_slab=frappe._dict(),
+			whitelisted_globals={},
+			current_additional_earnings_with_full_tax=0,
+			_component_based_variable_tax={"PAYE": {}},
+		)
+		slip.get_tax_paid_in_period = Mock(return_value=5_000)
+		slip.get_data_for_eval = Mock(return_value=({}, {}))
+		slip.get_total_sub_periods = Mock(return_value=12)
+		slip.get_periods_employed_to_date = Mock(return_value=6)
+		with patch(
+			"hrms.payroll.doctype.salary_slip.salary_slip.calculate_tax_by_tax_slab",
+			return_value=(12_000, None),
+		):
+			ZASalarySlip.calculate_variable_tax(slip, "PAYE")
+		self.assertIn("current_tax_amount_for_payment_days", slip._component_based_variable_tax["PAYE"])

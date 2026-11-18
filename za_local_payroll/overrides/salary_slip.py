@@ -12,7 +12,7 @@ from math import ceil
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, flt, getdate
+from frappe.utils import add_days, cint, flt, getdate
 
 from za_local_payroll.utils.hrms import get_hrms_doctype_class, require_hrms, safe_import_hrms
 
@@ -95,6 +95,29 @@ LUMP_SUM_TREATMENTS = {"Severance Benefit"}
 def sars_periods_per_year(salary_slip) -> int:
 	"""Pay periods per tax year for the slip's frequency, as the SARS tables use them."""
 	return SARS_PERIODS_PER_YEAR.get(getattr(salary_slip, "payroll_frequency", None) or "Monthly", 12)
+
+
+def record_tax_for_payment_days(slip, tax_component):
+	"""Set the key HRMS 16.54+ reads for the tax breakup: the tax this slip deducts.
+
+	HRMS prorates a tax component that depends on payment days by the share of the period worked,
+	and its income tax breakup reads that figure from ``current_tax_amount_for_payment_days``.
+	This override builds the same dictionary without calling HRMS, so it has to set the key too,
+	or the slip fails with a KeyError in ``get_income_tax_deducted_till_date``. The PAYE
+	calculation is unchanged: only the breakup's view of it is recorded.
+	"""
+	share = 1.0
+	total_days = cint(getattr(slip, "total_working_days", 0))
+	payment_days = flt(getattr(slip, "payment_days", total_days))
+	if (
+		total_days
+		and payment_days != total_days
+		and cint(frappe.db.get_value("Salary Component", tax_component, "depends_on_payment_days"))
+	):
+		share = payment_days / total_days
+	amount = flt(flt(slip.current_tax_amount) * share)
+	slip.current_tax_amount_for_payment_days = amount
+	slip._component_based_variable_tax[tax_component]["current_tax_amount_for_payment_days"] = amount
 
 
 class ZASalarySlip(SalarySlip):
@@ -793,6 +816,7 @@ class ZASalarySlip(SalarySlip):
 					"current_tax_amount": current_tax_amount,
 				}
 			)
+			record_tax_for_payment_days(self, tax_component)
 			self.apply_paye_directive(tax_component)
 
 	def apply_paye_directive(self, tax_component):
@@ -814,6 +838,7 @@ class ZASalarySlip(SalarySlip):
 				"full_tax_on_additional_earnings": 0,
 			}
 		)
+		record_tax_for_payment_days(self, tax_component)
 
 	def get_period_remuneration(self):
 		"""This period's remuneration for a directive rate: PAYE-included earnings less
@@ -906,6 +931,7 @@ class ZASalarySlip(SalarySlip):
 				"current_tax_amount": self.current_tax_amount,
 			}
 		)
+		record_tax_for_payment_days(self, tax_component)
 
 	def get_tax_rebates(self):
 		"""

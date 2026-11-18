@@ -67,6 +67,7 @@ frappe.ui.form.on("Business Trip Journey", {
 		if (row.transport_mode === "Car (Private)") {
 			frappe.call({
 				method: "za_local_payroll.sa_labour.doctype.business_trip_settings.business_trip_settings.get_mileage_rate",
+				type: "GET",
 				args: {
 					date_value: row.date || frm.doc.to_date || frm.doc.from_date,
 				},

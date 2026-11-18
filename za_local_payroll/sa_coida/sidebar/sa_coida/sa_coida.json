@@ -18,7 +18,7 @@
    "label": "Home",
    "link_to": "SA COIDA",
    "link_type": "Workspace",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -33,7 +33,7 @@
    "keep_closed": 1,
    "label": "Setup",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -48,7 +48,7 @@
    "label": "COIDA Settings",
    "link_to": "COIDA Settings",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -63,7 +63,7 @@
    "keep_closed": 1,
    "label": "Returns & incidents",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -78,7 +78,7 @@
    "label": "COIDA Annual Return",
    "link_to": "COIDA Annual Return",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -93,7 +93,7 @@
    "label": "Workplace Injury",
    "link_to": "Workplace Injury",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -108,12 +108,12 @@
    "label": "OID Claim",
    "link_to": "OID Claim",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-10-07 08:58:28.382320",
+ "modified": "2026-11-18 09:30:00.000000",
  "modified_by": "Administrator",
  "module": "SA COIDA",
  "name": "SA COIDA",

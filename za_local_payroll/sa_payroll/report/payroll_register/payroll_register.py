@@ -2,6 +2,7 @@
 
 import frappe
 from frappe import _
+from frappe.utils import flt
 
 
 def execute(filters=None):
@@ -40,7 +41,7 @@ def get_columns():
 		{"label": _("Basic"), "fieldname": "basic", "fieldtype": "Currency", "width": 100},
 		{"label": _("Gross Pay"), "fieldname": "gross_pay", "fieldtype": "Currency", "width": 120},
 		{"label": _("PAYE"), "fieldname": "paye", "fieldtype": "Currency", "width": 100},
-		{"label": _("UIF"), "fieldname": "uif", "fieldtype": "Currency", "width": 80},
+		{"label": _("Employee UIF"), "fieldname": "uif", "fieldtype": "Currency", "width": 110},
 		{
 			"label": _("Total Deductions"),
 			"fieldname": "total_deduction",
@@ -48,6 +49,9 @@ def get_columns():
 			"width": 120,
 		},
 		{"label": _("Net Pay"), "fieldname": "net_pay", "fieldtype": "Currency", "width": 120},
+		{"label": _("Employer UIF"), "fieldname": "employer_uif", "fieldtype": "Currency", "width": 110},
+		{"label": _("Total UIF Payable"), "fieldname": "total_uif", "fieldtype": "Currency", "width": 130},
+		{"label": _("SDL"), "fieldname": "sdl", "fieldtype": "Currency", "width": 90},
 	]
 
 
@@ -84,7 +88,26 @@ def get_data(filters):
 				WHERE sd.parent = ss.name
 					AND sd.parentfield = 'deductions'
 					AND (sd.salary_component IN ('UIF', 'UIF Employee Contribution') OR sc.za_sars_payroll_code = '4141')
-			) as uif
+			) as uif,
+			(
+				SELECT SUM(cc.amount)
+				FROM `tabCompany Contribution` cc
+				LEFT JOIN `tabSalary Component` sc ON sc.name = cc.salary_component
+				WHERE cc.parent = ss.name
+					AND cc.parenttype = 'Salary Slip'
+					AND (cc.salary_component = 'UIF Employer Contribution' OR sc.za_sars_payroll_code = '4141')
+			) as employer_uif,
+			(
+				SELECT SUM(cc.amount)
+				FROM `tabCompany Contribution` cc
+				LEFT JOIN `tabSalary Component` sc ON sc.name = cc.salary_component
+				WHERE cc.parent = ss.name
+					AND cc.parenttype = 'Salary Slip'
+					AND (
+						cc.salary_component IN ('SDL', 'SDL Contribution', 'Skills Development Levy')
+						OR sc.za_sars_payroll_code = '4142'
+					)
+			) as sdl
 		FROM `tabSalary Slip` ss
 		INNER JOIN `tabEmployee` e ON e.name = ss.employee
 		WHERE ss.company = %(company)s
@@ -93,4 +116,8 @@ def get_data(filters):
 		ORDER BY e.department, ss.employee_name
 	"""
 
-	return frappe.db.sql(query, filters, as_dict=1)
+	rows = frappe.db.sql(query, filters, as_dict=1)
+	for row in rows:
+		# Employer contributions sit outside the slip's deductions, so they never change Net Pay.
+		row.total_uif = flt(row.uif) + flt(row.employer_uif)
+	return rows

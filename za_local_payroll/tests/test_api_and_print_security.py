@@ -2,7 +2,10 @@
 
 import ast
 import json
+import re
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import frappe
 from frappe.tests.classes import UnitTestCase
@@ -38,6 +41,10 @@ POST_ENDPOINTS = {
 	"sa_labour.doctype.bargaining_council.bargaining_council.import_common_councils",
 	"sa_labour.doctype.business_trip.business_trip.create_expense_claim_from_trip",
 	"sa_labour.doctype.business_trip.business_trip.generate_allowances_for_date_range",
+	# BCEA leave standards; reviewed POST-only, as the decorators declare.
+	"setup.leave_standards.allocate_sick_leave_by_cycle",
+	"setup.leave_standards.assign_leave_policy_by_cycle",
+	"setup.leave_standards.create_company_leave_policies",
 	"overrides.journal_entry.force_delete_all_cancelled_payroll_journal_entries",
 	"overrides.journal_entry.force_delete_cancelled_payroll_journal_entry",
 	"overrides.payroll_entry.ZAPayrollEntry.create_salary_slips",
@@ -199,3 +206,146 @@ class TestPayrollPrintSecurity(UnitTestCase):
 			],
 		)
 		self._assert_escaped("sa_emp501_reconciliation", doc)
+
+
+def _call_blocks(source):
+	"""Yield the text of each ``frappe.call({ ... })`` argument, found by brace matching."""
+	for match in re.finditer(r"frappe\.call\(\s*\{", source):
+		depth = 0
+		for index in range(match.end() - 1, len(source)):
+			if source[index] == "{":
+				depth += 1
+			elif source[index] == "}":
+				depth -= 1
+				if depth == 0:
+					yield source[match.end() - 1 : index + 1]
+					break
+
+
+class TestClientCallVerbs(UnitTestCase):
+	"""``frappe.call`` sends POST unless told otherwise, and the server refuses a verb it did not allow.
+
+	A GET-only endpoint called without ``type: "GET"`` fails with "Not permitted", which is how the
+	EMP501 form stopped filling its dates and reference numbers.
+	"""
+
+	def _client_files(self):
+		app_path = Path(frappe.get_app_path("za_local_payroll"))
+		return [p for p in app_path.rglob("*.js") if "node_modules" not in p.parts and "dist" not in p.parts]
+
+	def test_get_only_endpoints_are_called_with_type_get(self):
+		get_paths = {f"za_local_payroll.{name}" for name in GET_ENDPOINTS if not _is_class_method(name)}
+		offenders = []
+		for path in self._client_files():
+			for block in _call_blocks(path.read_text(encoding="utf-8")):
+				method = re.search(r"method\s*:\s*['\"]([\w.]+)['\"]", block)
+				if not method or method.group(1) not in get_paths:
+					continue
+				if not re.search(r"type\s*:\s*['\"]GET['\"]", block):
+					offenders.append(f"{path.name}: {method.group(1)}")
+		self.assertEqual([], offenders, "GET-only endpoints are called with the default POST")
+
+	def test_post_endpoints_are_not_called_with_type_get(self):
+		post_paths = {f"za_local_payroll.{name}" for name in POST_ENDPOINTS if not _is_class_method(name)}
+		offenders = []
+		for path in self._client_files():
+			for block in _call_blocks(path.read_text(encoding="utf-8")):
+				method = re.search(r"method\s*:\s*['\"]([\w.]+)['\"]", block)
+				if method and method.group(1) in post_paths and re.search(r"type\s*:\s*['\"]GET['\"]", block):
+					offenders.append(f"{path.name}: {method.group(1)}")
+		self.assertEqual([], offenders)
+
+	def test_get_only_document_methods_are_not_called_through_frm_call(self):
+		"""``frm.call`` posts, so a GET-only document method behind it can never succeed."""
+		names = {name.rsplit(".", 1)[1] for name in GET_ENDPOINTS if _is_class_method(name)}
+		offenders = []
+		for path in self._client_files():
+			source = path.read_text(encoding="utf-8")
+			for name in names:
+				if re.search(rf"frm\.call\(\s*['\"]{name}['\"]", source):
+					offenders.append(f"{path.name}: {name}")
+		self.assertEqual([], offenders)
+
+
+def _is_class_method(qualified_name):
+	"""A dotted endpoint name whose second-to-last segment is a class (CamelCase)."""
+	return qualified_name.rsplit(".", 2)[-2][:1].isupper()
+
+
+class TestEMP501FormEndpoints(UnitTestCase):
+	"""The EMP501 form fills its dates and SARS reference numbers through two GET endpoints."""
+
+	module = "za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation"
+
+	def _fiscal_year(self, start="2026-03-01", end="2027-02-28"):
+		return frappe._dict(year_start_date=start, year_end_date=end)
+
+	def test_the_server_allows_get_and_refuses_the_default_post(self):
+		from frappe.handler import is_valid_http_method
+
+		from za_local_payroll.sa_payroll.doctype.emp501_reconciliation import emp501_reconciliation as module
+
+		for function in (module.get_period_dates, module.get_company_tax_details):
+			with patch.object(frappe.local, "request", SimpleNamespace(method="GET"), create=True):
+				is_valid_http_method(function)
+			with patch.object(frappe.local, "request", SimpleNamespace(method="POST"), create=True):
+				with self.assertRaises(frappe.PermissionError):
+					is_valid_http_method(function)
+
+	def test_interim_period_is_the_first_six_months_of_the_tax_year(self):
+		from za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation import (
+			get_period_dates,
+		)
+
+		with patch("frappe.get_doc", return_value=self._fiscal_year()):
+			dates = get_period_dates("2026-27", "Interim")
+		self.assertEqual("2026-03-01", str(dates["from_date"]))
+		self.assertEqual("2026-08-31", str(dates["to_date"]))
+
+	def test_final_period_runs_to_the_end_of_february(self):
+		from za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation import (
+			get_period_dates,
+		)
+
+		with patch("frappe.get_doc", return_value=self._fiscal_year()):
+			dates = get_period_dates("2026-27", "Final")
+		self.assertEqual("2026-03-01", str(dates["from_date"]))
+		self.assertEqual("2027-02-28", str(dates["to_date"]))
+
+	def test_a_calendar_year_is_not_a_sars_tax_year(self):
+		from za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation import (
+			get_period_dates,
+		)
+
+		with patch("frappe.get_doc", return_value=self._fiscal_year("2026-01-01", "2026-12-31")):
+			with self.assertRaises(frappe.ValidationError):
+				get_period_dates("2026", "Interim")
+
+	def test_company_tax_details_return_the_three_reference_numbers(self):
+		from za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation import (
+			get_company_tax_details,
+		)
+
+		details = frappe._dict(
+			za_paye_reference_number="7123456789",
+			za_sdl_reference_number="L123456789",
+			za_uif_reference_number="U123456789",
+		)
+		with (
+			patch("frappe.has_permission", return_value=True),
+			patch("frappe.db.get_value", return_value=details),
+		):
+			result = get_company_tax_details("Test Company")
+		self.assertEqual(
+			{"za_paye_reference_number", "za_sdl_reference_number", "za_uif_reference_number"}, set(result)
+		)
+
+	def test_company_tax_details_need_read_permission_on_the_company(self):
+		from za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation import (
+			get_company_tax_details,
+		)
+
+		with patch("frappe.has_permission", return_value=False), patch("frappe.db.get_value") as get_value:
+			with self.assertRaises(frappe.PermissionError):
+				get_company_tax_details("Test Company")
+		get_value.assert_not_called()

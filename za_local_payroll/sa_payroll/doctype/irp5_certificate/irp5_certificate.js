@@ -94,6 +94,7 @@ frappe.ui.form.on('IRP5 Certificate', {
             frm.add_custom_button(__('Download IRP5 Certificate PDF'), function() {
                 frappe.call({
                     method: 'za_local_payroll.sa_payroll.doctype.irp5_certificate.irp5_certificate.get_official_pdf',
+                    type: 'GET',
                     args: { docname: frm.doc.name },
                     freeze: true,
                     freeze_message: __('Generating IRP5 certificate PDF...'),

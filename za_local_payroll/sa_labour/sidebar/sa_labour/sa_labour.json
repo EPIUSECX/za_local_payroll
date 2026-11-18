@@ -18,7 +18,7 @@
    "label": "Home",
    "link_to": "SA Labour",
    "link_type": "Workspace",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -33,7 +33,7 @@
    "keep_closed": 1,
    "label": "Masters",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -48,7 +48,7 @@
    "label": "Business Trip Settings",
    "link_to": "Business Trip Settings",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -63,7 +63,7 @@
    "label": "SETA",
    "link_to": "SETA",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -78,7 +78,7 @@
    "label": "Skills Development Facilitator",
    "link_to": "Skills Development Facilitator",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -93,7 +93,7 @@
    "label": "OFO Occupation",
    "link_to": "OFO Occupation",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -108,7 +108,7 @@
    "label": "Training Provider",
    "link_to": "Training Provider",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -123,7 +123,7 @@
    "label": "Bargaining Council",
    "link_to": "Bargaining Council",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -138,7 +138,7 @@
    "label": "Sectoral Minimum Wage",
    "link_to": "Sectoral Minimum Wage",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -153,7 +153,7 @@
    "label": "Industry Specific Contribution",
    "link_to": "Industry Specific Contribution",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -168,7 +168,7 @@
    "label": "Business Trip Region",
    "link_to": "Business Trip Region",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -183,7 +183,7 @@
    "keep_closed": 1,
    "label": "HR \u2014 employees",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -198,7 +198,7 @@
    "label": "Employee",
    "link_to": "Employee",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -213,7 +213,7 @@
    "keep_closed": 1,
    "label": "Employment Equity reports",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -228,7 +228,7 @@
    "label": "EE Workforce Profile",
    "link_to": "Ee Workforce Profile",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -243,7 +243,7 @@
    "label": "Employment Equity Target Plan",
    "link_to": "Employment Equity Target Plan",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -258,7 +258,7 @@
    "label": "Employment Equity Movement",
    "link_to": "Employment Equity Movement",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -273,7 +273,7 @@
    "label": "EE Workforce Movement",
    "link_to": "EE Workforce Movement",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -288,7 +288,7 @@
    "label": "EE Plan Progress",
    "link_to": "EE Plan Progress",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -303,7 +303,7 @@
    "label": "EEA4 Income Differential Statement",
    "link_to": "EEA4 Income Differential Statement",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -318,7 +318,7 @@
    "keep_closed": 1,
    "label": "Transactions",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -333,7 +333,7 @@
    "label": "Workplace Skills Plan",
    "link_to": "Workplace Skills Plan",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -348,7 +348,7 @@
    "label": "Business Trip",
    "link_to": "Business Trip",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -363,7 +363,7 @@
    "label": "Annual Training Report",
    "link_to": "Annual Training Report",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -378,12 +378,12 @@
    "label": "Skills Development Record",
    "link_to": "Skills Development Record",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-10-07 08:58:28.385878",
+ "modified": "2026-11-18 09:30:00.000000",
  "modified_by": "Administrator",
  "module": "SA Labour",
  "name": "SA Labour",

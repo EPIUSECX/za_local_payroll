@@ -493,3 +493,72 @@ class TestETILogReuse(UnitTestCase):
 		)
 		self.assertEqual("ETI-NEW", log_eti_calculation("HR-EMP-00001", slip, 0, {}))
 		created.save.assert_called_once()
+
+
+PAYROLL_TOTALS = {
+	"PAYE": 10_000,
+	"UIF Employee Contribution": 177.12,
+	"UIF Employer Contribution": 177.12,
+	"SDL Contribution": 365,
+}
+
+
+class TestEMP201PreSubmissionReports(UnitTestCase):
+	"""Employee UIF, employer UIF and SDL are visible, and checkable against the EMP201, before filing."""
+
+	def _rows(self, submissions):
+		from za_local_payroll.sa_payroll.report.emp201_reconciliation.emp201_reconciliation import get_data
+
+		return {row["item"]: row for row in get_data(PAYROLL_TOTALS, submissions)}
+
+	def test_uif_is_compared_as_the_employee_plus_employer_total_the_emp201_files(self):
+		rows = self._rows([frappe._dict(gross_paye_before_eti=10_000, uif_payable=354.24, sdl_payable=365)])
+		uif = rows["UIF payable (employee + employer)"]
+		self.assertEqual(354.24, uif["payroll_amount"])
+		self.assertEqual(354.24, uif["emp201_amount"])
+		self.assertEqual("Agrees", uif["check"])
+		for part in ("UIF: employee deductions", "UIF: employer contributions"):
+			self.assertEqual(177.12, rows[part]["payroll_amount"])
+			self.assertNotIn(
+				"check", rows[part], "EMP201 files UIF as one figure, so the parts are not compared"
+			)
+
+	def test_a_difference_is_reported_not_hidden(self):
+		rows = self._rows([frappe._dict(gross_paye_before_eti=10_000, uif_payable=177.12, sdl_payable=365)])
+		uif = rows["UIF payable (employee + employer)"]
+		self.assertEqual(177.12, uif["difference"])
+		self.assertEqual("Differs", uif["check"])
+		self.assertEqual("Agrees", rows["SDL"]["check"])
+
+	def test_without_a_submission_the_payroll_figures_are_still_shown(self):
+		rows = self._rows([])
+		self.assertEqual(365, rows["SDL"]["payroll_amount"])
+		self.assertEqual("No EMP201", rows["SDL"]["check"])
+		self.assertNotIn("emp201_amount", rows["SDL"])
+
+	def test_payroll_register_separates_employee_and_employer_amounts(self):
+		from za_local_payroll.sa_payroll.report.payroll_register.payroll_register import (
+			get_columns,
+			get_data,
+		)
+
+		labels = {column["fieldname"]: str(column["label"]) for column in get_columns()}
+		self.assertEqual("Employee UIF", labels["uif"])
+		self.assertEqual("Employer UIF", labels["employer_uif"])
+		self.assertEqual("Total UIF Payable", labels["total_uif"])
+		self.assertEqual("SDL", labels["sdl"])
+
+		slip = frappe._dict(uif=177.12, employer_uif=177.12, sdl=365)
+		with patch("frappe.db.sql", return_value=[slip]):
+			(row,) = get_data(frappe._dict(company="C", from_date="2026-08-01", to_date="2026-08-31"))
+		self.assertEqual(354.24, round(row.total_uif, 2))
+
+	def test_payroll_register_totals_follow_the_same_sars_codes_as_the_emp201(self):
+		import inspect
+
+		from za_local_payroll.sa_payroll.report.payroll_register import payroll_register
+
+		source = inspect.getsource(payroll_register.get_data)
+		self.assertIn("'4141'", source)
+		self.assertIn("'4142'", source)
+		self.assertIn("tabCompany Contribution", source)

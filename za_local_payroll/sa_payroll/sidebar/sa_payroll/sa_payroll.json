@@ -18,7 +18,7 @@
    "label": "Home",
    "link_to": "SA Payroll",
    "link_type": "Workspace",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -33,7 +33,7 @@
    "keep_closed": 1,
    "label": "Masters",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -48,7 +48,7 @@
    "label": "Salary Component",
    "link_to": "Salary Component",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -63,7 +63,7 @@
    "label": "Salary Structure",
    "link_to": "Salary Structure",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -78,7 +78,7 @@
    "label": "Income Tax Slab",
    "link_to": "Income Tax Slab",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -93,7 +93,7 @@
    "label": "Payroll Period",
    "link_to": "Payroll Period",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -108,7 +108,7 @@
    "label": "Payroll Settings",
    "link_to": "Payroll Settings",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -123,7 +123,7 @@
    "label": "Employee Type",
    "link_to": "Employee Type",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -138,7 +138,7 @@
    "label": "Employee Payroll Frequency",
    "link_to": "Employee Payroll Frequency",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -153,7 +153,7 @@
    "label": "ETI Slab",
    "link_to": "ETI Slab",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -168,7 +168,7 @@
    "label": "Travel Allowance Rate",
    "link_to": "Travel Allowance Rate",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -183,7 +183,7 @@
    "label": "SARS Vehicle Emissions Rate",
    "link_to": "Sars Vehicle Emissions Rate",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -198,7 +198,7 @@
    "keep_closed": 1,
    "label": "Incentives",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -213,7 +213,7 @@
    "label": "Additional Salary",
    "link_to": "Additional Salary",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -228,7 +228,7 @@
    "label": "Employee Incentive",
    "link_to": "Employee Incentive",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -243,7 +243,7 @@
    "label": "Retention Bonus",
    "link_to": "Retention Bonus",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -258,7 +258,7 @@
    "label": "Employee ETI Log",
    "link_to": "Employee ETI Log",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -273,7 +273,7 @@
    "keep_closed": 1,
    "label": "Payroll Reports",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -288,7 +288,7 @@
    "label": "Salary Register",
    "link_to": "Salary Register",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -303,7 +303,7 @@
    "label": "Bank Remittance",
    "link_to": "Bank Remittance",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -318,7 +318,7 @@
    "label": "Salary Payments Based On Payment Mode",
    "link_to": "Salary Payments Based On Payment Mode",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -333,7 +333,7 @@
    "label": "Income Tax Computation",
    "link_to": "Income Tax Computation",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -348,7 +348,7 @@
    "label": "EMP201 Report",
    "link_to": "EMP201 Report",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -363,7 +363,22 @@
    "label": "Statutory Submissions Summary",
    "link_to": "Statutory Submissions Summary",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "added": 0,
+   "child": 1,
+   "collapsible": 1,
+   "hidden": 0,
+   "indent": 0,
+   "is_default_module": 0,
+   "keep_closed": 0,
+   "label": "EMP201 Reconciliation",
+   "link_to": "EMP201 Reconciliation",
+   "link_type": "Report",
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -378,7 +393,7 @@
    "label": "Payroll Register",
    "link_to": "Payroll Register",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -393,7 +408,7 @@
    "label": "Department Cost Analysis",
    "link_to": "Department Cost Analysis",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -408,7 +423,7 @@
    "keep_closed": 1,
    "label": "Deduction Reports",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -423,7 +438,7 @@
    "label": "Retirement Fund Deductions",
    "link_to": "Retirement Fund Deductions",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -438,7 +453,7 @@
    "label": "Income Tax Deductions",
    "link_to": "Income Tax Deductions",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -453,7 +468,7 @@
    "keep_closed": 1,
    "label": "Accounting",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -468,7 +483,7 @@
    "label": "Chart of Accounts",
    "link_to": "Account",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -483,7 +498,7 @@
    "label": "Chart of Cost Centers",
    "link_to": "Cost Center",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -498,7 +513,7 @@
    "label": "Payment Entry",
    "link_to": "Payment Entry",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -513,7 +528,7 @@
    "label": "Journal Entry",
    "link_to": "Journal Entry",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -528,7 +543,7 @@
    "label": "Accounts Settings",
    "link_to": "Accounts Settings",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -543,7 +558,7 @@
    "label": "Accounting Dimension",
    "link_to": "Accounting Dimension",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -558,7 +573,7 @@
    "label": "Currency",
    "link_to": "Currency",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -573,7 +588,7 @@
    "keep_closed": 1,
    "label": "Accounting Reports",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -588,7 +603,7 @@
    "label": "General Ledger",
    "link_to": "General Ledger",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -603,7 +618,7 @@
    "label": "Accounts Payable",
    "link_to": "Accounts Payable",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -618,7 +633,7 @@
    "label": "Accounts Receivable",
    "link_to": "Accounts Receivable",
    "link_type": "Report",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -633,7 +648,7 @@
    "keep_closed": 1,
    "label": "Payroll",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -648,7 +663,7 @@
    "label": "Salary Structure Assignment",
    "link_to": "Salary Structure Assignment",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -663,7 +678,7 @@
    "label": "Bulk Salary Structure Assignment",
    "link_to": "Bulk Salary Structure Assignment",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -678,7 +693,7 @@
    "label": "Salary Slip",
    "link_to": "Salary Slip",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -693,7 +708,7 @@
    "label": "Payroll Entry",
    "link_to": "Payroll Entry",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -708,7 +723,7 @@
    "label": "Salary Withholding",
    "link_to": "Salary Withholding",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -723,7 +738,7 @@
    "label": "Employee Benefit Application",
    "link_to": "Employee Benefit Application",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -738,7 +753,7 @@
    "label": "Employee Final Settlement",
    "link_to": "Employee Final Settlement",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -753,7 +768,7 @@
    "label": "Leave Encashment",
    "link_to": "Leave Encashment Sa",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -768,7 +783,7 @@
    "keep_closed": 1,
    "label": "Statutory",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -783,7 +798,7 @@
    "label": "EMP201 Submission",
    "link_to": "EMP201 Submission",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -798,7 +813,7 @@
    "label": "EMP501 Reconciliation",
    "link_to": "EMP501 Reconciliation",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -813,7 +828,7 @@
    "label": "Tax Rebates and Medical Tax Credit",
    "link_to": "Tax Rebates and Medical Tax Credit",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -828,7 +843,7 @@
    "label": "Retirement Fund",
    "link_to": "Retirement Fund",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -843,7 +858,7 @@
    "label": "IRP5 Certificate",
    "link_to": "IRP5 Certificate",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -858,7 +873,7 @@
    "label": "SARS Payroll Code",
    "link_to": "SARS Payroll Code",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -873,7 +888,7 @@
    "label": "Tax Directive",
    "link_to": "Tax Directive",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -888,7 +903,7 @@
    "label": "UIF U19 Declaration",
    "link_to": "Uif U19 Declaration",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -903,7 +918,7 @@
    "keep_closed": 1,
    "label": "Benefits",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -918,7 +933,7 @@
    "label": "Fringe Benefit",
    "link_to": "Fringe Benefit",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -933,7 +948,7 @@
    "label": "Company Car Benefit",
    "link_to": "Company Car Benefit",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -948,7 +963,7 @@
    "label": "Housing Benefit",
    "link_to": "Housing Benefit",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -963,7 +978,7 @@
    "label": "Low Interest Loan Benefit",
    "link_to": "Low Interest Loan Benefit",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -978,7 +993,7 @@
    "label": "Bursary Benefit",
    "link_to": "Bursary Benefit",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -993,7 +1008,7 @@
    "label": "Cellphone Benefit",
    "link_to": "Cellphone Benefit",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -1008,7 +1023,7 @@
    "label": "Fuel Card Benefit",
    "link_to": "Fuel Card Benefit",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -1023,7 +1038,7 @@
    "label": "Employee Private Benefit",
    "link_to": "Employee Private Benefit",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   },
@@ -1038,7 +1053,7 @@
    "keep_closed": 1,
    "label": "Payments",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Section Break"
   },
@@ -1053,12 +1068,12 @@
    "label": "Payroll Payment Batch",
    "link_to": "Payroll Payment Batch",
    "link_type": "DocType",
-   "open_in_new_tab": 1,
+   "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-10-07 08:58:28.393941",
+ "modified": "2026-11-18 09:30:00.000000",
  "modified_by": "Administrator",
  "module": "SA Payroll",
  "name": "SA Payroll",

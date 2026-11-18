@@ -41,7 +41,7 @@
     "autoname": "EMP201-.#####",
     "naming_rule": "Expression (autoname)",
     "creation": "2024-05-06 16:00:00.000000",
-    "modified": "2024-05-06 16:00:00.000000",
+    "modified": "2026-11-18 09:45:00.000000",
     "modified_by": "Administrator",
     "title_field": "company",
     "track_changes": 1,
@@ -293,6 +293,7 @@
             "description": "Unused ETI ring-fenced for refund at the August or February reconciliation, subject to SARS tax-compliance requirements."
         },
         {
+            "description": "Employee UIF deductions plus employer UIF contributions, as filed on the EMP201.",
             "fieldname": "uif_payable",
             "label": "UIF Payable",
             "fieldtype": "Currency",
@@ -301,6 +302,7 @@
             "bold": 1
         },
         {
+            "description": "Employer Skills Development Levy, from the Company Contributions on the salary slips.",
             "fieldname": "sdl_payable",
             "label": "SDL Payable",
             "fieldtype": "Currency",

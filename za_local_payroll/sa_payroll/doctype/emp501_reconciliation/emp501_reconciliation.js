@@ -214,6 +214,7 @@ frappe.ui.form.on('EMP501 Reconciliation', {
     get_dates: function(frm) {
         frappe.call({
             method: "za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation.get_period_dates",
+            type: "GET",
             args: {
                 tax_year: frm.doc.tax_year,
                 reconciliation_period: frm.doc.reconciliation_period
@@ -238,6 +239,7 @@ frappe.ui.form.on('EMP501 Reconciliation', {
 
             frappe.call({
                 method: 'za_local_payroll.sa_payroll.doctype.emp501_reconciliation.emp501_reconciliation.get_company_tax_details',
+                type: 'GET',
                 args: {
                     company: frm.doc.company
                 },

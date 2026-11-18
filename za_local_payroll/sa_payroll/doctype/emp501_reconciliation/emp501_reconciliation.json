@@ -153,6 +153,7 @@
   },
   {
    "default": "0",
+   "description": "PAYE before ETI, summed from the linked EMP201 submissions.",
    "fieldname": "total_paye",
    "fieldtype": "Currency",
    "label": "Total PAYE",
@@ -160,6 +161,7 @@
   },
   {
    "default": "0",
+   "description": "Employer SDL, summed from the linked EMP201 submissions.",
    "fieldname": "total_sdl",
    "fieldtype": "Currency",
    "label": "Total SDL",
@@ -167,6 +169,7 @@
   },
   {
    "default": "0",
+   "description": "Employee plus employer UIF, summed from the linked EMP201 submissions.",
    "fieldname": "total_uif",
    "fieldtype": "Currency",
    "label": "Total UIF",
@@ -373,7 +376,7 @@
    "link_fieldname": "emp501_reconciliation"
   }
  ],
- "modified": "2025-05-06 17:12:00.000000",
+ "modified": "2026-11-18 09:45:00.000000",
  "modified_by": "Administrator",
  "module": "SA Payroll",
  "name": "EMP501 Reconciliation",

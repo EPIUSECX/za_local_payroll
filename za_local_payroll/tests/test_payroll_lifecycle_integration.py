@@ -518,10 +518,24 @@ class TestSouthAfricanPayrollLifecycle(IntegrationTestCase):
 		self.assertEqual(4000, flt(timesheet_slip.gross_pay, 2))
 		self.assertEqual(40, self._component_amount(timesheet_slip, "deductions", "4141"))
 
+		filters = {"company": self.company, "from_date": "2026-08-01", "to_date": "2026-08-31"}
+		before_filing = self._reconciliation_rows(filters)
+		self.assertEqual(277.12, before_filing["UIF: employee deductions"].payroll_amount)
+		self.assertEqual(277.12, before_filing["UIF: employer contributions"].payroll_amount)
+		self.assertEqual(554.24, before_filing["UIF payable (employee + employer)"].payroll_amount)
+		self.assertEqual(465, before_filing["SDL"].payroll_amount)
+		self.assertEqual("No EMP201", before_filing["SDL"].check, "Nothing is filed yet")
+
 		emp201 = self._submit_emp201()
 		self.assertEqual(554.24, flt(emp201.uif_payable, 2))
 		self.assertEqual(465, flt(emp201.sdl_payable, 2))
 		self.assertEqual(1125, flt(emp201.eti_generated_current_month, 2))
+
+		after_filing = self._reconciliation_rows(filters)
+		for item in ("PAYE before ETI", "UIF payable (employee + employer)", "SDL"):
+			self.assertEqual("Agrees", after_filing[item].check, item)
+			self.assertEqual(0, after_filing[item].difference, item)
+		self._assert_payroll_register_reconciles_to(emp201, filters)
 
 		certificate = self._generate_company_scoped_irp5()
 		self.assertEqual(self.company, certificate.company)
@@ -634,6 +648,24 @@ class TestSouthAfricanPayrollLifecycle(IntegrationTestCase):
 		slip.insert(ignore_permissions=True)
 		slip.submit()
 		return slip
+
+	def _reconciliation_rows(self, filters):
+		from za_local_payroll.sa_payroll.report.emp201_reconciliation.emp201_reconciliation import execute
+
+		_columns, data, _message = execute(filters)
+		return {row["item"]: frappe._dict(row) for row in data}
+
+	def _assert_payroll_register_reconciles_to(self, emp201, filters):
+		"""The register's UIF and SDL columns add up to what the EMP201 filed."""
+		from za_local_payroll.sa_payroll.report.payroll_register.payroll_register import execute
+
+		_columns, rows = execute(filters)
+		self.assertTrue(rows, "The register lists the period's salary slips")
+		employee_uif = sum(flt(row.uif) for row in rows)
+		employer_uif = sum(flt(row.employer_uif) for row in rows)
+		self.assertEqual(flt(employee_uif + employer_uif, 2), flt(sum(flt(r.total_uif) for r in rows), 2))
+		self.assertEqual(flt(emp201.uif_payable, 2), flt(employee_uif + employer_uif, 2))
+		self.assertEqual(flt(emp201.sdl_payable, 2), flt(sum(flt(row.sdl) for row in rows), 2))
 
 	def _submit_emp201(self):
 		doc = frappe.get_doc(

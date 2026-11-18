@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### Fixed
+
+- **EMP501 Reconciliation no longer fails with "Not permitted".** `get_period_dates` and
+  `get_company_tax_details` are GET-only, but the form called them with `frappe.call`, which
+  sends POST. From Date, To Date and the PAYE, SDL and UIF reference numbers now fill. The
+  server's verb and permission checks are unchanged. The same mismatch is fixed for
+  `get_mileage_rate` (Business Trip and Business Trip Settings) and `get_official_pdf` (IRP5
+  Certificate). A test now checks every client call against the verbs the server allows.
+- **Salary slips failed to generate on HRMS 16.54.1** with `KeyError:
+  'current_tax_amount_for_payment_days'`. HRMS now reads that key from the per-component PAYE
+  dictionary, which this app builds itself. It is set wherever PAYE is calculated or adjusted;
+  the PAYE amount is unchanged.
+- Every row of the SA Payroll, SA Labour and SA COIDA sidebars opened in a new browser tab.
+- The reviewed-endpoint test omitted the three `setup.leave_standards` POST endpoints.
+
+### Added
+
+- **EMP201 Reconciliation** report: payroll PAYE, employee UIF, employer UIF, total UIF and SDL
+  for a period beside the EMP201 Submission for the same months, with the difference. It reuses
+  the Statutory Submissions Summary's SARS-code classification, so it cannot drift from it.
+- **Payroll Register** now shows Employee UIF, Employer UIF, Total UIF Payable and SDL, so its
+  totals reconcile to the EMP201. Employer amounts are read from the salary slips' Company
+  Contributions and never change Net Pay.
+- Field descriptions on EMP201 UIF Payable and SDL Payable, and EMP501 Total PAYE, UIF and SDL,
+  stating what each includes.
+
 ### Added
 
 - BCEA leave standards: packaged, source-cited reference data, "(BCEA)" Leave Types with the
