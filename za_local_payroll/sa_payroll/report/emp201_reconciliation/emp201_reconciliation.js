@@ -24,6 +24,10 @@ frappe.query_reports["EMP201 Reconciliation"] = {
 		},
 	],
 	formatter(value, row, column, data, default_formatter) {
+		// EMP201 files UIF as one figure, so its parts have nothing to compare: show blanks, not R 0.00.
+		if (["emp201_amount", "difference"].includes(column.fieldname) && data && data[column.fieldname] == null) {
+			return "";
+		}
 		value = default_formatter(value, row, column, data);
 		if (column.fieldname === "check" && data?.check) {
 			const indicator = { Agrees: "green", Differs: "red" }[data.check] || "gray";
